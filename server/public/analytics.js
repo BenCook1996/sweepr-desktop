@@ -701,7 +701,7 @@
             '🛡️ Did Windows stop the install? (SWEEPRCleaner.exe)' +
           '</div>' +
           '<div style="color:#e2e8f0;margin-bottom:8px;">' +
-            'Because v0.1.0 is a freshly compiled 5 MB native Rust binary: <strong>Step 1: Click &ldquo;More info&rdquo;</strong> &rarr; <strong>Step 2: Click &ldquo;Run anyway&rdquo;</strong>. ' +
+            'Because v0.1.0 is a freshly compiled 6.76 MB native Rust installer: <strong>Step 1: Click &ldquo;More info&rdquo;</strong> &rarr; <strong>Step 2: Click &ldquo;Run anyway&rdquo;</strong>. ' +
             '<span title="FEAE464CA121CF897D27916C632F4DB8F84A87D4B79642403AD1B0E0F2BB706A" style="color:#94a3b8;font-family:ui-monospace,Consolas,monospace;font-size:11px;">(SHA-256: FEAE464C...F2BB706A)</span>' +
           '</div>' +
           '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +

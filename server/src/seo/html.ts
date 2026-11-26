@@ -103,20 +103,34 @@ function collectTypes(node: unknown, out: Set<string>, merchantIssues?: Set<stri
         }
       }
 
-      const rawOffers = o.offers;
-      const offerList = Array.isArray(rawOffers)
-        ? rawOffers
-        : rawOffers && typeof rawOffers === "object"
-        ? [rawOffers]
-        : [];
-      for (const off of offerList) {
-        if (off && typeof off === "object") {
-          const offObj = off as Record<string, unknown>;
-          if (!offObj.hasMerchantReturnPolicy) {
-            merchantIssues.add('Missing field "hasMerchantReturnPolicy" (in "offers")');
-          }
-          if (!offObj.shippingDetails) {
-            merchantIssues.add('Missing field "shippingDetails" (in "offers")');
+      const isDigitalApp =
+        nodeTypes.includes("SoftwareApplication") ||
+        nodeTypes.includes("WebApplication") ||
+        /sweepr|cleaner|software|subscription|digital|saas/i.test(
+          `${String(o.name ?? "")} ${String(o.description ?? "")}`
+        );
+      if (nodeTypes.includes("Product") && !isDigitalApp) {
+        const rawOffers = o.offers;
+        const offerList = Array.isArray(rawOffers)
+          ? rawOffers
+          : rawOffers && typeof rawOffers === "object"
+          ? [rawOffers]
+          : [];
+        for (const off of offerList) {
+          if (off && typeof off === "object") {
+            const offObj = off as Record<string, unknown>;
+            const rawPrice = offObj.price;
+            const isFreeOffer =
+              typeof rawPrice === "number"
+                ? rawPrice === 0
+                : typeof rawPrice === "string" && rawPrice.trim() !== "" && Number(rawPrice.trim()) === 0;
+            if (isFreeOffer) continue;
+            if (!offObj.hasMerchantReturnPolicy) {
+              merchantIssues.add('Missing field "hasMerchantReturnPolicy" (in "offers")');
+            }
+            if (!offObj.shippingDetails) {
+              merchantIssues.add('Missing field "shippingDetails" (in "offers")');
+            }
           }
         }
       }

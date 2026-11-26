@@ -1,10 +1,11 @@
 <script lang="ts" module>
-  import type { BrowserPrivacyItem } from "../lib/api";
+  import type { BrowserPrivacyItem, OsSecurityHealthReport } from "../lib/api";
 
   let cachedSubView: "browser" | "vault" | "eraser" = "browser";
   let cachedBrowsers: BrowserPrivacyItem[] = [];
   let cachedSelectedBrowsers: Record<string, boolean> = {};
   let cachedAllowlist: string[] = [];
+  let cachedSecurityHealth: OsSecurityHealthReport | null = null;
 </script>
 
 <script lang="ts">
@@ -58,6 +59,24 @@
   let breachCount = $state<number | null>(null);
   let checkingBreach = $state(false);
   let generatedPassword = $state("");
+
+  // OS Security Health (#10, 100% local)
+  let securityHealth = $state<OsSecurityHealthReport | null>(cachedSecurityHealth);
+  let securityLoading = $state(false);
+  let securityHealthAttempted = false;
+
+  async function checkSecurityHealth() {
+    securityLoading = true;
+    try {
+      const report = await api.osSecurityHealth();
+      securityHealth = report;
+      cachedSecurityHealth = report;
+    } catch (e) {
+      error = errorMessage(e);
+    } finally {
+      securityLoading = false;
+    }
+  }
 
   async function loadExtensions() {
     showExtensions = !showExtensions;
@@ -261,6 +280,10 @@
   $effect(() => {
     if (cachedBrowsers.length === 0) {
       scanBrowsers();
+    }
+    if (cachedSecurityHealth === null && !securityHealthAttempted) {
+      securityHealthAttempted = true;
+      void checkSecurityHealth();
     }
   });
 </script>
@@ -487,6 +510,104 @@
             <div class="muted small">No third-party browser extensions detected.</div>
           {/each}
         </div>
+      {/if}
+    </div>
+
+    <!-- #10 OS Security Health (100% Local · Zero Network) -->
+    <div class="card browser-card">
+      <div class="card-top-row">
+        <div class="row" style="gap: 10px; align-items: center; flex-wrap: wrap;">
+          <strong class="card-title">OS Security Health</strong>
+          <span class="badge free">100% Local · Zero Network</span>
+          {#if securityHealth}
+            <span
+              class="badge"
+              style={securityHealth.overall_status === "healthy"
+                ? "background: var(--accent-light); color: var(--accent);"
+                : securityHealth.overall_status === "warning"
+                  ? "background: rgba(239, 68, 68, 0.14); color: var(--danger);"
+                  : "background: rgba(245, 158, 11, 0.15); color: var(--warn);"}
+            >
+              {securityHealth.overall_status === "healthy"
+                ? "Healthy"
+                : securityHealth.overall_status === "warning"
+                  ? "Action Recommended"
+                  : "Needs Attention"}
+            </span>
+          {/if}
+        </div>
+        <button class="ghost small-pill" disabled={securityLoading} onclick={checkSecurityHealth}>
+          <span>{securityLoading ? "Checking…" : "Recheck"}</span>
+        </button>
+      </div>
+
+      {#if securityLoading && !securityHealth}
+        <div class="empty-state">
+          <span class="muted small">Inspecting local antivirus, firewall, and startup persistence…</span>
+        </div>
+      {:else if securityHealth}
+        <div class="muted small">{securityHealth.summary}</div>
+
+        <div class="browser-list">
+          {#each securityHealth.checks as chk (chk.id)}
+            <div class="row browser-row" style="cursor: default;">
+              <div style="flex: 1; min-width: 0;">
+                <strong class="browser-name">{chk.label}</strong>
+                <div class="muted small">{chk.detail}</div>
+              </div>
+              <span
+                class="badge"
+                style={chk.status === "ok"
+                  ? "background: var(--accent-light); color: var(--accent);"
+                  : chk.status === "critical"
+                    ? "background: rgba(239, 68, 68, 0.14); color: var(--danger);"
+                    : chk.status === "warning"
+                      ? "background: rgba(245, 158, 11, 0.15); color: var(--warn);"
+                      : "background: var(--panel-solid); color: var(--muted);"}
+              >
+                {chk.status === "ok"
+                  ? "Protected"
+                  : chk.status === "critical"
+                    ? "Off / Risk"
+                    : chk.status === "warning"
+                      ? "Warning"
+                      : "Unavailable"}
+              </span>
+            </div>
+          {/each}
+        </div>
+
+        {#if securityHealth.suspicious_entries.length > 0}
+          <div class="sub-panel">
+            <strong class="small" style="display: block; margin-bottom: 8px;">
+              Flagged Startup Persistence Entries ({securityHealth.suspicious_entries.length})
+            </strong>
+            <div class="browser-list">
+              {#each securityHealth.suspicious_entries as entry (entry.scope + entry.name + entry.command)}
+                <div class="row browser-row" style="cursor: default;">
+                  <div style="flex: 1; min-width: 0;">
+                    <div class="row" style="gap: 8px;">
+                      <strong class="small">{entry.name}</strong>
+                      <span class="badge free">{entry.scope}</span>
+                      <span
+                        class="badge"
+                        style={entry.severity === "high"
+                          ? "background: rgba(239, 68, 68, 0.14); color: var(--danger);"
+                          : "background: rgba(245, 158, 11, 0.15); color: var(--warn);"}
+                      >
+                        {entry.severity}
+                      </span>
+                    </div>
+                    <div class="muted small" style="margin-top: 2px;">{entry.reason}</div>
+                    <code class="small" style="display: block; margin-top: 2px; opacity: 0.8; word-break: break-all;">
+                      {entry.command}
+                    </code>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
       {/if}
     </div>
   {/if}

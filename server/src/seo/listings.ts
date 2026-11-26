@@ -37,8 +37,8 @@ export const DEFAULT_DIRECTORY_LISTINGS: Array<{
   },
   {
     platform_id: "winget",
-    platform_name: "Windows Package Manager (winget-pkgs #480164)",
-    listing_url: "https://github.com/microsoft/winget-pkgs/pull/480164",
+    platform_name: "Windows Package Manager (Sweepr.SweeprCleaner)",
+    listing_url: "https://github.com/microsoft/winget-pkgs/tree/master/manifests/s/Sweepr/SweeprCleaner",
   },
   {
     platform_id: "scoop",
@@ -277,7 +277,7 @@ export function isSubmissionOrRootListingUrl(rawUrl: string): boolean {
     const host = u.hostname.toLowerCase();
     const p = u.pathname || "/";
     if (host.endsWith("sweeprcleaner.com") && p === "/pad.xml") return false;
-    if (host.includes("github.com") && /\/(?:pull|releases|scoop-sweepr)\b/i.test(p)) return false;
+    if (host.includes("github.com") && /\/(?:pull|releases|scoop-sweepr|tree\/master\/manifests)\b/i.test(p)) return false;
     if (host.includes("community.chocolatey.org") && /^\/packages\/[^/]+/i.test(p)) return false;
     if (host.includes("form.asana.com")) return true;
     if (p === "/" || p === "") return true;
@@ -508,8 +508,21 @@ export function listListingCrmTasks(store: SeoStore) {
 export function getDirectorySubmissionPack(store: SeoStore) {
   const version = readCurrentReleaseVersion();
   const listings = listDirectoryListings(store);
-  const sha256Exe = "FEAE464CA121CF897D27916C632F4DB8F84A87D4B79642403AD1B0E0F2BB706A";
-  const sha256Msi = "33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A";
+  let sha256Exe = "FEAE464CA121CF897D27916C632F4DB8F84A87D4B79642403AD1B0E0F2BB706A";
+  let sha256Msi = "33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A";
+  const releaseManifestPath = resolve(__dirname, "../../public/release-manifest.json");
+  if (existsSync(releaseManifestPath)) {
+    try {
+      const rm = JSON.parse(readFileSync(releaseManifestPath, "utf8")) as {
+        exe?: { sha256?: string };
+        msi?: { sha256?: string };
+      };
+      if (rm?.exe?.sha256 && /^[A-F0-9]{64}$/i.test(rm.exe.sha256)) sha256Exe = rm.exe.sha256.toUpperCase();
+      if (rm?.msi?.sha256 && /^[A-F0-9]{64}$/i.test(rm.msi.sha256)) sha256Msi = rm.msi.sha256.toUpperCase();
+    } catch {
+      /* fallback */
+    }
+  }
 
   return {
     release_version: version,
@@ -527,9 +540,9 @@ export function getDirectorySubmissionPack(store: SeoStore) {
     },
     canonical_copy: {
       title_short: "SWEEPR Cleaner",
-      tagline_80: "Privacy-first 5 MB native Rust PC & cross-platform disk cleaner with 7-day rollback.",
+      tagline_80: "Privacy-first 6.76 MB native Rust disk cleaner with 7-day Undo Quarantine.",
       description_250:
-        "SWEEPR Cleaner is a lightweight 5 MB native Rust & Tauri v2 disk cleaner for Windows 11/10, macOS, Android, and iOS. Safely reclaim 10–65 GB across 367 audited AppData, Steam, NVIDIA DXCache, Adobe, and Windows Update caches with zero telemetry.",
+        "SWEEPR Cleaner is a 6.76 MB native Rust & Tauri v2 disk cleaner for Windows 11/10 (x64), macOS, Android, and iOS (Safari web companion / TestFlight beta). Zero-Telemetry Offline Mode is on by default (opt-in anonymized diagnostics only).",
       categories: ["System Utilities", "Disk Cleaners", "PC Optimization", "Privacy & Security"],
       competitor_alternatives: ["CCleaner", "BleachBit", "CleanMyPC", "Wise Disk Cleaner", "Avast Cleanup", "Glary Utilities"],
     },
@@ -553,7 +566,7 @@ export function getDirectorySubmissionPack(store: SeoStore) {
         name: "Microsoft Security Intelligence (WDSI SmartScreen File Submission)",
         submission_url: "https://www.microsoft.com/en-us/wdsi/filesubmission",
         instructions:
-          "Submit SWEEPRCleaner.exe and Sweepr_Setup.msi as Software Developer -> Incorrectly detected as PUA/SmartScreen unknown publisher alongside SSL.com OV/EV ticket #151810941.",
+          "Submit SWEEPRCleaner.exe and Sweepr_Setup.msi as Software Developer -> Incorrectly detected as PUA/SmartScreen unknown publisher alongside SSL.com Individual Validation (IV) Authenticode certificate (CN=Benjamin Cook, thumbprint 1800DBEA6FE847D384E549D02CA372C3D45D8B81, ticket #151810941).",
       },
       {
         platform_id: "softpedia",
@@ -585,7 +598,7 @@ export function getDirectorySubmissionPack(store: SeoStore) {
 
 /**
  * A15: Audits and optionally auto-normalizes internal `/vs/*.html`, `/alternatives/*.html`, and `/llms.txt`
- * against canonical brand facts (5.8 MB binary size, 5-device license, 365+ verified guides).
+ * against canonical brand facts (6.76 MB binary size, 5-device license, 365+ verified guides).
  */
 export function auditInternalBrandFactConsistency(opts: { autoFix?: boolean; totalGuides?: number } = {}) {
   const publicDir = resolve(__dirname, "../../public");
@@ -614,9 +627,9 @@ export function auditInternalBrandFactConsistency(opts: { autoFix?: boolean; tot
       let fixed = false;
       if (reasons.length > 0 && opts.autoFix) {
         const updated = raw
-          .replace(/~?\s*12\s*MB\s*[-–]\s*14\s*MB/gi, "6.52 MB")
-          .replace(/<\s*15\s*MB\s+download/gi, "6.52 MB native Rust download")
-          .replace(/under\s+15\s*MB/gi, "under 7 MB (6.52 MB)")
+          .replace(/~?\s*12\s*MB\s*[-–]\s*14\s*MB/gi, "6.76 MB")
+          .replace(/<\s*15\s*MB\s+download/gi, "6.76 MB native Rust download")
+          .replace(/under\s+15\s*MB/gi, "under 7 MB (6.76 MB)")
           .replace(/\b40\+\s*Guides\b/gi, `${totalGuides}+ Guides`)
           .replace(/up to 3 Desktop PCs/gi, "up to 5 Devices");
         if (updated !== raw) {

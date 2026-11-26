@@ -803,7 +803,7 @@ export function createApp(deps: AppDeps) {
       home: {
         title: "SWEEPR Cleaner: Schneller PC-, Mac- & Handy-Cleaner (2026)",
         description:
-          "Gewinnen Sie in 60 Sekunden Gigabytes Speicherplatz auf Windows 11/10, Mac, iPhone & Android zurück. Sicher bereinigen mit 7-Tage-Wiederherstellung.",
+          "Gewinnen Sie Speicherplatz auf Windows 11/10, Mac, Android & iOS Beta zurück. Sichere Bereinigung mit 7-Tage-Quarantäne (2–10 GB Budget, 5 GB Standard).",
         canonicalPath: "/de",
       },
       pricing: {
@@ -817,7 +817,7 @@ export function createApp(deps: AppDeps) {
       home: {
         title: "SWEEPR Cleaner : Nettoyeur Rapide PC, Mac, iPhone & Android",
         description:
-          "Libérez des gigaoctets d'espace disque en 60 secondes sur Windows 11/10, Mac, iPhone et Android. Nettoyage sûr sans bloatware avec restauration 7 jours.",
+          "Libérez vite de l'espace disque sur Windows 11/10, Mac, Android et iOS Beta. Nettoyage sûr sans bloatware, quarantaine 7 j (budget 2–10 Go, 5 Go par défaut).",
         canonicalPath: "/fr",
       },
       pricing: {
@@ -831,7 +831,7 @@ export function createApp(deps: AppDeps) {
       home: {
         title: "SWEEPR Cleaner: Limpiador Rápido para PC, Mac y Móvil (2026)",
         description:
-          "Recupera gigabytes de espacio en 60 segundos en Windows 11/10, Mac, iPhone y Android. Limpieza segura sin bloatware y con restauración de 7 días.",
+          "Recupera espacio en Windows 11/10, Mac, Android e iOS Beta. Limpieza segura sin bloatware y con cuarentena de 7 días (límite 2–10 GB, 5 GB por defecto).",
         canonicalPath: "/es",
       },
       pricing: {
@@ -946,6 +946,11 @@ export function createApp(deps: AppDeps) {
     return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
   });
   app.get("/refund.html", (c) => c.redirect("/refund", 301));
+  app.get("/about", (c) => {
+    const file = "./public/about.html";
+    return existsSync(file) ? c.html(readFileSync(file, "utf-8")) : c.notFound();
+  });
+  app.get("/about.html", (c) => c.redirect("/about", 301));
   app.get("/llms.txt", (c) => {
     c.header("Content-Type", "text/plain; charset=utf-8");
     c.header("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
@@ -957,14 +962,8 @@ export function createApp(deps: AppDeps) {
     c.header("X-Robots-Tag", "noindex, follow");
     return c.body(renderLlmsFullTxt(seoStore));
   });
-  const RETIRED_VS_REDIRECTS: Record<string, string> = {
-    onyx: "/vs/cleanmymac",
-  };
-  const RETIRED_ALTERNATIVES_REDIRECTS: Record<string, string> = {
-    daisydisk: "/vs/daisydisk",
-    onyx: "/alternatives/cleanmymac",
-    pearcleaner: "/vs/pearcleaner",
-  };
+  const RETIRED_VS_REDIRECTS: Record<string, string> = {};
+  const RETIRED_ALTERNATIVES_REDIRECTS: Record<string, string> = {};
   const BLOAT_WATCH_SLUG_REDIRECTS: Record<string, string> = {
     "windows-11-24h2-8gb-update-cache-bug": "/clean/folder/windows-11-24h2-update-cache-8gb-bug",
     "nvidia-rtx-shader-cache-10gb-limit-fix": "/clean/app/nvidia-dxcache",
@@ -1186,12 +1185,12 @@ export function createApp(deps: AppDeps) {
     const title = escapeHtml(rawTitle);
     const fullTitle =
       rawTitle === "Download SWEEPR Cleaner"
-        ? "Download SWEEPR Cleaner — Windows, Mac, iOS & Android"
+        ? "Download SWEEPR Cleaner — Windows, Mac, Android & iOS Beta"
         : rawTitle.length < 30
           ? `${title} | SWEEPR Cleaner Official`
           : title.slice(0, 60);
     const desc =
-      "Download or activate SWEEPR Cleaner across Windows 11/10, macOS, Android, and iPhone/iPad. Digitally signed native cleaner with 14-day money-back guarantee.";
+      "Download or activate SWEEPR Cleaner across Windows 11/10, macOS, Android, and iOS Safari Web Companion / TestFlight Beta. Digitally signed native desktop cleaner with 14-day money-back guarantee.";
     const dlJsonLd = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "WebPage",
@@ -1204,13 +1203,12 @@ export function createApp(deps: AppDeps) {
 
   // ---------- Smart download: one button, the right app for every device ----------
   type Platform = "windows" | "mac" | "linux" | "android" | "ios";
+  type ShippedBinaryPlatform = "windows" | "mac" | "android";
 
-  const DESKTOP_FILES: Record<Platform, { file: string; type: string; label: string }> = {
+  const DESKTOP_FILES: Record<ShippedBinaryPlatform, { file: string; type: string; label: string }> = {
     windows: { file: "SWEEPRCleaner.exe", type: "application/vnd.microsoft.portable-executable", label: "Windows" },
     mac: { file: "SWEEPRCleaner.dmg", type: "application/x-apple-diskimage", label: "Mac" },
-    linux: { file: "SWEEPRCleaner.AppImage", type: "application/x-executable", label: "Linux" },
     android: { file: "SWEEPRCleaner.apk", type: "application/vnd.android.package-archive", label: "Android" },
-    ios: { file: "SWEEPRCleaner.dmg", type: "application/x-apple-diskimage", label: "iPhone & iPad" },
   };
 
   let cachedApkSha256: string | null = null;
@@ -1228,8 +1226,8 @@ export function createApp(deps: AppDeps) {
     return "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855";
   };
 
-  const cachedInstallerMeta = new Map<Platform, { sha256: string; sizeMb: string }>();
-  const getInstallerMeta = (platform: Platform): { sha256: string; sizeMb: string } => {
+  const cachedInstallerMeta = new Map<ShippedBinaryPlatform, { sha256: string; sizeMb: string }>();
+  const getInstallerMeta = (platform: ShippedBinaryPlatform): { sha256: string; sizeMb: string } => {
     const hit = cachedInstallerMeta.get(platform);
     if (hit) return hit;
     const { file } = DESKTOP_FILES[platform];
@@ -1238,23 +1236,23 @@ export function createApp(deps: AppDeps) {
       if (existsSync(p)) {
         const buf = readFileSync(p);
         const sha256 = createHash("sha256").update(buf).digest("hex").toUpperCase();
-        const sizeMb = `${(buf.length / (1024 * 1024)).toFixed(1)} MB`;
+        const sizeMb = `${(buf.length / (1024 * 1024)).toFixed(2)} MB`;
         const meta = { sha256, sizeMb };
         cachedInstallerMeta.set(platform, meta);
         return meta;
       }
     } catch {}
     if (platform === "android") {
-      return { sha256: getApkSha256(), sizeMb: "3.2 MB" };
+      return { sha256: getApkSha256(), sizeMb: "3.23 MB" };
     }
     return {
       sha256: SWEEPR_WINDOWS_EXE_SHA256,
-      sizeMb: platform === "mac" ? "7.0 MB" : "6.5 MB",
+      sizeMb: platform === "mac" ? "7.07 MB" : "6.76 MB",
     };
   };
 
   const renderPostDownloadThankYouPage = (
-    activePlatform: "windows" | "mac" | "linux",
+    activePlatform: "windows" | "mac",
     attributionId: string
   ): string => {
     const winMeta = getInstallerMeta("windows");
@@ -1264,9 +1262,7 @@ export function createApp(deps: AppDeps) {
     const streamHref =
       activePlatform === "mac"
         ? "/download?stream=1&platform=mac"
-        : activePlatform === "linux"
-          ? "/download?stream=1&platform=linux"
-          : "/download?stream=1&platform=windows";
+        : "/download?stream=1&platform=windows";
     const isMacDefault = activePlatform === "mac";
     const safeAttrId = escapeHtml(attributionId);
     const safeWinSha = escapeHtml(winMeta.sha256);
@@ -1289,7 +1285,7 @@ export function createApp(deps: AppDeps) {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Downloading SWEEPR Cleaner — 3-Step Quick Launch Guide</title>
-  <meta name="description" content="Your SWEEPR Cleaner download is starting automatically. Follow the 3-step Windows SmartScreen or macOS Gatekeeper walkthrough to run your free 60-second scan." />
+  <meta name="description" content="Your SWEEPR Cleaner download is starting automatically. Follow the 3-step Windows SmartScreen or macOS Gatekeeper walkthrough to run your free on-device storage scan." />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="canonical" href="https://sweeprcleaner.com/download" />
   <script type="application/ld+json">${dlJsonLd}</script>
@@ -1734,8 +1730,8 @@ export function createApp(deps: AppDeps) {
         </div>
         <div class="trust-pills">
           <span>✓ SSL.com Publisher: Benjamin Cook</span>
-          <span>✓ 500 MB Free Starter Clean</span>
-          <span>✓ 7-Day Undo Quarantine</span>
+          <span>✓ Unlimited Free Temp &amp; Browser Cache Clean</span>
+          <span>✓ Pro 7-Day Undo (2&ndash;10 GB budget)</span>
         </div>
       </div>
 
@@ -1786,11 +1782,11 @@ export function createApp(deps: AppDeps) {
 
         <article class="step-card">
           <div class="step-badge"><span class="step-num">3</span> Step 3</div>
-          <h2 class="step-title">Free 60s Scan starts automatically</h2>
-          <p class="step-desc">Click <strong>Install</strong> once (&lt;0.3s, zero bundled bloatware) — your <strong>Free 60s Scan starts automatically</strong> with 500 MB Free Starter Clean.</p>
+          <h2 class="step-title">Free Storage Scan starts automatically</h2>
+          <p class="step-desc">Click <strong>Install</strong> once (fast setup, zero bundled bloatware) — your <strong>Free Storage Scan starts automatically</strong> with Unlimited Free Temp &amp; Browser Cache Clean (to OS Recycle Bin).</p>
           <div class="scan-ready-mock">
-            <strong>⚡ Instant 1-Click Launch</strong>
-            <span>Scans System Temp, Shaders, Browsers &amp; AI Caches in seconds</span>
+            <strong>⚡ Fast 1-Click Launch</strong>
+            <span>Scans System Temp, Shaders, Browsers &amp; AI Caches on-device</span>
           </div>
         </article>
       </section>
@@ -1825,8 +1821,8 @@ export function createApp(deps: AppDeps) {
 
         <article class="step-card">
           <div class="step-badge"><span class="step-num">3</span> Step 3</div>
-          <h2 class="step-title">Free 60s Scan starts automatically</h2>
-          <p class="step-desc">SWEEPR opens immediately and your <strong>Free 60s Scan starts automatically</strong> with 500 MB Free Starter Clean &amp; 7-Day Undo Quarantine.</p>
+          <h2 class="step-title">Free Storage Scan starts automatically</h2>
+          <p class="step-desc">SWEEPR opens immediately and your <strong>Free Storage Scan starts automatically</strong> with Unlimited Free Temp &amp; Browser Cache Clean (to OS Trash) &amp; Pro 7-Day Undo Quarantine (2&ndash;10 GB budget, 5 GB default).</p>
           <div class="scan-ready-mock">
             <strong>⚡ Native Apple Silicon &amp; Intel</strong>
             <span>Scans System Temp, Xcode, Browsers &amp; App Caches safely</span>
@@ -1865,7 +1861,7 @@ export function createApp(deps: AppDeps) {
     </div>
 
     <footer class="footer-links">
-      <span>Need help launching SWEEPR? <a href="/support">Contact 1-on-1 Support</a> or install via Winget: <code>winget install SWEEPR.Cleaner</code></span>
+      <span>Need help launching SWEEPR? <a href="/support">Contact 1-on-1 Support</a> or install via Winget: <code>winget install Sweepr.SweeprCleaner</code></span>
       <div>
         <a href="/order?plan=annual" rel="nofollow">Unlock 5-Device Pro License &rarr;</a>
         &nbsp;&middot;&nbsp;
@@ -2012,7 +2008,7 @@ export function createApp(deps: AppDeps) {
   const renderDesktopEmailCaptureCard = (sourcePlatform: string, prominent = false) =>
     `<div id="dlRecoveryBox" style="margin-top:14px;padding:${prominent ? "16px" : "14px"};border-radius:14px;background:${prominent ? "#eef6f1" : "#f8faf9"};border:${prominent ? "2px solid #0d6847" : "1px solid #c6dcd0"};text-align:left;font-size:12.5px;color:#111613;">` +
     `<div style="font-weight:800;font-size:13.5px;color:#073825;margin-bottom:4px;">📩 Send PC &amp; Mac Download Link to My Email</div>` +
-    `<div style="color:#4b554e;font-size:12px;margin-bottom:8px;">On your phone right now? Enter your email and we&rsquo;ll send the direct Windows 11/10 &amp; Mac download link + your free 500 MB cleanup pass:</div>` +
+    `<div style="color:#4b554e;font-size:12px;margin-bottom:8px;">On your phone right now? Enter your email and we&rsquo;ll send the direct Windows 11/10 &amp; Mac download link + your unlimited free Temp &amp; Browser Cache clean:</div>` +
     `<form id="dlRecoveryForm" style="display:flex;gap:6px;flex-wrap:wrap;" onsubmit="return window.__bindDlEmail && window.__bindDlEmail(event)">` +
     `<input type="email" id="dlRecoveryEmail" required placeholder="you@example.com" style="flex:1;min-width:160px;padding:10px 12px;border-radius:9px;border:1px solid #b8c4bc;font-size:13px;" />` +
     `<button type="submit" id="dlRecoverySubmit" style="background:#0d6847;color:#fff;border:none;padding:10px 14px;border-radius:9px;font-weight:800;font-size:12.5px;cursor:pointer;">Email Me PC &amp; Mac Link</button>` +
@@ -2045,24 +2041,24 @@ export function createApp(deps: AppDeps) {
         `<div style="margin-top:8px;padding:8px 10px;border-radius:8px;background:#eceee9;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;word-break:break-all;color:#143625;"><strong>Verified SHA-256:</strong> ${escapeHtml(apkSha)}</div>` +
         `</details>` +
         `<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(17,22,19,0.08);display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;">` +
-        `<a href="/download?platform=picker" rel="nofollow" style="color:#4b554e;text-decoration:underline;">All Platforms (Windows / Mac / Linux)</a>` +
+        `<a href="/download?platform=picker" rel="nofollow" style="color:#4b554e;text-decoration:underline;">All Platforms (Windows / Mac / Android)</a>` +
         `<a href="/" style="color:#0d6847;text-decoration:none;">&larr; Home</a>` +
         `</div><p style="display:none">`;
       return page("SWEEPR Cleaner for Android & PC", bodyHtml);
     }
 
-    // iOS landing view: App Store / TestFlight / Instant Web App + Prominent Cross-Device PC & Mac Email Capture Card
+    // iOS landing view: Safari Web Companion / TestFlight Beta (no App Store release yet) + Cross-Device PC & Mac Email Capture Card
     const iosBodyHtml =
-      `Cleaning your PC, Mac, or iPhone? Send the desktop installer link to your email or launch SWEEPR on iOS:</p>` +
+      `Cleaning your PC, Mac, or iPhone? Send the desktop installer link to your email or try the iOS Web Companion / TestFlight Beta:</p>` +
       renderDesktopEmailCaptureCard("ios", true) +
       `<div style="margin-top:14px;padding:14px;border-radius:14px;background:#ffffff;border:1px solid #d6dad5;text-align:left;">` +
-      `<div style="font-weight:800;font-size:13px;color:#073825;margin-bottom:4px;">🍎 SWEEPR Cleaner for iPhone &amp; iPad</div>` +
-      `<div style="color:#4b554e;font-size:12px;margin-bottom:6px;">No configuration profiles required. Launch the instant iOS Cleaner or join Apple TestFlight / App Store access:</div>` +
-      btn("/ios-app", "🚀 Launch SWEEPR Cleaner for iOS (Instant)", true, "iPhone & iPad") +
-      btn("https://testflight.apple.com", "🍏 App Store & TestFlight Early Access", false) +
+      `<div style="font-weight:800;font-size:13px;color:#073825;margin-bottom:4px;">🍎 SWEEPR Cleaner for iPhone &amp; iPad (Web Companion &amp; Beta)</div>` +
+      `<div style="color:#4b554e;font-size:12px;margin-bottom:6px;">No App Store release yet &mdash; no configuration profiles required. Open the Safari Web Companion or join Apple TestFlight Beta:</div>` +
+      btn("/ios-app", "🚀 Open iOS Safari Web Companion", true, "Web Companion") +
+      btn("https://testflight.apple.com", "🧪 Join iOS TestFlight Beta (No App Store App Yet)", false) +
       `</div>` +
       `<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(17,22,19,0.08);display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;">` +
-      `<a href="/download?platform=picker" rel="nofollow" style="color:#4b554e;text-decoration:underline;">All Platforms (Windows / Mac / Linux)</a>` +
+      `<a href="/download?platform=picker" rel="nofollow" style="color:#4b554e;text-decoration:underline;">All Platforms (Windows / Mac / Android)</a>` +
       `<a href="/" style="color:#0d6847;text-decoration:none;">&larr; Home</a>` +
       `</div><p style="display:none">`;
     return page("SWEEPR Cleaner for iPhone, PC & Mac", iosBodyHtml);
@@ -2072,10 +2068,9 @@ export function createApp(deps: AppDeps) {
     const btn = (href: string, text: string, primary = false) =>
       `<a href="${href}" rel="nofollow" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;background:${primary ? "#0d6847" : "#f4f5f3"};color:${primary ? "#ffffff" : "#111613"};border:1px solid ${primary ? "#0d6847" : "#d6dad5"};padding:12px 16px;border-radius:12px;text-decoration:none;font-weight:${primary ? "800" : "600"};font-size:14px;box-shadow:${primary ? "0 6px 16px rgba(13,104,71,0.24)" : "none"};"><span>${text}</span>${primary ? '<span style="font-size:10.5px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:999px;font-weight:700;white-space:nowrap;">Recommended</span>' : '<span style="color:#0d6847;font-weight:700;font-size:12.5px;white-space:nowrap;">Download &rarr;</span>'}</a>`;
     const hasMac = existsSync("./public/SWEEPRCleaner.dmg");
-    const hasLinux = existsSync("./public/SWEEPRCleaner.AppImage");
     const hasAndroid = existsSync("./public/SWEEPRCleaner.apk");
     const recommended: Platform = detectPlatform(ua.toLowerCase()) ?? "windows";
-    const smartScreenGuide = `<div style="margin-top:14px;padding:12px 14px;border-radius:12px;background:#eef6f1;border:1px solid #b8d8c5;text-align:left;font-size:12px;color:#143625;line-height:1.45;"><strong>🛡️ Windows 10 &amp; 11 Signed Installer:</strong><br>Digitally signed with SSL.com EV/IV Authenticode. Download and run to start your 60-second scan.</div>`;
+    const smartScreenGuide = `<div style="margin-top:14px;padding:12px 14px;border-radius:12px;background:#eef6f1;border:1px solid #b8d8c5;text-align:left;font-size:12px;color:#143625;line-height:1.45;"><strong>🛡️ Windows 10 &amp; 11 Signed Installer:</strong><br>Digitally signed with SSL.com Individual Validation (IV) Authenticode. Download and run to start your free on-device storage scan.</div>`;
     const platformEntries: { key: Platform | "play_beta"; html: string; isPrimary: boolean }[] = [
       {
         key: "windows",
@@ -2108,17 +2103,8 @@ export function createApp(deps: AppDeps) {
       {
         key: "ios",
         isPrimary: recommended === "ios",
-        html: btn("/download?platform=ios", "🍎 iPhone & iPad (App Store / Send PC Link)", recommended === "ios"),
+        html: btn("/download?platform=ios", "🍎 iPhone & iPad (Safari Web Companion / TestFlight Beta)", recommended === "ios"),
       },
-      ...(hasLinux
-        ? [
-            {
-              key: "linux" as const,
-              isPrimary: recommended === "linux",
-              html: btn("/download?platform=linux", "🐧 Download for Linux (.AppImage)", recommended === "linux"),
-            },
-          ]
-        : []),
     ];
     const primaryEntry = platformEntries.find((e) => e.isPrimary) ?? platformEntries[0];
     const secondaryEntries = platformEntries.filter((e) => e !== primaryEntry);
@@ -2212,9 +2198,9 @@ export function createApp(deps: AppDeps) {
 
   <main id="view-home" class="view active">
     <div style="text-align:center;padding-top:10px">
-      <div class="badge" style="display:inline-block">PHONE STORAGE CLEANER</div>
+      <div class="badge" style="display:inline-block">IOS SAFARI WEB COMPANION (BETA)</div>
       <div id="scanHeadline" style="font-size:22px;font-weight:900;margin-top:12px">Tap to Scan Storage</div>
-      <div id="scanOut" style="font-size:13px;color:var(--muted);font-weight:600;margin-top:4px">Finds duplicate photos, large videos &amp; temporary app files</div>
+      <div id="scanOut" style="font-size:13px;color:var(--muted);font-weight:600;margin-top:4px">Checks selected photos for exact duplicates &amp; clears browser origin storage (no App Store app yet)</div>
     </div>
 
     <div class="c3-orb-stage">
@@ -2230,9 +2216,9 @@ export function createApp(deps: AppDeps) {
       <details class="card" style="padding:11px 14px;border-radius:14px;font-size:12px">
         <summary style="cursor:pointer;font-weight:800;display:flex;justify-content:space-between;align-items:center;list-style:none"><span>What We Check for You</span><span class="mono" style="color:var(--accent-fg);font-size:11px">View ▾</span></summary>
         <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;color:var(--muted);line-height:1.4">
-          <div>• <strong>Web Browsers:</strong> Saved website files from Safari, Chrome, Brave &amp; Arc</div>
-          <div>• <strong>Photos &amp; Videos:</strong> Identical duplicate photos, burst shots &amp; large video clips</div>
-          <div>• <strong>Chat &amp; Social Apps:</strong> Leftover media copies from WhatsApp, Telegram &amp; Discord</div>
+          <div>• <strong>This Browser Origin:</strong> Cached site storage, IndexedDB &amp; Cache API in your current browser</div>
+          <div>• <strong>Selected Photos &amp; Files:</strong> Exact SHA-256 duplicate check on files you select via the picker</div>
+          <div>• <strong>No Native App Store Access:</strong> iOS Safari cannot scan other apps directly — use the Windows or Mac app for full system cleanup</div>
         </div>
       </details>
       <button id="cleanBtn" onclick="cleanIosStorage()" class="btn-primary" style="display:none;margin-top:0">Clean Temporary Files &amp; Duplicate Report</button>
@@ -2512,9 +2498,38 @@ export function createApp(deps: AppDeps) {
 
     const shouldRecordDownloadTelemetry = !isCrawler && !isPrefetch && !isScraperBurst && isBrowserUa;
 
-    // Never force an immediate raw .apk sideload or unsigned .mobileconfig MDM stream on mobile visitors!
-    // Route Android to the Google Play + Verified SHA-256 APK landing view, and iOS to the App Store / Cross-Device Email capture card.
-    if ((platform === "android" && !isStream) || (platform === "ios" && !isStream)) {
+    // Never force an immediate raw .apk sideload, macOS .dmg, or unsigned .mobileconfig MDM stream on mobile/Linux visitors!
+    // Route iOS unconditionally (even on ?stream=1) to the Safari Web Companion / TestFlight Beta + PC/Mac Email capture card.
+    if (platform === "ios") {
+      if (shouldRecordDownloadTelemetry && !isStream) {
+        try {
+          let attrId =
+            sanitizeAttributionId(c.req.query("attribution_id")) ||
+            sanitizeAttributionId(getCookie(c, "sweepr_attr_id"));
+          if (!attrId) {
+            attrId = `attr_dl_${randomToken(8)}`;
+            setCookie(c, "sweepr_attr_id", attrId, {
+              httpOnly: false,
+              sameSite: "Lax",
+              secure: isHttps,
+              path: "/",
+              maxAge: 90 * 86400,
+            });
+          }
+          const sessAccId = await sessionAccountId(c);
+          repo.recordAnalyticsEvent({
+            event_name: "mobile_download_landing_viewed",
+            platform,
+            account_id: sessAccId,
+            metadata: { platform, referrer: c.req.header("referer") || null, attribution_id: attrId },
+          });
+        } catch {}
+      }
+      c.header("Cache-Control", "private, no-store");
+      return c.html(mobileDownloadLandingPage("ios", ua, host));
+    }
+
+    if (platform === "android" && !isStream) {
       if (shouldRecordDownloadTelemetry) {
         try {
           let attrId =
@@ -2540,10 +2555,23 @@ export function createApp(deps: AppDeps) {
         } catch {}
       }
       c.header("Cache-Control", "private, no-store");
-      return c.html(mobileDownloadLandingPage(platform, ua, host));
+      return c.html(mobileDownloadLandingPage("android", ua, host));
     }
 
-    const { file, type, label } = DESKTOP_FILES[platform];
+    if (platform === "linux") {
+      c.header("Cache-Control", "private, no-store");
+      return c.html(
+        pickerPage(
+          "Download SWEEPR Cleaner",
+          "SWEEPR Cleaner currently ships for Windows, macOS, and Android (with iOS Safari Web Companion &amp; TestFlight Beta). Choose your platform:",
+          ua,
+          host
+        )
+      );
+    }
+
+    const desktopPlatform = platform as ShippedBinaryPlatform;
+    const { file, type, label } = DESKTOP_FILES[desktopPlatform];
     const installerPath = `./public/${file}`;
     const hasFile = existsSync(installerPath);
 
@@ -2554,7 +2582,7 @@ export function createApp(deps: AppDeps) {
 
     const shouldRenderThankYouHtml =
       !isStream &&
-      (platform === "windows" || platform === "mac" || platform === "linux") &&
+      (desktopPlatform === "windows" || desktopPlatform === "mac") &&
       (!requested || isBrowserNavigation);
 
     if (shouldRecordDownloadTelemetry) {
@@ -2569,11 +2597,11 @@ export function createApp(deps: AppDeps) {
           });
         }
         const sessAccId = await sessionAccountId(c);
-        const ipOsFingerprint = computeIpOsFingerprint(visitorIp, platform);
+        const ipOsFingerprint = computeIpOsFingerprint(visitorIp, desktopPlatform);
         c.header("X-Sweepr-Attribution-Id", resolvedAttrId);
         recordInstallerDownloaded(repo, {
           attributionId: resolvedAttrId,
-          platform,
+          platform: desktopPlatform,
           installerFile: file,
           accountId: sessAccId,
           clientIp: visitorIp,
@@ -2590,15 +2618,15 @@ export function createApp(deps: AppDeps) {
         if (shouldRenderThankYouHtml) {
           repo.recordAnalyticsEvent({
             event_name: "download_thankyou_viewed",
-            platform,
+            platform: desktopPlatform,
             account_id: sessAccId,
             metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId },
           });
         } else {
-          const clientMeta = extractTelemetryClientMeta(c, platform);
+          const clientMeta = extractTelemetryClientMeta(c, desktopPlatform);
           repo.recordAnalyticsEvent({
             event_name: "installer_downloaded",
-            platform,
+            platform: desktopPlatform,
             account_id: sessAccId,
             metadata: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId, ...clientMeta },
           });
@@ -2607,7 +2635,7 @@ export function createApp(deps: AppDeps) {
             {
               event_name: "installer_downloaded",
               category: "funnel",
-              os: platform,
+              os: desktopPlatform,
               properties: { installer: file, available: hasFile, referrer: c.req.header("referer") || null, attribution_id: resolvedAttrId, ...clientMeta },
             },
             visitorIp ? { "x-sweepr-forwarded-ip": visitorIp } : {}
@@ -2622,7 +2650,7 @@ export function createApp(deps: AppDeps) {
         return c.html(pickerPage(`${label} Version Coming Soon`, `SWEEPR Cleaner for ${label} will be available soon. Other versions:`, ua, host));
       }
       c.header("Cache-Control", "private, no-store");
-      return c.html(renderPostDownloadThankYouPage(platform as "windows" | "mac" | "linux", resolvedAttrId));
+      return c.html(renderPostDownloadThankYouPage(desktopPlatform as "windows" | "mac", resolvedAttrId));
     }
 
     if (!hasFile) {
@@ -2935,7 +2963,7 @@ export function createApp(deps: AppDeps) {
       }
       const created = await stripe.products.create({
         name: "Total Battery & Mac/Phone Care — Device Lifespan Extender",
-        description: "Smart 80% Charge-Limiter, Automatic Thermal Throttling & Browser Tab Hibernate Add-on",
+        description: "80% Charge Limit (firmware on ASUS WMI, Dell CCTK & Linux sysfs; unplug alert elsewhere) & Idle Tab/Power Saver Add-on",
       });
       cachedStripeBatteryProductId = created.id;
       return created.id;
@@ -2956,8 +2984,8 @@ export function createApp(deps: AppDeps) {
         return match.id;
       }
       const created = await stripe.products.create({
-        name: "SWEEPR Cloud Protection — Encrypted Photo Vault & Multi-Cloud Backup Sync",
-        description: "AES-256 Argon2id Encrypted Photo & Document Vault + Automated Multi-Cloud Backup Sync Add-on",
+        name: "SWEEPR Cloud Protection — Local Encrypted Vault & Folder Sync Mirror",
+        description: "Local Argon2id + AES-256-GCM Encrypted File Lockbox & Additive Local-to-Local Sync-Folder Mirror Add-on",
       });
       cachedStripeCloudVaultProductId = created.id;
       return created.id;
@@ -3827,7 +3855,7 @@ export function createApp(deps: AppDeps) {
         },
         cloud_vault: {
           id: "cloud_vault",
-          name: "SWEEPR Cloud Protection — Encrypted Photo Vault & Multi-Cloud Backup Sync",
+          name: "SWEEPR Cloud Protection — Local Encrypted Vault & Folder Sync Mirror",
           annualAmountPence: localizedPricing.cloudVaultAnnualAmount,
           annualFormatted: localizedPricing.cloudVaultAnnualFormatted,
           annualMonthlyEqFormatted: localizedPricing.cloudVaultAnnualMonthlyEqFormatted,
@@ -5017,7 +5045,7 @@ export function createApp(deps: AppDeps) {
     });
     const addonTitle =
       addon === "cloud_vault"
-        ? "SWEEPR Cloud Protection — Encrypted Photo Vault & Multi-Cloud Backup Sync"
+        ? "SWEEPR Cloud Protection — Local Encrypted Vault & Folder Sync Mirror"
         : "Total Battery & Mac/Phone Care";
     repo.addActivity({
       account_id: accountId,
@@ -7507,7 +7535,7 @@ export function createApp(deps: AppDeps) {
             : isSixMonth
             ? { interval: "month" as const, interval_count: 6 }
             : { interval: "month" as const },
-          product_data: { name: "SWEEPR Cloud Protection — Encrypted Photo Vault & Multi-Cloud Backup Sync" },
+          product_data: { name: "SWEEPR Cloud Protection — Local Encrypted Vault & Folder Sync Mirror" },
         },
         quantity: 1,
       });
@@ -7554,11 +7582,12 @@ export function createApp(deps: AppDeps) {
       .toUpperCase();
     const resolvedV1Promo = await resolveCheckoutPromoCoupon(requestedV1Coupon);
 
+    const applyMonthlyIntro =
+      Boolean((body as Record<string, unknown>)?.intro === true || (body as Record<string, unknown>)?.intro === "1") &&
+      plan === "monthly" &&
+      !alreadyPro;
+
     try {
-      const applyMonthlyIntro =
-        Boolean((body as Record<string, unknown>)?.intro === true || (body as Record<string, unknown>)?.intro === "1") &&
-        plan === "monthly" &&
-        !alreadyPro;
       const introCouponId = resolvedV1Promo
         ? resolvedV1Promo.stripeCouponId
         : applyMonthlyIntro
@@ -7581,7 +7610,7 @@ export function createApp(deps: AppDeps) {
             plan,
             ...(chosenAddons.length > 0 ? { addons: chosenAddons.join(",") } : {}),
             ...(includeBatteryCare ? { battery_care: "1" } : {}),
-            ...(includeCloudVault ? { battery_care: "1", cloud_vault: "1" } : {}),
+            ...(includeCloudVault ? { cloud_vault: "1" } : {}),
           },
         },
         ...(introCouponId
@@ -7599,6 +7628,7 @@ export function createApp(deps: AppDeps) {
 
     const params = new URLSearchParams();
     params.set("plan", plan);
+    if (applyMonthlyIntro) params.set("intro", "1");
     if (email) params.set("email", email);
     if (resolvedV1Promo) params.set("coupon", resolvedV1Promo.code);
     if (chosenAddons.length > 0) {
@@ -8123,7 +8153,7 @@ export function createApp(deps: AppDeps) {
           "Quick Windows SmartScreen Tip:",
           "1. Open SWEEPRCleaner.exe",
           "2. Click More info -> Run anyway (Verified SSL.com Publisher: Benjamin Cook)",
-          "3. Your free 60s scan starts automatically.",
+          "3. Your free storage scan starts automatically.",
           "",
           `Claim 20% Off 5-Device Pro License (Code WELCOME20): ${orderUrl}`,
         ].join("\n"),
@@ -8169,10 +8199,29 @@ export function createApp(deps: AppDeps) {
           "anon"
       ).trim() || "anon";
 
+    const rawRequestedExp =
+      body?.experiment ??
+      body?.experiment_id ??
+      (Array.isArray(body?.experiments) ? body.experiments.join(",") : undefined) ??
+      c.req.query("experiment") ??
+      c.req.query("experiment_id") ??
+      c.req.query("experiments") ??
+      "";
+    const requestedExpList = String(rawRequestedExp)
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const hasFilter = requestedExpList.length > 0;
+    const requestedSet = new Set(requestedExpList);
+
     const recordExposure = body?.record_exposure !== false && c.req.query("record_exposure") !== "0";
     const assignments: Record<string, { variant: "A" | "B"; label: string; copy: string }> = {};
 
-    for (const exp of Object.values(ACTIVE_EXPERIMENTS)) {
+    const targetExperiments = hasFilter
+      ? Object.values(ACTIVE_EXPERIMENTS).filter((exp) => requestedSet.has(exp.id))
+      : Object.values(ACTIVE_EXPERIMENTS);
+
+    for (const exp of targetExperiments) {
       const variant = assignExperimentVariant(exp.id, visitorKey);
       assignments[exp.id] = {
         variant,
@@ -8300,6 +8349,11 @@ export function createApp(deps: AppDeps) {
       });
     }
 
+    const localizedPricing = await resolvePricingForRequest(c, {
+      country: isCallerAuthenticatedForAcc ? (acc?.country ?? undefined) : undefined,
+      trustProxy,
+      allowQueryOverride: true,
+    });
     const emailQuery = safeEmailForUrl ? `&email=${encodeURIComponent(safeEmailForUrl)}` : "";
     const isHighBloat = bytesFound >= 5 * 1024 * 1024 * 1024;
     return c.json({
@@ -8313,12 +8367,12 @@ export function createApp(deps: AppDeps) {
         ? `Reclaim ${gbFound} GB Automatically — Claim 20% Off Annual Pro (SCAN5GB20)`
         : "Keep Your PC Clean Automatically with SWEEPR Pro",
       subheadline:
-        "Unlock 1-click scheduled background cleanup, 5-device coverage (Windows, Mac, Android & iOS), and 7-day Trash Vault safety.",
+        "Unlock optional scheduled cleaning, 5-device coverage (Windows, Mac, Android & iOS Safari Web Companion / TestFlight Beta), and Pro 7-Day Undo Quarantine (2–10 GB budget, 5 GB default).",
       cta_label: isHighBloat
         ? `Claim 20% Off Pro & Clean ${gbFound} GB Now`
-        : "Start Trial ($1 First Month) or Save 58% Annually",
+        : `Start Trial (${localizedPricing.introMonthlyFormatted} First Month) or Save ${localizedPricing.annualSavingsPercent}% Annually`,
       checkout_url: `/order?plan=annual${isHighBloat ? "&coupon=SCAN5GB20" : ""}${emailQuery}&utm_source=app_scan_offer`,
-      intro_monthly_url: `/order?plan=monthly&intro=1${emailQuery}&utm_source=app_scan_offer`,
+      intro_monthly_url: `/order?plan=monthly&offer=intro${emailQuery}&utm_source=app_scan_offer`,
     });
   });
 

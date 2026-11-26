@@ -69,10 +69,11 @@ jobs:
         with:
           workspaces: "app/src-tauri -> target"
 
-      - name: Build frontend bundle
+      - name: Typecheck & build frontend bundle
         working-directory: app
         run: |
           npm ci
+          npx tsc --noEmit
           npm run build
 
       - name: Cargo check all targets

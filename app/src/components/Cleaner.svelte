@@ -1,19 +1,10 @@
 <script lang="ts" module>
-  import type { AppRemnant, FreeAllowanceStatus, ScanReport, StartupItem } from "../lib/api";
-  const FREE_STARTER_LIMIT_BYTES = 500 * 1024 * 1024;
+  import type { AppRemnant, ScanReport, StartupItem } from "../lib/api";
   let cachedReport: ScanReport | null = null;
   let cachedSelected: Record<string, boolean> = {};
   let cachedRemnants: AppRemnant[] = [];
   let cachedStartups: StartupItem[] = [];
   let cachedIncludeRemnants = true;
-  let cachedFreeAllowance: FreeAllowanceStatus = {
-    used_bytes: 0,
-    limit_bytes: FREE_STARTER_LIMIT_BYTES,
-    remaining_bytes: FREE_STARTER_LIMIT_BYTES,
-    files_cleaned: 0,
-    exhausted: false,
-    updated_at: 0,
-  };
 </script>
 
 <script lang="ts">
@@ -25,15 +16,21 @@
     errorMessage,
     isPaymentRequired,
     OPEN_UNDO_EVENT,
+    QUARANTINE_DEFAULT_BUDGET_BYTES,
+    QUARANTINE_MAX_BUDGET_BYTES,
+    QUARANTINE_MIN_BUDGET_BYTES,
     requestActivation,
     trackAppEvent,
     type AppInfo,
     type CategoryResult,
     type CleanReport,
+    type CustomRuleView,
+    type Group,
     type LicenseStatus,
     type QuarantineEntry,
     type RunningAppConflict,
     type ScanProgress,
+    type UiPreferences,
   } from "../lib/api";
   import { formatBytes } from "../lib/format";
   import { addLifetimeStats, syncLifetimeStatsFromBackend } from "../lib/store";
@@ -50,11 +47,15 @@
   let {
     license,
     info = null,
+    preferences = null,
+    onPreferencesChange,
     onLicenseChange,
     onOpenTool,
   }: {
     license: LicenseStatus | null;
     info?: AppInfo | null;
+    preferences?: UiPreferences | null;
+    onPreferencesChange?: (prefs: UiPreferences) => void;
     onLicenseChange: (force?: boolean) => Promise<void>;
     onOpenTool?: (tool: "memory" | "battery" | "apps" | "storage" | "privacy" | "shredder" | "schedule" | "cloud") => void;
   } = $props();
@@ -74,26 +75,172 @@
   let results = $state<CleanReport[]>([]);
   let freedTotal = $state(0);
   let removedTotal = $state(0);
+  let quarantinedTotal = $state(0);
+  let quarantineFallbackTotal = $state(0);
+  let lastCleanWasFree = $state(false);
 
   let quarantine = $state<QuarantineEntry[]>([]);
+  let quarantineBudgetBytes = $state(QUARANTINE_DEFAULT_BUDGET_BYTES);
+  const quarantineUsedBytes = $derived(quarantine.reduce((s, q) => s + q.size, 0));
+  const quarantineBudgetGb = $derived(
+    Math.min(10, Math.max(2, Math.round(quarantineBudgetBytes / (1024 * 1024 * 1024))))
+  );
+  const quarantineUsagePct = $derived(
+    Math.min(100, Math.round((quarantineUsedBytes / Math.max(1, quarantineBudgetBytes)) * 100))
+  );
   let showQuarantine = $state(false);
   let undoSearch = $state("");
   let restoringAll = $state(false);
   let restoreNotice = $state<string | null>(null);
   let runningConflicts = $state<RunningAppConflict[]>([]);
   let pendingCleanAfterAuth = $state(false);
-  let freeAllowance = $state<FreeAllowanceStatus>(cachedFreeAllowance);
   let showCleanConfirm = $state(false);
   let confirmCleanForcePro = $state(false);
 
-  async function refreshFreeAllowance(): Promise<FreeAllowanceStatus> {
+  // Custom JSON Rules UI state (#13)
+  let customRules = $state<CustomRuleView[]>([]);
+  let showCustomRulesModal = $state(false);
+  let customRuleTab = $state<"quick" | "json">("quick");
+  let customRuleName = $state("");
+  let customRuleId = $state("");
+  let customRulePath = $state("");
+  let customRuleMinAge = $state(0);
+  let customRuleGroup = $state<Group>("apps");
+  let customRuleJsonText = $state("");
+  let customRuleError = $state<string | null>(null);
+  let customRuleNotice = $state<string | null>(null);
+  let customRuleBusy = $state(false);
+
+  async function refreshCustomRules() {
     try {
-      const fa = await api.getFreeAllowance();
-      freeAllowance = fa;
-      cachedFreeAllowance = fa;
-      return fa;
+      customRules = await api.listCustomRules();
     } catch {
-      return freeAllowance;
+      // Ignore if backend unavailable
+    }
+  }
+
+  function openCustomRulesModal() {
+    customRuleError = null;
+    customRuleNotice = null;
+    showCustomRulesModal = true;
+    void refreshCustomRules();
+  }
+
+  async function pickCustomRuleFolder() {
+    try {
+      const picked = await api.pickFolder("Select cache or temporary folder for custom rule");
+      if (picked && picked.trim()) {
+        customRulePath = picked.trim();
+        customRuleError = null;
+      }
+    } catch {
+      // Ignore cancel
+    }
+  }
+
+  async function addQuickCustomRule() {
+    customRuleError = null;
+    customRuleNotice = null;
+    const name = customRuleName.trim();
+    const path = customRulePath.trim();
+    if (!name) {
+      customRuleError = "Please enter a rule name.";
+      return;
+    }
+    if (!path) {
+      customRuleError = "Please choose or paste an absolute target folder path.";
+      return;
+    }
+    customRuleBusy = true;
+    try {
+      const payload = {
+        id: customRuleId.trim() || undefined,
+        name,
+        group: customRuleGroup,
+        paths: [path],
+        min_age_hours: Math.max(0, Math.floor(Number(customRuleMinAge) || 0)),
+        enabled: true,
+      };
+      const check = await api.validateCustomRule(payload);
+      if (!check.valid) {
+        customRuleError = check.errors.join(" ");
+        return;
+      }
+      customRules = await api.importCustomRules(
+        JSON.stringify([{ ...payload, id: check.normalized_id, paths: check.resolved_paths }]),
+        false
+      );
+      customRuleName = "";
+      customRuleId = "";
+      customRulePath = "";
+      customRuleMinAge = 0;
+      customRuleNotice = `Saved custom rule "${name}" and refreshing scan…`;
+      void scan();
+    } catch (e) {
+      customRuleError = errorMessage(e);
+    } finally {
+      customRuleBusy = false;
+    }
+  }
+
+  async function importCustomRulesFromJson() {
+    customRuleError = null;
+    customRuleNotice = null;
+    if (!customRuleJsonText.trim()) {
+      customRuleError = "Paste a custom rule JSON object or array first.";
+      return;
+    }
+    customRuleBusy = true;
+    try {
+      customRules = await api.importCustomRules(customRuleJsonText, false);
+      customRuleJsonText = "";
+      customRuleNotice = "Imported custom rules and refreshing scan…";
+      void scan();
+    } catch (e) {
+      customRuleError = errorMessage(e);
+    } finally {
+      customRuleBusy = false;
+    }
+  }
+
+  async function deleteCustomRule(id: string) {
+    customRuleError = null;
+    customRuleNotice = null;
+    customRuleBusy = true;
+    try {
+      customRules = await api.removeCustomRule(id);
+      customRuleNotice = `Removed custom rule "${id}" and refreshing scan…`;
+      void scan();
+    } catch (e) {
+      customRuleError = errorMessage(e);
+    } finally {
+      customRuleBusy = false;
+    }
+  }
+
+  $effect(() => {
+    if (preferences?.quarantine_budget_bytes) {
+      quarantineBudgetBytes = preferences.quarantine_budget_bytes;
+    } else if (info?.preferences?.quarantine_budget_bytes) {
+      quarantineBudgetBytes = info.preferences.quarantine_budget_bytes;
+    }
+  });
+
+  async function setQuarantineBudgetGb(gb: number) {
+    const clampedGb = Math.min(10, Math.max(2, Math.round(gb)));
+    const nextBytes = Math.min(
+      QUARANTINE_MAX_BUDGET_BYTES,
+      Math.max(QUARANTINE_MIN_BUDGET_BYTES, clampedGb * 1024 * 1024 * 1024)
+    );
+    const prev = quarantineBudgetBytes;
+    quarantineBudgetBytes = nextBytes;
+    try {
+      const saved = await api.saveUiPreferences({ quarantineBudgetBytes: nextBytes });
+      quarantineBudgetBytes = saved.quarantine_budget_bytes;
+      onPreferencesChange?.(saved);
+    } catch (e) {
+      quarantineBudgetBytes = prev;
+      error = errorMessage(e);
     }
   }
 
@@ -356,7 +503,7 @@
   let safetyCheckPath = $state("");
   let safetySearchInputEl = $state<HTMLInputElement | null>(null);
   const safetyCheckResult = $derived(
-    safetyCheckPath.trim() ? resolveFilePathSafetyIntelligence(safetyCheckPath) : null
+    safetyCheckPath.trim() ? resolveFilePathSafetyIntelligence(safetyCheckPath).matched : null
   );
 
   const SAMPLE_SAFETY_PATHS = [
@@ -411,7 +558,6 @@
   const selectedCats = $derived(nonEmpty.filter((c) => selected[c.id]));
   const freeEligibleCats = $derived(nonEmpty.filter((c) => c.free));
   const freeEligibleBytes = $derived(freeEligibleCats.reduce((s, c) => s + c.bytes, 0));
-  const starterCleanableNowBytes = $derived(Math.min(freeEligibleBytes, freeAllowance.remaining_bytes));
   const freeSelectedCats = $derived(selectedCats.filter((c) => c.free));
   const proSelectedCats = $derived(selectedCats.filter((c) => !c.free));
   const starterSelectedBytes = $derived(freeSelectedCats.reduce((s, c) => s + c.bytes, 0));
@@ -423,10 +569,7 @@
   );
   const totalFoundBytes = $derived((report?.total_bytes ?? 0) + remnantsBytes);
   const isStarterSelectionOnly = $derived(
-    !license?.active &&
-      !freeAllowance.exhausted &&
-      freeSelectedCats.length > 0 &&
-      !hasProSelection
+    !license?.active && freeSelectedCats.length > 0 && !hasProSelection
   );
   const targetHeroBytes = $derived(
     isStarterSelectionOnly
@@ -435,7 +578,7 @@
         ? selectedBytes
         : totalFoundBytes
   );
-  const freedStarterOrSessionBytes = $derived(Math.max(freedTotal, freeAllowance.used_bytes));
+  const freedStarterOrSessionBytes = $derived(freedTotal);
   const remainingUncleanedBytes = $derived.by(() => {
     if (totalFoundBytes > 0) return totalFoundBytes;
     try {
@@ -490,8 +633,8 @@
       return `You just freed ${formatBytes(freedB)}! Unlock SWEEPR Pro for unlimited Gaming Shaders, AI/Dev Caches, Duplicates & Scheduled Clean across all 5 devices.`;
     }
     if (remB > 0) {
-      return starterCleanableNowBytes > 0
-        ? `Unlock SWEEPR Pro to clean all ${formatBytes(remB)} across all 5 devices — or run your free ${formatBytes(starterCleanableNowBytes)} Starter Clean on Basic Temp first!`
+      return freeEligibleBytes > 0
+        ? `Unlock SWEEPR Pro to clean all ${formatBytes(remB)} across all 5 devices — or run your Unlimited Free Temp & Browser Cache Clean (${formatBytes(freeEligibleBytes)} to OS Recycle Bin) first!`
         : `Unlock SWEEPR Pro to clean the remaining ${formatBytes(remB)} across all 5 devices.`;
     }
     return "Unlock SWEEPR Pro for unlimited Gaming Shaders, AI/Dev Caches, App Remnants, Duplicates & Scheduled Clean across all 5 devices.";
@@ -612,12 +755,6 @@
     kind: "starter" | "shaders" | "ai_dev" | "remnants" | "duplicates" | "schedule"
   ) {
     if (kind === "starter") {
-      if (freeAllowance.exhausted) {
-        selectAllRemainingForPro();
-        pendingCleanAfterAuth = true;
-        openProUpgradeModal("500 MB Free Starter Clean Used");
-        return;
-      }
       if (freeEligibleCats.length > 0) {
         const next: Record<string, boolean> = {};
         for (const c of nonEmpty) {
@@ -724,14 +861,12 @@
     trackAppEvent("scan_started");
     const unlisten = await api.onScanProgress((p) => (progress = p));
     try {
-      const [scanRes, remRes, startRes, faRes] = await Promise.allSettled([
+      const [scanRes, remRes, startRes] = await Promise.allSettled([
         api.scan(),
         api.scanAppRemnants(),
         api.startupItems(),
-        refreshFreeAllowance(),
       ]);
 
-      const currentAllowance = faRes.status === "fulfilled" ? faRes.value : freeAllowance;
       const loadedRemnants = remRes.status === "fulfilled" ? remRes.value : remnants;
 
       if (remRes.status === "fulfilled") {
@@ -747,20 +882,18 @@
         const r = scanRes.value;
         report = r;
         cachedReport = r;
-        const hasFreeStarterTargets =
-          !license?.active &&
-          !currentAllowance.exhausted &&
-          r.categories.some((c) => c.free && c.bytes > 0);
+        const hasFreeTargets =
+          !license?.active && r.categories.some((c) => c.free && c.bytes > 0);
 
         const sel = Object.fromEntries(
           r.categories.map((c) => [
             c.id,
-            hasFreeStarterTargets ? c.free && c.bytes > 0 : c.bytes > 0,
+            hasFreeTargets ? c.free && c.bytes > 0 : c.bytes > 0,
           ])
         );
         selected = sel;
         cachedSelected = sel;
-        includeRemnants = hasFreeStarterTargets ? false : loadedRemnants.length > 0;
+        includeRemnants = hasFreeTargets ? false : loadedRemnants.length > 0;
         cachedIncludeRemnants = includeRemnants;
 
         const activeCats = r.categories.filter((c) => c.bytes > 0);
@@ -799,7 +932,7 @@
         name: c.name,
         bytes: c.bytes,
         files: c.files,
-        note: "Moved to 7-Day Undo Quarantine",
+        note: "7-Day Undo Quarantine (OS Recycle Bin fallback if > budget)",
       }));
       if (includeRemnants && remnants.length > 0) {
         items.push({
@@ -813,22 +946,16 @@
       return items;
     }
     const freeCats = selectedCats.filter((c) => c.free && c.bytes > 0);
-    const rawBytes = freeCats.reduce((s, c) => s + c.bytes, 0);
-    const isCapped = rawBytes > freeAllowance.remaining_bytes;
     return freeCats.map((c) => ({
       id: c.id,
       name: c.name,
-      bytes: Math.min(c.bytes, freeAllowance.remaining_bytes),
+      bytes: c.bytes,
       files: c.files,
-      note: isCapped
-        ? `Capped at ${formatBytes(freeAllowance.remaining_bytes)} Free Starter allowance · 7-Day Quarantine`
-        : "Free Starter Clean · Moved to 7-Day Undo Quarantine",
+      note: "SWEEPR Free · Moved to OS Recycle Bin",
     }));
   });
   const confirmDrawerTotalBytes = $derived(
-    confirmIsProRun
-      ? selectedBytes
-      : Math.min(starterSelectedBytes, freeAllowance.remaining_bytes)
+    confirmIsProRun ? selectedBytes : starterSelectedBytes
   );
   const confirmDrawerTotalFiles = $derived(
     confirmDrawerCategories.reduce((s, item) => s + item.files, 0)
@@ -853,16 +980,11 @@
       return;
     }
     if (!license?.active) {
-      const canRunFreeStarter =
-        freeSelectedCats.length > 0 &&
-        starterSelectedBytes > 0 &&
-        !freeAllowance.exhausted &&
-        freeAllowance.remaining_bytes > 0;
-      if (!canRunFreeStarter) {
+      const canRunFreeClean =
+        freeSelectedCats.length > 0 && starterSelectedBytes > 0;
+      if (!canRunFreeClean) {
         pendingCleanAfterAuth = true;
-        openProUpgradeModal(
-          freeAllowance.exhausted ? "500 MB Free Starter Clean Used" : "Pro Deep Cleanup"
-        );
+        openProUpgradeModal("Pro Deep Cleanup");
         return;
       }
     }
@@ -894,23 +1016,14 @@
     if (!isProActive) {
       const freeCatsToClean = selectedCats.filter((c) => c.free && c.bytes > 0);
       const hadProSelected = hasProSelection;
-      if (
-        freeCatsToClean.length === 0 ||
-        freeAllowance.exhausted ||
-        freeAllowance.remaining_bytes <= 0
-      ) {
+      if (freeCatsToClean.length === 0) {
         pendingCleanAfterAuth = true;
-        openProUpgradeModal(
-          freeAllowance.exhausted ? "500 MB Free Starter Clean Used" : "Pro Deep Cleanup"
-        );
+        openProUpgradeModal("Pro Deep Cleanup");
         return;
       }
 
       error = null;
-      const initialDeplete = Math.min(
-        freeCatsToClean.reduce((s, c) => s + c.bytes, 0),
-        freeAllowance.remaining_bytes
-      );
+      const initialDeplete = freeCatsToClean.reduce((s, c) => s + c.bytes, 0);
       depletingBytes = initialDeplete;
       phase = "cleaning";
       if (
@@ -932,16 +1045,18 @@
 
       try {
         const freeIds = freeCatsToClean.map((c) => c.id);
-        const cleanedReports = await api.clean(freeIds, false);
-        const updatedAllowance = await refreshFreeAllowance();
+        const cleanedReports = await api.clean(freeIds, true);
 
         results = cleanedReports;
         const catFreed = cleanedReports.reduce((s, r) => s + r.bytes_freed, 0);
         const catRemoved = cleanedReports.reduce((s, r) => s + r.files_removed, 0);
         freedTotal = catFreed;
         removedTotal = catRemoved;
+        quarantinedTotal = 0;
+        quarantineFallbackTotal = catRemoved;
+        lastCleanWasFree = true;
 
-        let remainingAfterStarter = 0;
+        let remainingAfterFree = 0;
         if (report) {
           const freedMap = new Map(cleanedReports.map((r) => [r.category_id, r.bytes_freed]));
           const updatedCategories = report.categories.map((c) => {
@@ -959,11 +1074,11 @@
             total_bytes: updatedTotal,
           };
           cachedReport = report;
-          remainingAfterStarter = updatedTotal + remnantsBytes;
+          remainingAfterFree = updatedTotal + remnantsBytes;
 
           const nextSel: Record<string, boolean> = {};
           for (const c of updatedCategories) {
-            nextSel[c.id] = !updatedAllowance.exhausted ? c.free && c.bytes > 0 : c.bytes > 0;
+            nextSel[c.id] = c.free && c.bytes > 0;
           }
           selected = nextSel;
           cachedSelected = nextSel;
@@ -973,46 +1088,38 @@
           freedTotal,
           removedTotal,
           freeIds,
-          "Recently Cleaned (7-day undo)",
+          "OS Recycle Bin",
           false
         );
-        trackAppEvent("free_starter_clean_completed", {
+        trackAppEvent("free_clean_completed", {
           cleaned_bytes: freedTotal,
           files_removed: removedTotal,
-          allowance_used_bytes: updatedAllowance.used_bytes,
-          allowance_remaining_bytes: updatedAllowance.remaining_bytes,
-          remaining_pro_bytes: remainingAfterStarter,
+          remaining_pro_bytes: remainingAfterFree,
         });
         await syncLifetimeStatsFromBackend().catch(() => {});
         api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
+    void refreshCustomRules();
         phase = "done";
 
-        const contextualFreed = Math.max(freedTotal, updatedAllowance.used_bytes);
-        if (
-          remainingAfterStarter > 0 &&
-          (hadProSelected || updatedAllowance.exhausted)
-        ) {
+        if (remainingAfterFree > 0 && hadProSelected) {
           selectAllRemainingForPro();
           pendingCleanAfterAuth = true;
           setTimeout(() => {
             openProUpgradeModal(
-              updatedAllowance.exhausted
-                ? "500 MB Free Starter Clean Complete"
-                : "Unlock Full Cleanup",
-              contextualFreed,
-              remainingAfterStarter
+              "Unlock Full Cleanup",
+              freedTotal,
+              remainingAfterFree
             );
           }, 360);
         }
       } catch (e: any) {
         phase = "idle";
-        const latestAllowance = await refreshFreeAllowance();
         if (isPaymentRequired(e)) {
           selectAllRemainingForPro();
           pendingCleanAfterAuth = true;
           openProUpgradeModal(
-            latestAllowance.exhausted ? "500 MB Free Starter Clean Used" : "Pro Deep Cleanup",
-            Math.max(freedTotal, latestAllowance.used_bytes),
+            "Pro Deep Cleanup",
+            freedTotal,
             remainingUncleanedBytes
           );
         } else {
@@ -1065,6 +1172,12 @@
       results = cleanedReports;
       const catFreed = cleanedReports.reduce((s, r) => s + r.bytes_freed, 0);
       const catRemoved = cleanedReports.reduce((s, r) => s + r.files_removed, 0);
+      quarantinedTotal = cleanedReports.reduce((s, r) => s + (r.quarantined_count ?? 0), 0);
+      quarantineFallbackTotal = cleanedReports.reduce(
+        (s, r) => s + (r.quarantine_fallback_count ?? 0),
+        0
+      );
+      lastCleanWasFree = false;
       freedTotal = catFreed + remBytesFreed;
       removedTotal = catRemoved + remFilesRemoved;
 
@@ -1082,6 +1195,7 @@
       });
       await syncLifetimeStatsFromBackend().catch(() => {});
       api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
+    void refreshCustomRules();
       phase = "done";
       if (freedTotal >= 500 * 1024 * 1024 && !error) {
         try {
@@ -1105,7 +1219,14 @@
   async function openUndoModal() {
     showQuarantine = true;
     restoreNotice = null;
-    quarantine = await api.listQuarantine().catch(() => []);
+    const [qList, qStatus] = await Promise.all([
+      api.listQuarantine().catch(() => []),
+      api.getQuarantineStatus().catch(() => null),
+    ]);
+    quarantine = qList;
+    if (qStatus?.budget_bytes) {
+      quarantineBudgetBytes = qStatus.budget_bytes;
+    }
   }
 
   async function restoreQuarantined(item: QuarantineEntry) {
@@ -1147,6 +1268,11 @@
     if (e.key === "Escape" && showShareWinModal) {
       e.preventDefault();
       showShareWinModal = false;
+      return;
+    }
+    if (e.key === "Escape" && showCustomRulesModal) {
+      e.preventDefault();
+      showCustomRulesModal = false;
     }
   }
 
@@ -1177,17 +1303,23 @@
       }
     } catch {}
 
-    // Fetch live localized pricing from server
+    // Fetch live localized pricing from server ONLY when telemetry/background lookups are opted-in
     let clientTz = "";
     try { clientTz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch {}
     api
       .appInfo()
       .then((inf) => {
+        if (inf.preferences?.quarantine_budget_bytes) {
+          quarantineBudgetBytes = inf.preferences.quarantine_budget_bytes;
+        }
+        if (!inf.preferences?.telemetry_enabled) {
+          return null;
+        }
         const base = (inf.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
         const qs = clientTz ? `?tz=${encodeURIComponent(clientTz)}` : "";
         return fetch(`${base}/api/pricing${qs}`);
       })
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => (r && r.ok ? r.json() : null))
       .then((d) => {
         const p = d?.pricing;
         if (p?.batteryCareAnnualFormatted) {
@@ -1196,8 +1328,14 @@
       })
       .catch(() => {});
 
-    void refreshFreeAllowance();
     api.listQuarantine().then((q) => (quarantine = q)).catch(() => {});
+    void refreshCustomRules();
+    api
+      .getQuarantineStatus()
+      .then((qs) => {
+        if (qs?.budget_bytes) quarantineBudgetBytes = qs.budget_bytes;
+      })
+      .catch(() => {});
     try {
       if (!localStorage.getItem("sweepr_installed_telemetry_v1")) {
         localStorage.setItem("sweepr_installed_telemetry_v1", "1");
@@ -1313,12 +1451,8 @@
         <div class="d3-disk-kicker">
           <span class="d3-os-pill">{osDiskLabel}</span>
           {#if !license?.active}
-            <span class="d3-starter-pill" class:exhausted={freeAllowance.exhausted}>
-              {#if freeAllowance.exhausted}
-                500 MB Free Starter Clean Used
-              {:else}
-                Free Starter Clean · {formatBytes(freeAllowance.remaining_bytes)} of 500 MB left
-              {/if}
+            <span class="d3-starter-pill">
+              SWEEPR Free · Unlimited Temp &amp; Browser Cache (OS Recycle Bin)
             </span>
           {/if}
           {#if phase === "scanning"}
@@ -1335,7 +1469,13 @@
               <span>Reclaiming space safely…</span>
             </span>
           {:else if phase === "done"}
-            <span class="d3-status-text">Cleaned {formatBytes(freedTotal)} ({removedTotal} files) into 7-Day Quarantine</span>
+            {#if lastCleanWasFree}
+              <span class="d3-status-text">Cleaned {formatBytes(freedTotal)} ({removedTotal} files) to OS Recycle Bin</span>
+            {:else if quarantineFallbackTotal > 0}
+              <span class="d3-status-text">Cleaned {formatBytes(freedTotal)} ({quarantinedTotal} quarantined · {quarantineFallbackTotal} sent to OS Recycle Bin fallback)</span>
+            {:else}
+              <span class="d3-status-text">Cleaned {formatBytes(freedTotal)} ({quarantinedTotal || removedTotal} files) into 7-Day Quarantine</span>
+            {/if}
           {:else}
             <span class="d3-status-text">Personal files &amp; active logins untouched</span>
           {/if}
@@ -1347,14 +1487,16 @@
             <span class="d3-hero-unit d3-scanning-pulse">analyzing storage…</span>
           {:else if phase === "cleaning"}
             <span class="d3-hero-metric is-scanning">{formatBytes(depletingBytes)}</span>
-            <span class="d3-hero-unit d3-scanning-pulse">moving to 7-day safety undo…</span>
+            <span class="d3-hero-unit d3-scanning-pulse">
+              {license?.active ? "moving to 7-day safety undo…" : "moving to OS Recycle Bin…"}
+            </span>
           {:else if phase === "done"}
             <span class="d3-hero-metric">{formatBytes(freedTotal)} Freed</span>
           {:else if report && totalFoundBytes > 0}
             <span class="d3-hero-metric">{formatBytes(displayedHeroBytes)}</span>
             {#if isStarterSelectionOnly}
               <span class="d3-hero-unit">
-                reclaimable junk found · <strong>{formatBytes(starterCleanableNowBytes)} Free Starter Clean</strong> ready
+                reclaimable junk found · <strong>{formatBytes(freeEligibleBytes)} Free Temp &amp; Browser Cache</strong> ready
               </span>
             {:else}
               <span class="d3-hero-unit">reclaimable junk selected</span>
@@ -1414,7 +1556,7 @@
             onclick={requestClean}
           >
             {#if isStarterSelectionOnly}
-              Free Starter Clean ({formatBytes(Math.min(starterSelectedBytes, freeAllowance.remaining_bytes))})
+              Clean Free Categories ({formatBytes(starterSelectedBytes)})
             {:else}
               {t("action.clean", $lang)} {formatBytes(selectedBytes)}
             {/if}
@@ -1455,11 +1597,11 @@
       >
         <span class="d3-tier-tag is-free">FREE</span>
         <span>
-          Basic Temp
-          {#if !license?.active}
-            ({freeAllowance.exhausted ? "500 MB used" : `${formatBytes(starterCleanableNowBytes > 0 ? starterCleanableNowBytes : freeAllowance.remaining_bytes)} free`})
-          {:else if freeEligibleBytes > 0}
+          Temp &amp; Browser Cache
+          {#if freeEligibleBytes > 0}
             ({formatBytes(freeEligibleBytes)})
+          {:else}
+            (Unlimited)
           {/if}
         </span>
       </button>
@@ -1513,14 +1655,24 @@
         {#if !license?.active}<span class="d3-tier-tag is-pro">PRO</span>{/if}
         <span>Scheduled Clean</span>
       </button>
+
+      <button
+        type="button"
+        class="d3-quick-tier-btn"
+        disabled={isBusy}
+        onclick={openCustomRulesModal}
+      >
+        {#if !license?.active}<span class="d3-tier-tag is-pro">PRO</span>{/if}
+        <span>Custom Rules{customRules.length > 0 ? ` (${customRules.length})` : ""}</span>
+      </button>
     </div>
   </header>
 
   {#if !license?.active && phase === "done" && freedStarterOrSessionBytes > 0 && remainingUncleanedBytes > 0}
     <div class="d3-starter-upsell-banner" role="region" aria-label="Unlock SWEEPR Pro for remaining storage">
       <div class="d3-starter-upsell-copy">
-        <span class="a14-referral-badge">500 MB Starter Clean</span>
-        <span>{buildContextualUpgradeCopy()}</span>
+        <span class="a14-referral-badge">SWEEPR Free</span>
+        <span>SWEEPR Free: Unlimited Temp &amp; Browser Cache Clean (to OS Recycle Bin); Pro unlocks Deep GPU/AI/Dev Caches, SHA-256 Duplicates, Uninstaller, Scheduler &amp; 7-Day Undo Quarantine.</span>
       </div>
       <button
         type="button"
@@ -1797,7 +1949,7 @@
                               {#each c.top_files.slice(0, 50) as file, fIdx (`${c.id}-${fIdx}`)}
                                 {@const fileKey = `${c.id}::${file.path}`}
                                 {@const fileOpen = !!expandedFileIntel[fileKey]}
-                                {@const fileIntel = fileOpen ? resolveFilePathSafetyIntelligence(file.path, c) : intel}
+                                {@const fileIntel = fileOpen ? resolveFilePathSafetyIntelligence(file.path, c).matched : intel}
                                 <div class="d3-top-file-row">
                                   <div class="d3-top-file-main">
                                     <code class="d3-top-file-path" title={file.path}>{file.path}</code>
@@ -1954,7 +2106,7 @@
                               {#each c.top_files.slice(0, 50) as file, fIdx (`${c.id}-${fIdx}`)}
                                 {@const fileKey = `${c.id}::${file.path}`}
                                 {@const fileOpen = !!expandedFileIntel[fileKey]}
-                                {@const fileIntel = fileOpen ? resolveFilePathSafetyIntelligence(file.path, c) : intel}
+                                {@const fileIntel = fileOpen ? resolveFilePathSafetyIntelligence(file.path, c).matched : intel}
                                 <div class="d3-top-file-row">
                                   <div class="d3-top-file-main">
                                     <code class="d3-top-file-path" title={file.path}>{file.path}</code>
@@ -2091,9 +2243,11 @@
       <span class="d3-undo-badge">7-Day Undo</span>
       <span class="d3-undo-text">
         {#if quarantine.length > 0}
-          {quarantine.length} recently cleaned file{quarantine.length === 1 ? "" : "s"} can be put right back where they were in 1 click.
+          {quarantine.length} recently cleaned file{quarantine.length === 1 ? "" : "s"} ({formatBytes(quarantineUsedBytes)} / {formatBytes(quarantineBudgetBytes)} budget) can be put back in 1 click.
+        {:else if !license?.active}
+          SWEEPR Free cleans to OS Recycle Bin. Pro unlocks 7-Day Undo Quarantine ({quarantineBudgetGb} GB budget, 2–10 GB configurable).
         {:else}
-          All cleaned files are kept safely for 7 days so you can put any file back in 1 click.
+          All Pro cleaned files are kept in 7-Day Undo Quarantine ({quarantineBudgetGb} GB budget; OS Recycle Bin fallback if file exceeds budget).
         {/if}
       </span>
     </div>
@@ -2108,8 +2262,11 @@
   open={showCleanConfirm}
   title={confirmIsProRun
     ? `Confirm Cleanup — ${formatBytes(confirmDrawerTotalBytes)}`
-    : `Confirm Free Starter Clean — ${formatBytes(confirmDrawerTotalBytes)}`}
-  rollback="quarantine"
+    : `Confirm Free Cleanup — ${formatBytes(confirmDrawerTotalBytes)}`}
+  rollback={confirmIsProRun ? "quarantine" : "recycle_bin"}
+  rollbackDetail={confirmIsProRun
+    ? `7-Day Undo Quarantine (configurable 2–10 GB disk budget, currently ${quarantineBudgetGb} GB [5 GB default], same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget; excludes shredded files, browser DBs, and registry edits).`
+    : "SWEEPR Free: Unlimited Temp & Browser Cache Clean (to OS Recycle Bin); Pro unlocks Deep GPU/AI/Dev Caches, SHA-256 Duplicates, Uninstaller, Scheduler & 7-Day Undo Quarantine."}
   secondaryRollbackBadge={confirmDrawerSecondaryBadge}
   categories={confirmDrawerCategories}
   totalBytes={confirmDrawerTotalBytes}
@@ -2123,7 +2280,7 @@
   }}
 />
 
-<!-- 7-Day Safety Undo Modal (Always 100% Free) -->
+<!-- 7-Day Safety Undo Modal -->
 {#if showQuarantine}
   <div
     class="undo-backdrop"
@@ -2144,6 +2301,28 @@
       <div class="undo-head">
         <h3 class="undo-title">Recently Cleaned Files (7-Day Undo)</h3>
         <button type="button" class="close-x" onclick={() => (showQuarantine = false)}>✕</button>
+      </div>
+
+      <div class="undo-budget-box">
+        <div class="undo-budget-top">
+          <span>{formatBytes(quarantineUsedBytes)} of {formatBytes(quarantineBudgetBytes)} used ({quarantine.length} files · 7-day auto-expiry)</span>
+          <div class="undo-budget-pills">
+            {#each [2, 5, 10] as gb}
+              <button
+                type="button"
+                class="undo-budget-pill"
+                class:active={quarantineBudgetGb === gb}
+                onclick={() => void setQuarantineBudgetGb(gb)}
+              >
+                {gb} GB
+              </button>
+            {/each}
+          </div>
+        </div>
+        <div class="undo-budget-track">
+          <div class="undo-budget-fill" style={`width: ${quarantineUsagePct}%;`}></div>
+        </div>
+        <span class="undo-budget-note">Same-volume O(1) move; oldest entries FIFO-evict at budget; files exceeding budget or excluded types fall back to OS Recycle Bin.</span>
       </div>
 
       {#if restoreNotice}
@@ -2252,6 +2431,179 @@
           Discord
         </button>
       </div>
+    </div>
+  </div>
+{/if}
+
+{#if showCustomRulesModal}
+  <div
+    class="undo-backdrop"
+    onclick={() => (showCustomRulesModal = false)}
+    role="presentation"
+    transition:fade={{ duration: 160 }}
+  >
+    <div
+      class="undo-modal custom-rules-modal card"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Custom Cleanup Rules"
+      tabindex="-1"
+      transition:scale={{ duration: 200, start: 0.96, opacity: 0, easing: cubicOut }}
+    >
+      <div class="undo-head">
+        <div>
+          <h3 class="undo-title">Custom Cleanup Rules (custom_rules.json)</h3>
+          <span style="font-size:11.5px;color:var(--muted);">
+            Scan any custom cache directory safely. System folders, personal document folders, and symlinks are automatically blocked.
+          </span>
+        </div>
+        <button type="button" class="close-x" onclick={() => (showCustomRulesModal = false)}>✕</button>
+      </div>
+
+      <div class="custom-rule-tabs">
+        <button
+          type="button"
+          class="undo-budget-pill"
+          class:active={customRuleTab === "quick"}
+          onclick={() => { customRuleTab = "quick"; customRuleError = null; }}
+        >
+          Add Folder Rule
+        </button>
+        <button
+          type="button"
+          class="undo-budget-pill"
+          class:active={customRuleTab === "json"}
+          onclick={() => { customRuleTab = "json"; customRuleError = null; }}
+        >
+          Import JSON
+        </button>
+      </div>
+
+      {#if customRuleError}
+        <div class="error-banner" role="alert">{customRuleError}</div>
+      {/if}
+      {#if customRuleNotice}
+        <div class="restore-toast toast" role="status">{customRuleNotice}</div>
+      {/if}
+
+      {#if customRuleTab === "quick"}
+        <div class="custom-rule-form">
+          <div class="custom-rule-row">
+            <input
+              type="text"
+              class="undo-search"
+              placeholder="Rule name (e.g. Unreal Shader Cache)"
+              bind:value={customRuleName}
+              disabled={customRuleBusy}
+            />
+            <input
+              type="text"
+              class="undo-search"
+              placeholder="Optional ID (e.g. unreal_shaders)"
+              bind:value={customRuleId}
+              disabled={customRuleBusy}
+            />
+          </div>
+          <div class="custom-rule-row">
+            <input
+              type="text"
+              class="undo-search"
+              style="flex: 1;"
+              placeholder="Absolute folder path (e.g. C:\Users\You\AppData\Local\MyApp\Cache)"
+              bind:value={customRulePath}
+              disabled={customRuleBusy}
+            />
+            <button
+              type="button"
+              class="restore-link"
+              onclick={pickCustomRuleFolder}
+              disabled={customRuleBusy}
+            >
+              Browse…
+            </button>
+          </div>
+          <div class="custom-rule-row">
+            <label class="custom-rule-field">
+              <span>Group</span>
+              <select class="undo-search" bind:value={customRuleGroup} disabled={customRuleBusy}>
+                <option value="apps">Apps</option>
+                <option value="developer">Developer</option>
+                <option value="system">System</option>
+                <option value="browsers">Browsers</option>
+              </select>
+            </label>
+            <label class="custom-rule-field">
+              <span>Min age (hours)</span>
+              <input
+                type="number"
+                min="0"
+                max="87600"
+                class="undo-search"
+                bind:value={customRuleMinAge}
+                disabled={customRuleBusy}
+              />
+            </label>
+            <button
+              type="button"
+              class="primary restore-all-btn"
+              style="margin-top: 0; align-self: flex-end;"
+              disabled={customRuleBusy}
+              onclick={addQuickCustomRule}
+            >
+              {customRuleBusy ? "Validating…" : "Validate & Add Rule"}
+            </button>
+          </div>
+        </div>
+      {:else}
+        <div class="custom-rule-form">
+          <textarea
+            class="custom-rule-textarea"
+            rows="6"
+            placeholder={'[{"id":"my_cache","name":"My App Cache","group":"apps","paths":["C:\\\\Path\\\\To\\\\Cache"],"min_age_hours":24}]'}
+            bind:value={customRuleJsonText}
+            disabled={customRuleBusy}
+          ></textarea>
+          <button
+            type="button"
+            class="primary restore-all-btn"
+            style="margin-top: 0;"
+            disabled={customRuleBusy}
+            onclick={importCustomRulesFromJson}
+          >
+            {customRuleBusy ? "Importing…" : "Validate & Import JSON"}
+          </button>
+        </div>
+      {/if}
+
+      {#if customRules.length > 0}
+        <div class="undo-rows">
+          {#each customRules as cr (cr.id)}
+            <div class="undo-item">
+              <div class="undo-item-info" style="min-width:0;flex:1;">
+                <span class="undo-name">{cr.name} <code style="font-size:11px;opacity:0.7;">({cr.id})</code></span>
+                <span class="undo-size" style="word-break:break-all;">
+                  {cr.paths.join(", ")} · min {cr.min_age_hours}h
+                  {#if !cr.valid && cr.warnings.length > 0}
+                    · ⚠ {cr.warnings[0]}
+                  {/if}
+                </span>
+              </div>
+              <button
+                type="button"
+                class="restore-link"
+                disabled={customRuleBusy}
+                onclick={() => void deleteCustomRule(cr.id)}
+              >
+                Remove
+              </button>
+            </div>
+          {/each}
+        </div>
+      {:else}
+        <div class="undo-empty">No custom rules configured yet.</div>
+      {/if}
     </div>
   </div>
 {/if}
@@ -3378,6 +3730,63 @@
     align-items: center;
     justify-content: space-between;
   }
+  .undo-budget-box {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+  }
+  .undo-budget-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .undo-budget-pills {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .undo-budget-pill {
+    padding: 2px 8px;
+    border-radius: 9999px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .undo-budget-pill.active {
+    background: rgba(16, 185, 129, 0.16);
+    border-color: rgba(16, 185, 129, 0.45);
+    color: var(--accent);
+  }
+  .undo-budget-track {
+    width: 100%;
+    height: 6px;
+    border-radius: 9999px;
+    background: rgba(148, 163, 184, 0.25);
+    overflow: hidden;
+  }
+  .undo-budget-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: var(--accent);
+    transition: width 160ms ease;
+  }
+  .undo-budget-note {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.35;
+  }
   .undo-title {
     margin: 0;
     font-size: 15px;
@@ -3574,6 +3983,49 @@
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
+  }
+  .custom-rules-modal {
+    max-width: 620px;
+  }
+  .custom-rule-tabs {
+    display: flex;
+    gap: 8px;
+  }
+  .custom-rule-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .custom-rule-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .custom-rule-row > input.undo-search {
+    flex: 1;
+    min-width: 170px;
+  }
+  .custom-rule-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    min-width: 120px;
+  }
+  .custom-rule-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 12px;
+    resize: vertical;
+    box-sizing: border-box;
   }
 
   @media (prefers-reduced-motion: reduce) {

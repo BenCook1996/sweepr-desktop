@@ -2,7 +2,7 @@
   import { onDestroy } from "svelte";
   import { fade, scale } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
-  import { api, errorMessage, trackAppEvent, type PaywallContext } from "../lib/api";
+  import { api, errorMessage, isTelemetryEnabled, trackAppEvent, type PaywallContext } from "../lib/api";
 
   let {
     open = $bindable(false),
@@ -34,6 +34,7 @@
       api
         .appInfo()
         .then((info) => {
+          if (!open) return null;
           const base = (info.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
           const uid = encodeURIComponent(info.device_id || info.machine_id || "desktop");
           let lastScanBytes = 0;
@@ -56,9 +57,12 @@
               }
             })
             .catch(() => {});
+          if (!isTelemetryEnabled() || !info.preferences?.telemetry_enabled) {
+            return null;
+          }
           return fetch(`${base}/api/experiments/assign?experiment=paywall_anchor_v1&uid=${uid}`);
         })
-        .then((r) => (r.ok ? r.json() : null))
+        .then((r) => (r && r.ok ? r.json() : null))
         .then((exp) => {
           const assignedVariant = exp?.assignments?.paywall_anchor_v1?.variant || exp?.variant;
           if (assignedVariant === "B") {
@@ -153,74 +157,87 @@
     return currencySymbolPosition === "suffix" ? `${numStr}${currencySymbol}` : `${currencySymbol}${numStr}`;
   }
 
+  let tzPricingInit = false;
+  let pricingLoaded = false;
+
   $effect(() => {
+    const modalOpen = open;
     let tz = "";
     try {
       tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-      if (tz.startsWith("America/")) {
-        currencySymbol = "$";
-        currencySymbolPosition = "prefix";
-        currencyZeroDecimal = false;
-        introMonthlyAmount = 199;
-        monthlyAmount = 1199;
-        sixMonthAmount = 4799;
-        annualAmount = 6499;
-        addonMonthlyAmount = 199;
-        addonSixMonthAmount = 699;
-        addonAnnualAmount = 999;
-        monthlyIntroLabel = "$1.99";
-        monthlyRenewLabel = "$11.99";
-        sixMonthLabel = "$47.99";
-        sixMonthPerMoLabel = "$7.99";
-        sixMonthRegularTotalLabel = "$71.94";
-        sixMonthSavingsPercent = Math.round((1 - (47.99 / (11.99 * 6))) * 100);
-        annualLabel = "$64.99";
-        annualPerMoLabel = "$5.41";
-        annualRegularTotalLabel = "$143.88";
-        annualSavingsPercent = Math.round((1 - (64.99 / (11.99 * 12))) * 100);
-        batteryAddonMonthlyLabel = "$1.99";
-        batteryAddonSixMonthLabel = "$6.99";
-        batteryAddonLabel = "$9.99";
-        cloudAddonMonthlyLabel = "$1.99";
-        cloudAddonSixMonthLabel = "$6.99";
-        cloudAddonLabel = "$9.99";
-      } else if (tz.startsWith("Europe/") && !tz.includes("London") && !tz.includes("Belfast")) {
-        currencySymbol = "€";
-        currencySymbolPosition = "prefix";
-        currencyZeroDecimal = false;
-        introMonthlyAmount = 199;
-        monthlyAmount = 1099;
-        sixMonthAmount = 4499;
-        annualAmount = 5999;
-        addonMonthlyAmount = 199;
-        addonSixMonthAmount = 699;
-        addonAnnualAmount = 999;
-        monthlyIntroLabel = "€1.99";
-        monthlyRenewLabel = "€10.99";
-        sixMonthLabel = "€44.99";
-        sixMonthPerMoLabel = "€7.49";
-        sixMonthRegularTotalLabel = "€65.94";
-        sixMonthSavingsPercent = Math.round((1 - (44.99 / (10.99 * 6))) * 100);
-        annualLabel = "€59.99";
-        annualPerMoLabel = "€4.99";
-        annualRegularTotalLabel = "€131.88";
-        annualSavingsPercent = Math.round((1 - (59.99 / (10.99 * 12))) * 100);
-        batteryAddonMonthlyLabel = "€1.99";
-        batteryAddonSixMonthLabel = "€6.99";
-        batteryAddonLabel = "€9.99";
-        cloudAddonMonthlyLabel = "€1.99";
-        cloudAddonSixMonthLabel = "€6.99";
-        cloudAddonLabel = "€9.99";
+      if (!tzPricingInit) {
+        tzPricingInit = true;
+        if (tz.startsWith("America/")) {
+          currencySymbol = "$";
+          currencySymbolPosition = "prefix";
+          currencyZeroDecimal = false;
+          introMonthlyAmount = 199;
+          monthlyAmount = 1199;
+          sixMonthAmount = 4799;
+          annualAmount = 6499;
+          addonMonthlyAmount = 199;
+          addonSixMonthAmount = 699;
+          addonAnnualAmount = 999;
+          monthlyIntroLabel = "$1.99";
+          monthlyRenewLabel = "$11.99";
+          sixMonthLabel = "$47.99";
+          sixMonthPerMoLabel = "$7.99";
+          sixMonthRegularTotalLabel = "$71.94";
+          sixMonthSavingsPercent = Math.round((1 - (47.99 / (11.99 * 6))) * 100);
+          annualLabel = "$64.99";
+          annualPerMoLabel = "$5.41";
+          annualRegularTotalLabel = "$143.88";
+          annualSavingsPercent = Math.round((1 - (64.99 / (11.99 * 12))) * 100);
+          batteryAddonMonthlyLabel = "$1.99";
+          batteryAddonSixMonthLabel = "$6.99";
+          batteryAddonLabel = "$9.99";
+          cloudAddonMonthlyLabel = "$1.99";
+          cloudAddonSixMonthLabel = "$6.99";
+          cloudAddonLabel = "$9.99";
+        } else if (tz.startsWith("Europe/") && !tz.includes("London") && !tz.includes("Belfast")) {
+          currencySymbol = "€";
+          currencySymbolPosition = "prefix";
+          currencyZeroDecimal = false;
+          introMonthlyAmount = 199;
+          monthlyAmount = 1099;
+          sixMonthAmount = 4499;
+          annualAmount = 5999;
+          addonMonthlyAmount = 199;
+          addonSixMonthAmount = 699;
+          addonAnnualAmount = 999;
+          monthlyIntroLabel = "€1.99";
+          monthlyRenewLabel = "€10.99";
+          sixMonthLabel = "€44.99";
+          sixMonthPerMoLabel = "€7.49";
+          sixMonthRegularTotalLabel = "€65.94";
+          sixMonthSavingsPercent = Math.round((1 - (44.99 / (10.99 * 6))) * 100);
+          annualLabel = "€59.99";
+          annualPerMoLabel = "€4.99";
+          annualRegularTotalLabel = "€131.88";
+          annualSavingsPercent = Math.round((1 - (59.99 / (10.99 * 12))) * 100);
+          batteryAddonMonthlyLabel = "€1.99";
+          batteryAddonSixMonthLabel = "€6.99";
+          batteryAddonLabel = "€9.99";
+          cloudAddonMonthlyLabel = "€1.99";
+          cloudAddonSixMonthLabel = "€6.99";
+          cloudAddonLabel = "€9.99";
+        }
       }
     } catch {}
+    if (pricingLoaded) return;
+    if (!modalOpen && !isTelemetryEnabled()) return;
     api
       .appInfo()
       .then((info) => {
+        if (!open && !info.preferences?.telemetry_enabled) {
+          return null;
+        }
+        pricingLoaded = true;
         const base = (info.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
         const qs = tz ? `?tz=${encodeURIComponent(tz)}` : "";
         return fetch(`${base}/api/pricing${qs}`);
       })
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => (r && r.ok ? r.json() : null))
       .then((cfg) => {
         const p = cfg?.pricing;
         if (!p) return;

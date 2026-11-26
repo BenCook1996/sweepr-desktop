@@ -29,4 +29,5 @@ mobile/android/.idea/
 .gcp-service-account.json
 *.service-account.json
 sweepr-*.json
+!scoop/bucket/*.json
 

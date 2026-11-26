@@ -20,14 +20,25 @@ jobs:
       matrix:
         include:
           - platform: "macos-latest"
+            arch_label: "mac-universal"
             args: "--target universal-apple-darwin"
             targets: "aarch64-apple-darwin,x86_64-apple-darwin"
+            rust_target: "universal-apple-darwin"
           - platform: "ubuntu-22.04"
+            arch_label: "linux-x64"
             args: ""
             targets: ""
+            rust_target: ""
           - platform: "windows-latest"
+            arch_label: "win-x64"
             args: ""
             targets: ""
+            rust_target: ""
+          - platform: "windows-latest"
+            arch_label: "win-arm64"
+            args: "--target aarch64-pc-windows-msvc"
+            targets: "aarch64-pc-windows-msvc"
+            rust_target: "aarch64-pc-windows-msvc"
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -75,12 +86,40 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
 
-      - name: Package signed macOS Universal UDIF DMG from Rust/Tauri binary & commit to server/public
+      - name: Package, Sign & Notarize macOS Universal UDIF DMG
         if: matrix.platform == 'macos-latest'
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          KEYCHAIN_PATH=""
+          cleanup_keychain() {
+            if [ -n "$KEYCHAIN_PATH" ] && [ -f "$KEYCHAIN_PATH" ]; then
+              security delete-keychain "$KEYCHAIN_PATH" || true
+            fi
+          }
+          trap cleanup_keychain EXIT
+
+          if [ -n "${APPLE_CERTIFICATE_BASE64:-}" ] && [ -n "${APPLE_CERTIFICATE_PASSWORD:-}" ]; then
+            KEYCHAIN_PATH="${RUNNER_TEMP}/sweepr-build.keychain-db"
+            CERT_P12="${RUNNER_TEMP}/sweepr-dev-id.p12"
+            KEYCHAIN_PASS="sweepr-ci-$(date +%s)"
+            echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$CERT_P12"
+            security create-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+            security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+            security unlock-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+            security import "$CERT_P12" -k "$KEYCHAIN_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+            security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+            rm -f "$CERT_P12"
+          fi
+
           APP_BUNDLE=$(find app/src-tauri/target/universal-apple-darwin/release/bundle/macos -maxdepth 1 -name "*.app" -type d | head -n 1)
           if [ -z "$APP_BUNDLE" ]; then
             echo "Error: Universal macOS .app bundle not found in target/universal-apple-darwin/release/bundle/macos" >&2
@@ -92,8 +131,14 @@ jobs:
             exit 1
           fi
           lipo -info "$MACHO_BIN"
+
           SIGN_ID="${APPLE_SIGNING_IDENTITY:--}"
-          codesign --force --deep --options runtime --sign "$SIGN_ID" "$APP_BUNDLE"
+          if [ "$SIGN_ID" = "-" ]; then
+            codesign --force --deep --options runtime --entitlements app/src-tauri/entitlements.plist --sign "-" "$APP_BUNDLE"
+          else
+            codesign --force --deep --options runtime --timestamp --entitlements app/src-tauri/entitlements.plist --sign "$SIGN_ID" "$APP_BUNDLE"
+          fi
+
           STAGE_DIR=$(mktemp -d)
           cp -R "$APP_BUNDLE" "$STAGE_DIR/"
           ln -s /Applications "$STAGE_DIR/Applications"
@@ -101,16 +146,91 @@ jobs:
           SetFile -c icnC "$STAGE_DIR/.VolumeIcon.icns" || true
           SetFile -a C "$STAGE_DIR" || true
           hdiutil create -volname "SWEEPR Cleaner" -srcfolder "$STAGE_DIR" -ov -format UDZO server/public/SWEEPRCleaner.dmg
-          if [ "$GITHUB_REF_NAME" = "main" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add server/public/SWEEPRCleaner.dmg
-            if ! git diff --staged --quiet; then
-              git commit -m "chore(mac): update native Universal UDIF SWEEPRCleaner.dmg with icon [skip ci]"
-              git pull --rebase origin main || true
-              git push origin HEAD:main || true
+
+          if [ "$SIGN_ID" != "-" ]; then
+            codesign --force --timestamp --sign "$SIGN_ID" server/public/SWEEPRCleaner.dmg
+            if [ -n "${APPLE_ID:-}" ] && [ -n "${APPLE_PASSWORD:-}" ] && [ -n "${APPLE_TEAM_ID:-}" ]; then
+              xcrun notarytool submit server/public/SWEEPRCleaner.dmg \
+                --apple-id "$APPLE_ID" \
+                --password "$APPLE_PASSWORD" \
+                --team-id "$APPLE_TEAM_ID" \
+                --wait
+              xcrun stapler staple server/public/SWEEPRCleaner.dmg
+              xcrun stapler validate server/public/SWEEPRCleaner.dmg
+            else
+              echo "APPLE_ID / APPLE_PASSWORD / APPLE_TEAM_ID not set — skipping Apple notarization."
             fi
           fi
+
+          mkdir -p "${RUNNER_TEMP}/mac-artifacts"
+          cp server/public/SWEEPRCleaner.dmg "${RUNNER_TEMP}/mac-artifacts/SWEEPRCleaner.dmg"
+          node -e '
+            const fs = require("fs");
+            const crypto = require("crypto");
+            const buf = fs.readFileSync("server/public/SWEEPRCleaner.dmg");
+            fs.writeFileSync(
+              process.env.RUNNER_TEMP + "/mac-artifacts/dmg-metadata.json",
+              JSON.stringify({
+                dmg: {
+                  bytes: buf.length,
+                  sha256: crypto.createHash("sha256").update(buf).digest("hex").toUpperCase()
+                }
+              }, null, 2)
+            );
+          '
+          TAURI_VERSION=$(node -e 'console.log(JSON.parse(require("fs").readFileSync("app/src-tauri/tauri.conf.json","utf8")).version)')
+          gh release upload "v${TAURI_VERSION}" server/public/SWEEPRCleaner.dmg --clobber || true
+
+      - name: Upload macOS DMG & Metadata Artifact
+        if: matrix.platform == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-universal-artifacts
+          path: |
+            ${{ runner.temp }}/mac-artifacts/SWEEPRCleaner.dmg
+            ${{ runner.temp }}/mac-artifacts/dmg-metadata.json
+
+      - name: Export Linux Package Metadata (DEB, RPM, AppImage)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/linux-artifacts"
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+            const crypto = require("crypto");
+            const bundleRoot = "app/src-tauri/target/release/bundle";
+            const findOne = (sub, ext) => {
+              const dir = path.join(bundleRoot, sub);
+              if (!fs.existsSync(dir)) return null;
+              const match = fs.readdirSync(dir).find((f) => f.toLowerCase().endsWith(ext));
+              if (!match) return null;
+              const buf = fs.readFileSync(path.join(dir, match));
+              return {
+                filename: match,
+                bytes: buf.length,
+                sha256: crypto.createHash("sha256").update(buf).digest("hex").toUpperCase()
+              };
+            };
+            const linux = {};
+            const deb = findOne("deb", ".deb");
+            const rpm = findOne("rpm", ".rpm");
+            const appImage = findOne("appimage", ".appimage");
+            if (deb) linux.deb = deb;
+            if (rpm) linux.rpm = rpm;
+            if (appImage) linux.appImage = appImage;
+            fs.writeFileSync(
+              process.env.RUNNER_TEMP + "/linux-artifacts/linux-metadata.json",
+              JSON.stringify({ linux }, null, 2)
+            );
+          '
+
+      - name: Upload Linux Metadata Artifact
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64-artifacts
+          path: ${{ runner.temp }}/linux-artifacts/linux-metadata.json
 
       - name: Check Azure Signing Configuration
         id: azure-check
@@ -137,20 +257,169 @@ jobs:
           endpoint: https://eus.codesigning.azure.net/
           artifact-signing-account-name: sweepr-signing
           certificate-profile-name: sweepr-prod-profile
-          files-folder: ${{ github.workspace }}/app/src-tauri/target/release
+          files-folder: ${{ github.workspace }}/app/src-tauri/${{ matrix.rust_target != '' && format('target/{0}/release', matrix.rust_target) || 'target/release' }}
           files-folder-filter: exe,msi
           file-digest: SHA256
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
 
-      - name: Upload Signed Windows Binaries to GitHub Release
-        if: matrix.platform == 'windows-latest' && steps.azure-check.outputs.enabled == 'true'
+      - name: Package Portable Windows ZIP & Upload Signed Assets
+        if: matrix.platform == 'windows-latest'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUST_TARGET: ${{ matrix.rust_target }}
+          ARCH_LABEL: ${{ matrix.arch_label }}
+          AZURE_SIGNING_ENABLED: ${{ steps.azure-check.outputs.enabled }}
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
           $tauriVersion = (Get-Content "app/src-tauri/tauri.conf.json" -Raw | ConvertFrom-Json).version
-          $signedInstallers = Get-ChildItem -Path "app/src-tauri/target/release/bundle" -Recurse -Include *.exe,*.msi | Select-Object -ExpandProperty FullName
-          if ($signedInstallers) {
-            gh release upload "v$tauriVersion" $signedInstallers --clobber
+          $TargetReleaseDir = if ([string]::IsNullOrWhiteSpace($env:RUST_TARGET)) {
+            "app/src-tauri/target/release"
+          } else {
+            "app/src-tauri/target/$($env:RUST_TARGET)/release"
           }
+
+          $ExeBin = Join-Path $TargetReleaseDir "SWEEPRCleaner.exe"
+          if (-not (Test-Path $ExeBin)) {
+            $ExeBin = Join-Path $TargetReleaseDir "sweepr.exe"
+          }
+          if (-not (Test-Path $ExeBin)) {
+            throw "Expected Windows executable (SWEEPRCleaner.exe or sweepr.exe) not found in $TargetReleaseDir"
+          }
+
+          $StageDir = Join-Path $env:RUNNER_TEMP "portable-$($env:ARCH_LABEL)"
+          $MetaDir = Join-Path $env:RUNNER_TEMP "win-meta-$($env:ARCH_LABEL)"
+          New-Item -ItemType Directory -Path $StageDir -Force | Out-Null
+          New-Item -ItemType Directory -Path $MetaDir -Force | Out-Null
+
+          Copy-Item -Path $ExeBin -Destination (Join-Path $StageDir "SWEEPRCleaner.exe") -Force
+          New-Item -ItemType File -Path (Join-Path $StageDir "portable.flag") -Force | Out-Null
+
+          $PortableZipName = "SWEEPRCleaner-portable-$($env:ARCH_LABEL).zip"
+          $PortableZipPath = Join-Path $MetaDir $PortableZipName
+          Compress-Archive -Path "$StageDir\*" -DestinationPath $PortableZipPath -Force
+
+          $PortableZipInfo = @{
+            filename = $PortableZipName
+            bytes = (Get-Item $PortableZipPath).Length
+            sha256 = (Get-FileHash $PortableZipPath -Algorithm SHA256).Hash.ToUpperInvariant()
+          }
+
+          $MetaPayload = @{}
+          if ($env:ARCH_LABEL -eq "win-x64") {
+            $MetaPayload["portableZip"] = $PortableZipInfo
+          } else {
+            $NsisExe = Get-ChildItem -Path (Join-Path $TargetReleaseDir "bundle/nsis") -Filter "*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+            $WixMsi = Get-ChildItem -Path (Join-Path $TargetReleaseDir "bundle/msi") -Filter "*.msi" -ErrorAction SilentlyContinue | Select-Object -First 1
+            $Arm64Data = @{ portableZip = $PortableZipInfo }
+            if ($env:AZURE_SIGNING_ENABLED -eq "true") {
+              if ($NsisExe) {
+                $Arm64ExeOut = Join-Path $MetaDir "SWEEPRCleaner-arm64.exe"
+                Copy-Item $NsisExe.FullName $Arm64ExeOut -Force
+                $Arm64Data["exe"] = @{
+                  filename = "SWEEPRCleaner-arm64.exe"
+                  bytes = (Get-Item $Arm64ExeOut).Length
+                  sha256 = (Get-FileHash $Arm64ExeOut -Algorithm SHA256).Hash.ToUpperInvariant()
+                }
+              }
+              if ($WixMsi) {
+                $Arm64MsiOut = Join-Path $MetaDir "Sweepr_Setup-arm64.msi"
+                Copy-Item $WixMsi.FullName $Arm64MsiOut -Force
+                $Arm64Data["msi"] = @{
+                  filename = "Sweepr_Setup-arm64.msi"
+                  bytes = (Get-Item $Arm64MsiOut).Length
+                  sha256 = (Get-FileHash $Arm64MsiOut -Algorithm SHA256).Hash.ToUpperInvariant()
+                }
+              }
+            }
+            $MetaPayload["windowsArm64"] = $Arm64Data
+          }
+
+          $MetaPayload | ConvertTo-Json -Depth 5 | Out-File -FilePath (Join-Path $MetaDir "metadata.json") -Encoding utf8
+
+          if ($env:AZURE_SIGNING_ENABLED -eq "true") {
+            $signedInstallers = Get-ChildItem -Path (Join-Path $TargetReleaseDir "bundle") -Recurse -Include *.exe,*.msi | Select-Object -ExpandProperty FullName
+            if ($signedInstallers) {
+              gh release upload "v$tauriVersion" $signedInstallers --clobber
+            }
+            if ($env:ARCH_LABEL -ne "win-x64") {
+              $arm64Assets = Get-ChildItem -Path (Join-Path $MetaDir "*") -Include *.exe,*.msi | Select-Object -ExpandProperty FullName
+              if ($arm64Assets) {
+                gh release upload "v$tauriVersion" $arm64Assets --clobber
+              }
+            }
+          }
+          gh release upload "v$tauriVersion" $PortableZipPath --clobber
+          if ($LASTEXITCODE -ne 0) {
+            Write-Warning "gh release upload for $PortableZipName exited $LASTEXITCODE"
+          }
+
+      - name: Upload Windows Metadata Artifact
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.arch_label }}-artifacts
+          path: ${{ runner.temp }}/win-meta-${{ matrix.arch_label }}/metadata.json
+
+  publish-release-manifest:
+    needs: build-tauri
+    if: github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Setup Node
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        with:
+          node-version: "24"
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/ci-artifacts
+
+      - name: Merge metadata, update DMG & sync release-manifest.json
+        run: |
+          set -euo pipefail
+          DMG_FILE="${RUNNER_TEMP}/ci-artifacts/mac-universal-artifacts/SWEEPRCleaner.dmg"
+          if [ -f "$DMG_FILE" ]; then
+            cp "$DMG_FILE" server/public/SWEEPRCleaner.dmg
+          fi
+          ARTIFACTS_JSON="${RUNNER_TEMP}/ci-artifacts/combined-artifacts.json"
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+            const root = process.env.RUNNER_TEMP + "/ci-artifacts";
+            const merged = {};
+            const files = [
+              "mac-universal-artifacts/dmg-metadata.json",
+              "linux-x64-artifacts/linux-metadata.json",
+              "win-x64-artifacts/metadata.json",
+              "win-arm64-artifacts/metadata.json"
+            ];
+            for (const rel of files) {
+              const p = path.join(root, rel);
+              if (fs.existsSync(p)) {
+                Object.assign(merged, JSON.parse(fs.readFileSync(p, "utf8")));
+              }
+            }
+            fs.writeFileSync(process.env.RUNNER_TEMP + "/ci-artifacts/combined-artifacts.json", JSON.stringify(merged, null, 2));
+          '
+          TAURI_VERSION=$(node -e 'console.log(JSON.parse(require("fs").readFileSync("app/src-tauri/tauri.conf.json","utf8")).version)')
+          node server/scripts/update-release-listings.mjs "--version=${TAURI_VERSION}" "--artifacts-json=${ARTIFACTS_JSON}"
+
+      - name: Commit updated DMG & release manifests
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add server/public/SWEEPRCleaner.dmg server/public/release-manifest.json server/public/pad.xml chocolatey/ winget-manifests/ homebrew/
+          git add -f scoop/bucket/sweepr-cleaner.json
+          if ! git diff --staged --quiet; then
+            git commit -m "chore(release): update DMG, release-manifest.json & package listings [skip ci]"
+            git pull --rebase origin main || true
+            git push origin HEAD:main || true
+          fi

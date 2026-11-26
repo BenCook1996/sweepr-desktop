@@ -73,9 +73,9 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
   });
 
   // -------------------------------------------------------------
-  // Test Suite 2: Exhaustive Verification of All 96 Indexed Guides
+  // Test Suite 2: Exhaustive Verification of All 69 Indexed Guides
   // -------------------------------------------------------------
-  test("CH-IDX-01: Exhaustive check of ALL 96 indexed items: HTTP 200, index robots, in sitemap", async () => {
+  test("CH-IDX-01: Exhaustive check of ALL 69 indexed items: HTTP 200, index robots, in sitemap", async () => {
     const { app } = setup();
     const items = getCleanItems();
     const indexed = items.filter((i) => !i.noindex);
@@ -227,8 +227,8 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
     assert.equal(openUrls, openFreq, "Every <url> must have exactly one <changefreq>");
     assert.equal(openUrls, openPri, "Every <url> must have exactly one <priority>");
 
-    // Total count exactly 96 curated indexable URLs
-    assert.equal(openUrls, 96, `Expected exactly 96 URLs, got ${openUrls}`);
+    // Total count exactly 101 curated indexable URLs
+    assert.equal(openUrls, 101, `Expected exactly 101 URLs, got ${openUrls}`);
 
     // Check duplicate URLs
     const locs = parseSitemap(xml);
@@ -276,7 +276,7 @@ describe("Empirical Challenger 2 — Milestone 1 Stress & Boundary Suite", () =>
 
     const xml = await res.text();
     const urls = parseSitemap(xml);
-    assert.equal(urls.length, 96, "Dynamic sitemap must contain exactly 96 URLs");
+    assert.equal(urls.length, 101, "Dynamic sitemap must contain exactly 101 URLs");
 
     const staticXml = readFileSync("public/sitemap.xml", "utf-8");
     const staticUrls = parseSitemap(staticXml);

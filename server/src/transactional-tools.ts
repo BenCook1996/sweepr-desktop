@@ -1,7 +1,8 @@
 import { analyzeSafeToDeleteInput } from "./safe-to-delete.js";
+import { getCleanItems } from "./pseo.js";
 import { escapeHtml } from "./security.js";
 import { assignExperimentVariant } from "./experiments.js";
-import { renderEditorialHead, renderSiteFooter, renderSiteHeader } from "./ui-shell.js";
+import { ORGANIZATION_LOGO_URL, ORGANIZATION_SAME_AS, renderEditorialHead, renderSiteFooter, renderSiteHeader } from "./ui-shell.js";
 
 export interface TransactionalToolConfig {
   slug: string;
@@ -429,12 +430,15 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
     "@graph": [
       {
         "@type": "SoftwareApplication",
+        "@id": `${canonicalUrl}#software`,
         name: `SWEEPR ${tool.shortName}`,
         applicationCategory: "UtilitiesApplication",
         operatingSystem: "Windows 10, Windows 11",
         url: canonicalUrl,
         image: "https://sweeprcleaner.com/og-image.png",
         description: tool.metaDescription,
+        author: { "@id": "https://sweeprcleaner.com/#founder" },
+        publisher: { "@id": "https://sweeprcleaner.com/#organization" },
         ...(verifiedReviewCount >= 5 && verifiedRatingValue
           ? {
               aggregateRating: {
@@ -446,48 +450,47 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
               },
             }
           : {}),
-        offers: {
-          "@type": "Offer",
-          price: "49.99",
-          priceCurrency: "GBP",
-          availability: "https://schema.org/InStock",
-          url: "https://sweeprcleaner.com/order?plan=annual",
-          hasMerchantReturnPolicy: {
-            "@type": "MerchantReturnPolicy",
-            applicableCountry: "GB",
-            returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
-            merchantReturnDays: 14,
-            returnMethod: "https://schema.org/ReturnByMail",
-            returnFees: "https://schema.org/FreeReturn",
+        offers: [
+          {
+            "@type": "Offer",
+            name: "SWEEPR Cleaner Free — Unlimited Temp & Browser Cache Clean",
+            price: "0",
+            priceCurrency: "GBP",
+            availability: "https://schema.org/InStock",
+            url: `https://sweeprcleaner.com/download?platform=windows&utm_source=tool_${tool.slug}`,
           },
-          shippingDetails: {
-            "@type": "OfferShippingDetails",
-            shippingRate: {
-              "@type": "MonetaryAmount",
-              value: "0.00",
-              currency: "GBP",
-            },
-            shippingDestination: {
-              "@type": "DefinedRegion",
-              addressCountry: "GB",
-            },
-            deliveryTime: {
-              "@type": "ShippingDeliveryTime",
-              handlingTime: {
-                "@type": "QuantitativeValue",
-                minValue: 0,
-                maxValue: 0,
-                unitCode: "DAY",
-              },
-              transitTime: {
-                "@type": "QuantitativeValue",
-                minValue: 0,
-                maxValue: 0,
-                unitCode: "DAY",
-              },
-            },
+          {
+            "@type": "Offer",
+            name: "SWEEPR Cleaner Pro Annual (5 Devices)",
+            price: "49.99",
+            priceCurrency: "GBP",
+            availability: "https://schema.org/InStock",
+            url: "https://sweeprcleaner.com/order?plan=annual",
           },
+        ],
+      },
+      {
+        "@type": "Person",
+        "@id": "https://sweeprcleaner.com/#founder",
+        name: "Benjamin Cook",
+        url: "https://sweeprcleaner.com/about",
+        sameAs: ["https://github.com/BenCook1996"],
+        worksFor: { "@id": "https://sweeprcleaner.com/#organization" },
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://sweeprcleaner.com/#organization",
+        name: "SWEEPR Cleaner",
+        legalName: "Benjamin Cook t/a SWEEPR Cleaner",
+        url: "https://sweeprcleaner.com/",
+        logo: {
+          "@type": "ImageObject",
+          url: ORGANIZATION_LOGO_URL,
+          width: 512,
+          height: 512,
         },
+        founder: { "@id": "https://sweeprcleaner.com/#founder" },
+        sameAs: ORGANIZATION_SAME_AS,
       },
       {
         "@type": "BreadcrumbList",
@@ -582,10 +585,10 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
       <div class="nav-links">
         <a href="/tools">All 10 Cleaner Tools</a>
         <a href="/safe-to-delete">Safe-to-Delete Checker</a>
-        <a href="/clean">377 Folder Guides</a>
-        <a href="/bloat-watch">Bloat Watch</a>
+        <a href="/clean">Storage Guides</a>
         <a href="/state-of-windows-storage">2026 Storage Study</a>
         <a href="/pricing">Pricing</a>
+        <a href="/about">About</a>
         <a href="/download?platform=windows" rel="nofollow" class="btn-primary" style="padding:8px 14px;font-size:13px;">Download Free Scanner</a>
       </div>
     </nav>
@@ -593,7 +596,7 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
     <main>
     <header style="background:#ffffff;border:1px solid var(--border);border-radius:22px;padding:26px 24px;margin-bottom:22px;box-shadow:0 8px 28px rgba(17,22,19,0.05);">
       <div style="display:inline-block;padding:5px 12px;border-radius:999px;background:#e3ede7;color:#073825;font-size:11.5px;font-weight:800;margin-bottom:10px;">
-        ${escapeHtml(tool.heroBadge)} &bull; SSL.COM AUTHENTICODE SIGNED (6.52 MB)
+        ${escapeHtml(tool.heroBadge)} &bull; SSL.COM INDIVIDUAL VALIDATION (IV) SIGNED (6.76 MB)
       </div>
       <h1 style="font-size:clamp(26px,3.8vw,36px);line-height:1.15;margin:0 0 10px;">
         ${escapeHtml(tool.h1)}
@@ -630,7 +633,7 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
         </div>
         <div class="kpi-box" style="background:#f8faf9;">
           <div style="font-size:11px;font-weight:800;color:var(--muted);">SAFETY GUARANTEE</div>
-          <div style="font-size:13px;font-weight:700;color:#111613;margin-top:4px;">🔒 Skips Active Processes &bull; 14-Day Guarantee</div>
+          <div style="font-size:13px;font-weight:700;color:#111613;margin-top:4px;">🔒 Zero-Telemetry Offline Mode &bull; 7-Day Undo Quarantine (2–10 GB budget, 5 GB default) &bull; 14-Day Guarantee</div>
         </div>
       </div>
     </header>
@@ -679,6 +682,18 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
       </div>
     </section>
     </main>
+    <footer style="margin-top:32px;padding-top:18px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;font-size:13px;color:var(--muted);">
+      <div>&copy; 2026 SWEEPR Cleaner (Benjamin Cook)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;">
+        <a href="/about" style="color:var(--text);text-decoration:none;">About</a>
+        <a href="/pricing" style="color:var(--text);text-decoration:none;">Pricing</a>
+        <a href="/support" style="color:var(--text);text-decoration:none;">Support</a>
+        <a href="/refund" style="color:var(--text);text-decoration:none;">Refund Policy</a>
+        <a href="/privacy" style="color:var(--text);text-decoration:none;">Privacy</a>
+        <a href="/terms" style="color:var(--text);text-decoration:none;">Terms</a>
+        <a href="/state-of-windows-storage" style="color:var(--text);text-decoration:none;">2026 Storage Study</a>
+      </div>
+    </footer>
   </div>
 
   <script>
@@ -733,6 +748,7 @@ export function renderTransactionalToolPage(tool: TransactionalToolConfig, visit
 }
 
 export function renderTransactionalToolsHub(): string {
+  const indexableGuideCount = getCleanItems().filter((i) => !i.noindex && !i.mergedIntoSlug).length;
   const title = "Free Storage Diagnostic Tools & Path Checkers | SWEEPR";
   const description =
     "Interactive Windows & Mac storage tools: check if any Windows folder path is safe to delete, estimate reclaimable gaming/AI cache GB, and inspect 2026 benchmark data.";
@@ -747,12 +763,37 @@ export function renderTransactionalToolsHub(): string {
         url: canonicalUrl,
         name: title,
         description,
+        publisher: { "@id": "https://sweeprcleaner.com/#organization" },
         isPartOf: {
           "@type": "WebSite",
           "@id": "https://sweeprcleaner.com/#website",
           name: "SWEEPR Cleaner",
           url: "https://sweeprcleaner.com",
+          publisher: { "@id": "https://sweeprcleaner.com/#organization" },
         },
+      },
+      {
+        "@type": "Person",
+        "@id": "https://sweeprcleaner.com/#founder",
+        name: "Benjamin Cook",
+        url: "https://sweeprcleaner.com/about",
+        sameAs: ["https://github.com/BenCook1996"],
+        worksFor: { "@id": "https://sweeprcleaner.com/#organization" },
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://sweeprcleaner.com/#organization",
+        name: "SWEEPR Cleaner",
+        legalName: "Benjamin Cook t/a SWEEPR Cleaner",
+        url: "https://sweeprcleaner.com/",
+        logo: {
+          "@type": "ImageObject",
+          url: ORGANIZATION_LOGO_URL,
+          width: 512,
+          height: 512,
+        },
+        founder: { "@id": "https://sweeprcleaner.com/#founder" },
+        sameAs: ORGANIZATION_SAME_AS,
       },
       {
         "@type": "BreadcrumbList",
@@ -787,7 +828,7 @@ export function renderTransactionalToolsHub(): string {
       href: "/state-of-windows-storage",
       cta: "Read Storage Report",
       summary:
-        "See median and 90th-percentile disk usage across WinSxS, Steam depotcache, NVIDIA shaders, and Windows 11 24H2 updates.",
+        "See median and 90th-percentile disk usage across WinSxS, Steam depotcache, NVIDIA shaders, and Windows 11 update staging.",
     },
   ];
 
@@ -795,22 +836,22 @@ export function renderTransactionalToolsHub(): string {
     {
       href: "/clean/folder/windows-11-24h2-update-cache-8gb-bug",
       title: "Fix Windows 11 24H2 8.63 GB Update Cache Bug",
-      meta: "8.8 GB Lab Reclaimed",
+      meta: "8.6–18.0 GB Typical",
     },
     {
       href: "/clean/app/steam-depotcache",
       title: "Steam depotcache & Shader Cache Cleanup",
-      meta: "18.5 GB Lab Reclaimed",
+      meta: "2–25 GB Typical",
     },
     {
       href: "/clean/app/nvidia-dxcache",
       title: "NVIDIA DXCache & GLCache Cleanup",
-      meta: "10.1 GB Lab Reclaimed",
+      meta: "2–14 GB Typical",
     },
     {
       href: "/clean/app/comfyui-temp-output-cache",
       title: "ComfyUI & Local AI Temp Cache Cleanup",
-      meta: "21.6 GB Lab Reclaimed",
+      meta: "2–18 GB Typical",
     },
     {
       href: "/clean/mac/system-data-huge",
@@ -830,12 +871,12 @@ export function renderTransactionalToolsHub(): string {
     {
       href: "/clean/app/logitech-ghub-installer-cache",
       title: "Logitech G HUB Depots Bloat Cleanup",
-      meta: "10.8 GB Lab Reclaimed",
+      meta: "1.5–8 GB Typical",
     },
     {
       href: "/clean/app/elgato-streamdeck-cache",
       title: "Elgato Stream Deck App Cache Folder Cleanup",
-      meta: "4.6 GB Lab Reclaimed",
+      meta: "1–4 GB Typical",
     },
   ];
 
@@ -883,7 +924,7 @@ ${renderEditorialHead({ title, description, canonical: canonicalUrl, jsonLd })}
             <h2 class="ed-h2" style="margin-bottom:4px;">Direct App &amp; System Storage Fix Guides</h2>
             <p style="font-size:0.9rem;color:var(--muted);">Canonical problem-solution walkthroughs for Windows 11, macOS, iPhone, and Android storage spikes.</p>
           </div>
-          <a href="/clean" class="ed-btn-secondary btn-press">Browse All 69 Guides</a>
+          <a href="/clean" class="ed-btn-secondary btn-press">All ${indexableGuideCount} Storage Guides</a>
         </div>
         <div class="ed-ledger">
           ${featuredGuides
@@ -905,10 +946,12 @@ ${renderEditorialHead({ title, description, canonical: canonicalUrl, jsonLd })}
       <div class="ed-card-muted">
         <h2 class="ed-h2">Prefer Automated One-Click Scanning?</h2>
         <p style="font-size:0.94rem;color:var(--muted);max-width:65ch;">
-          SWEEPR Cleaner is a 6.52 MB Authenticode-signed Rust utility for Windows, Mac, iPhone, and Android. It checks locked files safely, never runs hidden background processes when closed, and backs every eligible cleanup with a 7-day Undo Quarantine.
+          SWEEPR Cleaner is a lightweight Authenticode Individual Validation (IV) signed 6.76 MB Rust utility for Windows, Mac, Android, and iOS (Safari web companion / TestFlight beta). It checks locked files safely, scans on demand with an optional lightweight system tray and scheduled cleaning in Zero-Telemetry / Offline Mode (<code style="font-family:ui-monospace,monospace;">telemetry_enabled = false</code> default), and backs Pro cleanups with 7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget; excludes shredded files, browser DBs, and registry edits). SWEEPR Free provides Unlimited Temp &amp; Browser Cache Clean (to OS Recycle Bin) &mdash; or review <a href="/pricing" style="color:var(--accent);text-decoration:underline;font-weight:700;">Pro pricing</a> (<a href="/refund" style="color:var(--accent);text-decoration:underline;">14-day refund policy</a>).
         </p>
         <div class="ed-actions">
           <a href="/download?utm_source=tools_hub" class="ed-btn-primary btn-press" rel="nofollow">Free Download</a>
+          <a href="/pricing" class="ed-btn-secondary btn-press">Pricing &amp; Free Tier</a>
+          <a href="/refund" class="ed-btn-secondary btn-press">14-Day Refund Policy</a>
           <a href="/vs/ccleaner" class="ed-btn-secondary btn-press">Compare vs CCleaner</a>
           <a href="/vs/cleanmymac" class="ed-btn-secondary btn-press">Compare vs CleanMyMac</a>
         </div>

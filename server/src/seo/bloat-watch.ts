@@ -128,7 +128,7 @@ export function buildDraftTemplates(opts: {
   const verdict = opts.measurements.safe_verdict || (opts.cleanItem.safeToDelete ? "SAFE TO DELETE" : "CAUTION — USE BUILT-IN CLEANUP");
 
   const article_markdown = `## Executive Summary & Lab Benchmark
-Following recent reports via **${opts.sourceName}**, our storage engineering lab benchmarked \`${opts.cleanItem.path}\` (${opts.cleanItem.name}) on **${osBuild}** running **${appVer}**.
+Following recent reports via **${opts.sourceName}**, Benjamin Cook (SWEEPR Cleaner) benchmarked \`${opts.cleanItem.path}\` (${opts.cleanItem.name}) on **${osBuild}** running **${appVer}**.
 
 - **Target Path:** \`${opts.cleanItem.path}\`
 - **Measured Pre-Clean Footprint:** **${beforeStr}**
@@ -169,7 +169,8 @@ Key findings you are welcome to cite or reproduce:
 - Full methodology & PowerShell reproduction script: https://sweeprcleaner.com/bloat-watch/${opts.slug}
 
 Best regards,
-SWEEPR Storage Research Lab`;
+Benjamin Cook
+SWEEPR Cleaner`;
 
   return { article_markdown, reddit_reply_draft, press_pitch_draft };
 }
@@ -486,7 +487,7 @@ export function ensureBloatWatchSeeded(store: SeoStore) {
       title: "ComfyUI, Cursor IDE & Local AI Toolchain Cache Bloat: Reclaiming 21.6 GB on Windows 11",
       summary:
         "Local AI diffusion workflows (ComfyUI temp preview tensors & custom_nodes pip wheels) alongside Cursor/VS Code TypeScript & WebView2 caches silently consume over 22 GB on developer NVMe drives.",
-      source_name: "SWEEPR AI & DevTools Storage Lab",
+      source_name: "Benjamin Cook (SWEEPR Cleaner)",
       source_url: "https://sweeprcleaner.com/clean/app/comfyui-temp-output-cache",
       relevance_score: 9,
       item: findItem("comfyui-temp-output-cache"),
@@ -863,7 +864,19 @@ export function renderBloatWatchIndexHtml(store: SeoStore): string {
     name: title,
     description: desc,
     url: canonical,
-    publisher: { "@type": "Organization", name: "SWEEPR Cleaner", url: "https://sweeprcleaner.com" },
+    publisher: {
+      "@type": "Organization",
+      "@id": "https://sweeprcleaner.com/#organization",
+      name: "SWEEPR Cleaner",
+      legalName: "Benjamin Cook t/a SWEEPR Cleaner",
+      url: "https://sweeprcleaner.com",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://sweeprcleaner.com/icon-512.png",
+        width: 512,
+        height: 512,
+      },
+    },
   });
 
   return `<!doctype html><html lang="en"><head>
@@ -891,7 +904,7 @@ export function renderBloatWatchIndexHtml(store: SeoStore): string {
       <div style="margin-bottom:28px;">
         <span style="background:#0d6847;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;text-transform:uppercase;">Empirical Storage Telemetry</span>
         <h1 style="font-size:34px;margin:12px 0 10px;line-height:1.2;">SWEEPR PC Bloat Watch: Update &amp; Cache Benchmarks</h1>
-        <p style="color:#4b554e;font-size:17px;line-height:1.6;margin:0 0 14px;">Every Windows 11 cumulative update, GPU driver release, and game launcher patch is benchmarked in our clean VM lab to measure exact orphaned gigabytes and verify safe cleanup commands.</p>
+        <p style="color:#4b554e;font-size:17px;line-height:1.6;margin:0 0 14px;">Every Windows 11 cumulative update, GPU driver release, and game launcher patch is benchmarked in an isolated Windows VM to measure exact orphaned gigabytes and verify safe cleanup commands.</p>
         <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
           <span style="font-size:14px;color:#065f46;font-weight:600;">📊 Looking for the aggregate 2026 dataset across all 8 Windows storage silos?</span>
           <a href="/state-of-windows-storage" style="background:#047857;color:#fff;padding:8px 14px;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;">View 2026 State of Windows Storage Report &rarr;</a>
@@ -900,8 +913,8 @@ export function renderBloatWatchIndexHtml(store: SeoStore): string {
       ${cardsHtml}
       <section style="background:#ffffff;border:1px solid #d6dad5;border-radius:16px;padding:28px;margin-top:28px;line-height:1.7;color:#374151;">
         <h2 style="font-size:22px;color:#111613;margin:0 0 12px;">Laboratory Methodology &amp; Automated Storage Telemetry</h2>
-        <p>The SWEEPR Storage Research Lab tests every major Windows 11 monthly cumulative update, NVIDIA Game Ready driver, AMD Adrenalin release, and high-frequency desktop application inside sandboxed, hardware-isolated virtual machines. We track initial clean disk state, execute representative gaming and productivity workloads, apply updates, and measure byte-for-byte storage degradation across NTFS cluster allocations, component stores, shader caches, and temporary staging directories.</p>
-        <p>All benchmarks published on Bloat Watch include verified before-and-after storage snapshots, exact Windows filesystem paths, safe PowerShell reproduction scripts, and risk assessments. When an update or driver introduces abnormal bloat or persistent file locks, SWEEPR engineers publish mitigation guides and calibrate SWEEPR Cleaner's rule engine to safely reclaim orphaned space without disrupting system stability.</p>
+        <p>Benjamin Cook (SWEEPR Cleaner) benchmarks every major Windows 11 monthly cumulative update, NVIDIA Game Ready driver, AMD Adrenalin release, and high-frequency desktop application inside sandboxed, hardware-isolated virtual machines. We track initial clean disk state, execute representative gaming and productivity workloads, apply updates, and measure byte-for-byte storage degradation across NTFS cluster allocations, component stores, shader caches, and temporary staging directories.</p>
+        <p>All benchmarks published on Bloat Watch include verified before-and-after storage snapshots, exact Windows filesystem paths, safe PowerShell reproduction scripts, and risk assessments. When an update or driver introduces abnormal bloat or persistent file locks, we publish mitigation guides and calibrate SWEEPR Cleaner's rule engine to safely reclaim orphaned space without disrupting system stability.</p>
       </section>
     </main>
   </body></html>`;
@@ -923,7 +936,25 @@ export function renderBloatWatchPostHtml(post: BloatWatchPost): string {
         description: post.summary,
         url: canonical,
         datePublished: post.published_at ? new Date(post.published_at * 1000).toISOString() : "2026-11-01T00:00:00Z",
-        author: { "@type": "Organization", name: "SWEEPR Storage Research Lab" },
+        author: {
+          "@type": "Person",
+          "@id": "https://sweeprcleaner.com/#founder",
+          name: "Benjamin Cook",
+          url: "https://sweeprcleaner.com/about",
+        },
+        publisher: {
+          "@type": "Organization",
+          "@id": "https://sweeprcleaner.com/#organization",
+          name: "SWEEPR Cleaner",
+          legalName: "Benjamin Cook t/a SWEEPR Cleaner",
+          url: "https://sweeprcleaner.com",
+          logo: {
+            "@type": "ImageObject",
+            url: "https://sweeprcleaner.com/icon-512.png",
+            width: 512,
+            height: 512,
+          },
+        },
       },
       {
         "@type": "Dataset",
@@ -989,7 +1020,7 @@ export function renderBloatWatchPostHtml(post: BloatWatchPost): string {
         <div style="background:#06281e;color:#fff;border-radius:14px;padding:22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
           <div>
             <h3 style="margin:0 0 6px;font-size:18px;">Skip Manual PowerShell Cleanup — Reclaim ${escapeHtml(savedStr)} Safely</h3>
-            <p style="margin:0;color:#a7f3d0;font-size:14px;">SWEEPR Cleaner scans ${escapeHtml(post.affected_path)} in under 60 seconds with a 7-Day Undo Quarantine safety net.</p>
+            <p style="margin:0;color:#a7f3d0;font-size:14px;">SWEEPR Cleaner scans ${escapeHtml(post.affected_path)} quickly with Pro 7-Day Undo Quarantine (2&ndash;10 GB disk budget, 5 GB default; OS Recycle Bin fallback).</p>
           </div>
           <div style="display:flex;gap:12px;">
             <a href="/order?plan=annual" rel="nofollow" style="background:#10b981;color:#06281e;padding:10px 18px;border-radius:10px;font-weight:800;text-decoration:none;font-size:14px;">Get SWEEPR Pro (&pound;49.99/yr)</a>

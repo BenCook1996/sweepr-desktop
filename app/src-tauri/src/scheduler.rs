@@ -106,7 +106,10 @@ pub fn load_config(data_dir: &Path) -> ScheduleConfig {
         .and_then(|s| serde_json::from_str(&s).ok())
         .unwrap_or_default();
     if cfg.categories.is_empty() {
-        cfg.categories = rules::all().into_iter().map(|r| r.id.to_string()).collect();
+        cfg.categories = rules::all_with_custom(data_dir)
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
     }
     cfg.time = normalize_time(&cfg.time);
     cfg.day_of_week = normalize_day_of_week(&cfg.day_of_week);
@@ -301,14 +304,14 @@ pub async fn execute_scheduled_run(data_dir: &Path, licensing: &Licensing) -> Ap
     licensing.require_active().await?;
     let mut cfg = load_config(data_dir);
     let exclusions = safety::load_exclusions(data_dir);
-    let all_rules = rules::all();
+    let all_rules = rules::all_with_custom(data_dir);
 
     let selected_rules: Vec<rules::Rule> = if cfg.categories.is_empty() {
         all_rules
     } else {
         all_rules
             .into_iter()
-            .filter(|r| cfg.categories.iter().any(|id| id == r.id))
+            .filter(|r| cfg.categories.iter().any(|id| id == &r.id))
             .collect()
     };
 
@@ -328,15 +331,18 @@ pub async fn execute_scheduled_run(data_dir: &Path, licensing: &Licensing) -> Ap
 
         let clean_ids: Vec<String> = cleanable_rules.iter().map(|r| r.id.to_string()).collect();
         let data_dir_clean = data_dir.to_path_buf();
+        let q_budget = crate::commands::load_ui_preferences(&data_dir_clean).quarantine_budget_bytes;
         let reports = tokio::task::spawn_blocking(move || {
             cleanable_rules
                 .iter()
                 .map(|r| {
-                    cleaner::clean_with_exclusions_and_quarantine(
+                    cleaner::clean_with_exclusions_quarantine_and_options(
                         r,
                         false,
                         &exclusions,
                         Some(&data_dir_clean),
+                        None,
+                        q_budget,
                     )
                 })
                 .collect::<Vec<_>>()
@@ -395,44 +401,46 @@ pub async fn execute_scheduled_run(data_dir: &Path, licensing: &Licensing) -> Ap
     Ok(cfg)
 }
 
-/// Check CLI arguments on process start. If `--scheduled-clean` was passed by
-/// the OS Task Scheduler, run the scheduled scan/clean headlessly without
-/// opening a GUI window and return `true`.
-pub fn run_headless_if_requested() -> bool {
-    let args: Vec<String> = std::env::args().collect();
-    if !args.iter().any(|a| a == "--scheduled-clean") {
-        return false;
-    }
-
-    let mut data_dir = dirs::data_dir()
-        .unwrap_or_else(std::env::temp_dir)
-        .join("com.sweepr.app");
-
+pub fn resolve_validated_data_dir(args: &[String]) -> PathBuf {
+    let mut data_dir = crate::resolve_cli_data_dir(args);
+    let mut custom_val: Option<String> = None;
     for i in 0..args.len() {
         if args[i] == "--data-dir" {
             if let Some(custom) = args.get(i + 1) {
-                let candidate = PathBuf::from(custom.trim());
-                let is_symlink = std::fs::symlink_metadata(&candidate)
-                    .map(|m| m.file_type().is_symlink() || safety::metadata_is_link_like(&m))
-                    .unwrap_or(false);
-                let ends_with_valid = candidate
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .map(|n| {
-                        n.eq_ignore_ascii_case("com.sweepr.app")
-                            || n.eq_ignore_ascii_case("sweepr")
-                    })
-                    .unwrap_or(false)
-                    || dirs::config_dir()
-                        .map(|cfg| safety::is_within(&candidate, &cfg))
-                        .unwrap_or(false);
-                if candidate.is_absolute() && !is_symlink && ends_with_valid {
-                    data_dir = candidate;
-                }
+                custom_val = Some(custom.clone());
             }
+        } else if let Some(val) = args[i].strip_prefix("--data-dir=") {
+            custom_val = Some(val.to_string());
         }
     }
+    if let Some(custom) = custom_val {
+        let candidate = PathBuf::from(custom.trim());
+        let is_symlink = std::fs::symlink_metadata(&candidate)
+            .map(|m| m.file_type().is_symlink() || safety::metadata_is_link_like(&m))
+            .unwrap_or(false);
+        let ends_with_valid = candidate
+            .file_name()
+            .and_then(|n| n.to_str())
+            .map(|n| {
+                n.eq_ignore_ascii_case("com.sweepr.cleaner")
+                    || n.eq_ignore_ascii_case("com.sweepr.app")
+                    || n.eq_ignore_ascii_case("sweepr")
+                    || n.eq_ignore_ascii_case("portable_data")
+            })
+            .unwrap_or(false)
+            || dirs::config_dir()
+                .map(|cfg| safety::is_within(&candidate, &cfg))
+                .unwrap_or(false)
+            || safety::is_within(&candidate, &std::env::temp_dir());
+        if candidate.is_absolute() && !is_symlink && ends_with_valid {
+            data_dir = candidate;
+        }
+    }
+    data_dir
+}
 
+pub fn run_headless_with_args(args: &[String]) {
+    let data_dir = resolve_validated_data_dir(args);
     let _ = std::fs::create_dir_all(&data_dir);
     cleaner::purge_expired_quarantine_in(&data_dir);
 
@@ -443,7 +451,18 @@ pub fn run_headless_if_requested() -> bool {
         let licensing = Licensing::new(data_dir.clone());
         let _ = rt.block_on(execute_scheduled_run(&data_dir, &licensing));
     }
+}
 
+/// Check CLI arguments on process start. If `--scheduled-clean` was passed by
+/// the OS Task Scheduler, run the scheduled scan/clean headlessly without
+/// opening a GUI window and return `true`.
+#[allow(dead_code)]
+pub fn run_headless_if_requested() -> bool {
+    let args: Vec<String> = std::env::args().collect();
+    if !args.iter().any(|a| a == "--scheduled-clean") {
+        return false;
+    }
+    run_headless_with_args(&args);
     true
 }
 

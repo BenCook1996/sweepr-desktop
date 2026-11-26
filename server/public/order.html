@@ -27,16 +27,75 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "CheckoutPage",
-    "name": "Complete Your SWEEPR Cleaner Pro Order",
-    "description": "Secure 256-bit SSL encrypted checkout for SWEEPR Cleaner Pro. Clean up to 5 devices instantly with a 14-day money-back guarantee.",
-    "url": "https://sweeprcleaner.com/order",
-    "provider": {
-      "@type": "SoftwareApplication",
-      "name": "SWEEPR Cleaner",
-      "applicationCategory": "UtilitiesApplication",
-      "operatingSystem": "Windows 10, Windows 11"
-    }
+    "@graph": [
+      {
+        "@type": "CheckoutPage",
+        "@id": "https://sweeprcleaner.com/order#webpage",
+        "name": "Complete Your SWEEPR Cleaner Pro Order",
+        "description": "Secure 256-bit SSL encrypted checkout for SWEEPR Cleaner Pro. Clean up to 5 devices instantly with a 14-day money-back guarantee.",
+        "url": "https://sweeprcleaner.com/order",
+        "provider": { "@id": "https://sweeprcleaner.com/#software" },
+        "publisher": { "@id": "https://sweeprcleaner.com/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://sweeprcleaner.com/#software",
+        "name": "SWEEPR Cleaner",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Windows 10, Windows 11, macOS, Android",
+        "softwareVersion": "0.1.0",
+        "fileSize": "6.76MB",
+        "url": "https://sweeprcleaner.com/",
+        "downloadUrl": "https://sweeprcleaner.com/download",
+        "screenshot": "https://sweeprcleaner.com/screenshot.png",
+        "publisher": { "@id": "https://sweeprcleaner.com/#organization" }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://sweeprcleaner.com/#organization",
+        "name": "SWEEPR Cleaner",
+        "legalName": "Benjamin Cook t/a SWEEPR Cleaner",
+        "url": "https://sweeprcleaner.com/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://sweeprcleaner.com/icon-512.png",
+          "width": 512,
+          "height": 512
+        },
+        "founder": { "@id": "https://sweeprcleaner.com/#founder" },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "support@sweeprcleaner.com",
+          "contactType": "customer support",
+          "url": "https://sweeprcleaner.com/support"
+        },
+        "sameAs": [
+          "https://github.com/BenCook1996",
+          "https://github.com/BenCook1996/sweepr-desktop",
+          "https://github.com/BenCook1996/scoop-sweepr",
+          "https://github.com/microsoft/winget-pkgs/tree/master/manifests/s/Sweepr/SweeprCleaner",
+          "https://alternativeto.net/software/sweeprcleaner/",
+          "https://www.saashub.com/sweepr-cleaner",
+          "https://sourceforge.net/software/product/SWEEPR-Cleaner/",
+          "https://www.softpedia.com/get/Tweak/System-Tweak/SWEEPR-Cleaner.shtml",
+          "https://community.chocolatey.org/packages/sweepr-cleaner/0.1.0",
+          "https://www.producthunt.com/products/sweepr-cleaner",
+          "https://www.indiehackers.com/product/sweepr-cleaner",
+          "https://devhunt.org/tool/sweepr-cleaner"
+        ]
+      },
+      {
+        "@type": "Person",
+        "@id": "https://sweeprcleaner.com/#founder",
+        "name": "Benjamin Cook",
+        "jobTitle": "Founder & Software Developer",
+        "url": "https://sweeprcleaner.com/about",
+        "sameAs": [
+          "https://github.com/BenCook1996"
+        ],
+        "worksFor": { "@id": "https://sweeprcleaner.com/#organization" }
+      }
+    ]
   }
   </script>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261031b">
@@ -75,70 +134,6 @@
       margin: 0 !important;
       transform: translate(calc(-50% + 37.5px), -50%) !important;
       clip-path: inset(0 110px 0 0) !important;
-    }
-    /* 3D Box Mockup */
-    .software-box {
-      width: 76px;
-      height: 104px;
-      position: relative;
-      perspective: 600px;
-      filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.16));
-    }
-    .box-face {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(145deg, #145c3e 0%, #073825 100%);
-      border-radius: 4px 6px 6px 4px;
-      border: 1px solid rgba(154, 219, 192, 0.35);
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 8px 7px;
-      color: white;
-      transform: rotateY(-18deg);
-      transform-style: preserve-3d;
-    }
-    .box-face::before {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 60%);
-      pointer-events: none;
-    }
-    .box-spine {
-      position: absolute;
-      left: -11px;
-      top: 2px;
-      width: 13px;
-      height: 100px;
-      background: #073825;
-      border-radius: 4px 0 0 4px;
-      border: 1px solid rgba(154, 219, 192, 0.25);
-      transform: rotateY(-72deg);
-      transform-origin: right center;
-    }
-    .box-badge {
-      background: #0d6847;
-      font-size: 7px;
-      font-weight: 800;
-      padding: 1px 4px;
-      border-radius: 2px;
-      align-self: flex-start;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .box-title {
-      font-size: 9px;
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -0.2px;
-    }
-    .box-year {
-      font-size: 7px;
-      color: #9adbc0;
-      font-weight: 600;
     }
 
     /* Stripe custom element container styling */
@@ -243,47 +238,6 @@
       opacity: 1;
     }
 
-    /* Laptop UI Mockup */
-    .laptop-frame {
-      position: relative;
-      width: 100%;
-      max-width: 380px;
-      margin: 0 auto;
-    }
-    .laptop-screen {
-      background: #0b1120;
-      border: 3px solid #27272a;
-      border-bottom: none;
-      border-radius: 12px 12px 0 0;
-      padding: 6px;
-      position: relative;
-      box-shadow: 0 16px 36px rgba(0,0,0,0.25);
-    }
-    .laptop-notch {
-      width: 4px;
-      height: 4px;
-      background: #52525b;
-      border-radius: 50%;
-      margin: 0 auto 4px auto;
-    }
-    .laptop-base {
-      height: 10px;
-      background: linear-gradient(180deg, #71717a 0%, #3f3f46 100%);
-      border-radius: 0 0 10px 10px;
-      position: relative;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.2);
-    }
-    .laptop-base::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 50px;
-      height: 4px;
-      background: #27272a;
-      border-radius: 0 0 4px 4px;
-    }
     /* Tactile Responsiveness & Spatial Continuity Tokens (Motion Audit) */
     :root {
       --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -417,7 +371,7 @@
           <span id="planTabMonthlyText">Monthly Plan — £9.99/mo</span>
         </button>
       </div>
-      <!-- Desktop First-Time User Intro Trial Rescue Bar (Wired to monthlyIntroLabel & A/B Experiment) -->
+      <!-- Desktop First-Time User Intro Trial Rescue Bar (Wired to monthlyIntroLabel) -->
       <div id="desktopIntroRescueBar" class="hidden lg:flex items-center justify-between gap-3 px-4 py-2 mb-5 rounded-xl border border-[#dce0db] bg-[#f8f9f7] text-xs">
         <div class="flex items-center gap-2 flex-wrap">
           <span class="px-2 py-0.5 rounded-full bg-[#e6f4ee] text-[#073825] font-extrabold text-[10px] uppercase tracking-wide">First-Time Trial</span>
@@ -436,7 +390,7 @@
             <span id="mobileStickySummaryPlan" class="text-xs font-extrabold text-[#0c0f0e]">SWEEPR Pro · Yearly Plan</span>
             <span id="mobileStickySummarySave" class="px-1.5 py-0.5 rounded bg-[#e1f3ec] text-[#073825] text-[10px] font-bold">Most Popular — Save 58%</span>
           </div>
-          <span id="mobileAccordionHint" class="block text-[11px] text-[#505854] mt-0.5">Tap to view 2 free bonuses &amp; included items &darr;</span>
+          <span id="mobileAccordionHint" class="block text-[11px] text-[#505854] mt-0.5">Tap to view included features &amp; optional add-ons &darr;</span>
         </div>
         <div class="text-right shrink-0">
           <div class="text-[10px] font-bold uppercase tracking-wider text-[#505854]">Total Today</div>
@@ -464,7 +418,7 @@
                 Clears leftover junk files, removes duplicate photos, and speeds up slow startup times safely.
               </p>
               <div id="annualPerDeviceCallout" class="mt-2 px-2.5 py-1.5 rounded-lg bg-[#e6f4ee] border border-[#cde6db] text-[11px] font-bold text-[#073825] leading-snug">
-                Covers 5 PCs, Macs &amp; Phones — just £0.83 / $1.08 per device/month (vs $39.95/yr for 1 Mac on CleanMyMac)
+                Covers 5 PCs, Macs &amp; Phones — just £0.83 per device/month (vs $39.95/yr for 1 Mac on CleanMyMac)
               </div>
             </div>
 
@@ -479,27 +433,27 @@
           <div class="bg-[#eff1ee] border border-[#e5e7e4] rounded-xl p-4">
             <div class="text-xs font-bold text-[#3f4743] mb-2.5">Included in your Monthly, 6-Month, or Annual plan</div>
             <ul class="grid grid-cols-2 gap-2.5 text-xs font-semibold text-[#0c0f0e]">
-              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> 377 'Safe-to-Delete?' Cache Rules</li>
-              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> 7-Day 1-Click Undo Quarantine</li>
-              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> 6.5 MB Native Rust (&lt;10s Scan)</li>
-              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> 5 Devices (Win 11, Mac, iOS, Android)</li>
+              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> 71 Audited Rules (455 Path Patterns)</li>
+              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> 7-Day Undo Quarantine (2–10 GB budget, 5 GB default)</li>
+              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> 6.76 MB Native Rust (Zero-Telemetry Default)</li>
+              <li class="flex items-center gap-1.5"><span class="text-[#0d6847] font-bold">✓</span> 5 Devices (Win 10/11, Mac, Android + iOS Web/TestFlight)</li>
             </ul>
             <div class="mt-3 pt-3 border-t border-[#dce0db] space-y-1.5 text-[11px] text-[#3f4743] leading-snug">
               <div class="font-bold text-[#0c0f0e]">Why a Subscription? Continuous Protection Across 5 Devices</div>
               <p class="text-[#505854]">
-                Static one-time utilities go obsolete on the next Windows 24H2, macOS Sequoia, Chrome, or ComfyUI update. Sweepr Pro keeps every device fast year-round:
+                Static one-time utilities go obsolete on the next Windows 11 (25H2), macOS Sequoia, Chrome, or ComfyUI update. Sweepr Pro keeps every device fast year-round:
               </p>
               <ul class="space-y-1 text-[#0c0f0e] font-medium">
                 <li><span class="text-[#0d6847] font-bold">✓</span> <strong>Weekly updated cache definitions</strong> for new game patches, AI tools, and OS updates</li>
-                <li><span class="text-[#0d6847] font-bold">✓</span> <strong>Set-and-forget Scheduled Background Auto-Clean</strong> with 7-Day Undo Quarantine</li>
-                <li><span class="text-[#0d6847] font-bold">✓</span> <strong>5-Device license</strong> covering Windows, Mac, iPhone &amp; Android with 1-click cancellation anytime</li>
+                <li><span class="text-[#0d6847] font-bold">✓</span> <strong>Optional Scheduled Cleaning</strong> with 7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget)</li>
+                <li><span class="text-[#0d6847] font-bold">✓</span> <strong>5-Device license</strong> covering Windows, Mac, Android &amp; iOS (Safari web companion / TestFlight beta) with 1-click cancellation anytime</li>
               </ul>
             </div>
             <div class="mt-3 pt-3 border-t border-[#dce0db] space-y-1.5 text-[11px] text-[#3f4743] leading-snug">
               <div class="font-bold text-[#0c0f0e]">Why Engineers &amp; Power Users Choose Sweepr Over Free Scripts &amp; Legacy Cleaners:</div>
-              <div><strong class="text-[#073825]">vs. BleachBit / Pearcleaner / OnyX:</strong> Plain-English 'Safe-to-Delete?' explanations + 7-Day 1-Click Quarantine Rollback (zero risk to saved games or logins).</div>
-              <div><strong class="text-[#073825]">vs. CleanMyMac X ($39.95/yr Mac-only):</strong> Cross-platform 5-device license (Windows 11, macOS, iOS, Android) + gaming shader, ComfyUI/Ollama AI model &amp; WinSxS/AppData intelligence.</div>
-              <div><strong class="text-[#073825]">vs. CCleaner Pro:</strong> 6.5 MB native Rust binary with zero background adware daemons and zero personal filename telemetry.</div>
+              <div><strong class="text-[#073825]">vs. BleachBit / Pearcleaner / OnyX:</strong> Plain-English 'Safe-to-Delete?' explanations + 7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget; excludes shredded files, browser DBs, and registry edits).</div>
+              <div><strong class="text-[#073825]">vs. CleanMyMac ($39.95/yr Mac-only):</strong> Cross-platform 5-device license (Windows 10/11, macOS, Android + iOS Safari web companion / TestFlight beta) + gaming shader, ComfyUI/Ollama AI model &amp; WinSxS/AppData intelligence.</div>
+              <div><strong class="text-[#073825]">vs. CCleaner Pro:</strong> 6.76 MB (7,085,912 B) native Rust binary with optional lightweight tray/scheduler (no adware), and Zero-Telemetry / Offline Mode enabled by default (<code class="font-mono">telemetry_enabled = false</code>; opt-in only).</div>
             </div>
           </div>
 
@@ -523,7 +477,7 @@
                     </span>
                   </div>
                   <p class="text-xs text-[#3f4743] mt-0.5 leading-snug">
-                    Stops your laptop and phone battery from wearing out early when plugged in at your desk.
+                    80% hardware charge cap on supported ASUS WMI, Dell CCTK &amp; Linux sysfs laptops (software unplug alert on other Windows PCs &amp; Macs).
                   </p>
                 </div>
               </div>
@@ -539,13 +493,13 @@
                 />
                 <div class="flex-1 min-w-0">
                   <div class="flex flex-wrap items-center justify-between gap-2">
-                    <span class="font-bold text-[#0c0f0e] text-sm">Private File Lockbox &amp; Cloud Backup</span>
+                    <span class="font-bold text-[#0c0f0e] text-sm">Private File Lockbox &amp; Local Sync Mirror</span>
                     <span id="cloudVaultAddonPriceBadge" class="text-xs font-bold text-[#0d6847] tabular-nums shrink-0">
                       + £9.99/yr (£0.83/mo eq.)
                     </span>
                   </div>
                   <p class="text-xs text-[#3f4743] mt-0.5 leading-snug">
-                    Password-protected folder for private photos &amp; documents + automatic cloud backup.
+                    Local Argon2id + AES-256-GCM encrypted Vault for private files + additive one-way mirroring to your local OneDrive, Google Drive, Dropbox, or iCloud folder.
                   </p>
                 </div>
               </div>
@@ -565,7 +519,7 @@
             </div>
 
             <div id="cloudVaultSummaryRow" class="hidden flex items-center justify-between text-[#3f4743]">
-              <span id="cloudVaultSummaryTitle">+ Private File Lockbox &amp; Cloud Backup</span>
+              <span id="cloudVaultSummaryTitle">+ Private File Lockbox &amp; Local Sync Mirror</span>
               <span id="cloudVaultSummaryPrice" class="font-semibold text-[#0c0f0e] tabular-nums">+ £9.99/year</span>
             </div>
 
@@ -594,6 +548,14 @@
               <span id="totalTodayText" class="font-extrabold text-xl sm:text-2xl text-[#0c0f0e] tabular-nums">£49.99</span>
             </div>
           </div>
+
+          <!-- 5. Compact Visible Real Desktop UI Proof -->
+          <figure class="bg-[#eff1ee] border border-[#e5e7e4] rounded-2xl p-3 space-y-2">
+            <img src="/img/desktop-quarantine-undo.webp" alt="SWEEPR Cleaner Pro 7-Day Undo Quarantine drawer showing 2 to 10 GB configurable disk budget" width="1280" height="800" loading="lazy" decoding="async" class="w-full h-auto rounded-xl border border-[#dce0db] block" />
+            <figcaption class="text-[11px] text-[#3f4743] leading-snug">
+              <strong>Live Desktop UI Proof:</strong> Pro 7-Day Undo Quarantine (2–10 GB budget, 5 GB default, O(1) move) · 6.76 MB Native Rust · Zero-Telemetry / Offline Mode.
+            </figcaption>
+          </figure>
 
         </div>
 
@@ -726,7 +688,7 @@
                     <div id="o2MobileAnnualPerMo" class="font-black text-base text-[#0d6847] tabular-nums">£4.16/mo</div>
                   </div>
                   <div id="o2MobileAnnualPrice" class="text-[11px] text-[#3f4743] tabular-nums mt-0.5"><span class="line-through opacity-60">£119.88</span> · £49.99 / year</div>
-                  <div id="o2MobileAnnualPerDevice" class="text-[10px] font-semibold text-[#073825] mt-1 leading-tight">Covers 5 PCs, Macs &amp; Phones — just £0.83 / $1.08 per device/month (vs $39.95/yr for 1 Mac on CleanMyMac)</div>
+                  <div id="o2MobileAnnualPerDevice" class="text-[10px] font-semibold text-[#073825] mt-1 leading-tight">Covers 5 PCs, Macs &amp; Phones — just £0.83 per device/month (vs $39.95/yr for 1 Mac on CleanMyMac)</div>
                 </button>
                 <button type="button" id="o2MobilePlanSixMonth" onclick="selectOrderPlan('six_month')" class="p-3 rounded-xl border border-[#e5e7e4] bg-white text-left cursor-pointer transition-all relative">
                   <div id="o2MobileSixSaveBadge" class="inline-block px-2 py-0.5 rounded-full bg-[#e1f3ec] text-[#073825] text-[10px] font-bold">Smart 6-Month — Save 35%</div>
@@ -748,7 +710,7 @@
                   <div id="o2MobileMonthlyPrice" class="text-[11px] text-[#3f4743] tabular-nums mt-0.5">Billed £9.99 / month</div>
                 </button>
               </div>
-              <!-- First-Time User Intro Trial Rescue Offer Bar (Wired to monthlyIntroLabel & A/B Experiment) -->
+              <!-- First-Time User Intro Trial Rescue Offer Bar (Wired to monthlyIntroLabel) -->
               <div id="introRescueOfferBar" class="mt-2.5 px-3 py-2 rounded-xl border border-[#dce0db] bg-[#f8f9f7] flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="font-bold text-[#0c0f0e]">Want to test Pro first?</span>
@@ -764,11 +726,11 @@
               <!-- Why a Subscription? Value Block Below 3-Tier Mobile Selector -->
               <div class="mt-2.5 px-3 py-2.5 rounded-xl border border-[#e5e7e4] bg-[#eff1ee] text-[11px] text-[#3f4743] leading-snug space-y-1">
                 <div class="font-extrabold text-[#0c0f0e]">Why a Subscription? Continuous Protection Across 5 Devices</div>
-                <div class="text-[#505854]">Unlike static one-time utilities that go obsolete on the next Windows 24H2 / macOS Sequoia / Chrome / ComfyUI update:</div>
+                <div class="text-[#505854]">Unlike static one-time utilities that go obsolete on the next Windows 11 (25H2) / macOS Sequoia / Chrome / ComfyUI update:</div>
                 <ul class="space-y-0.5 text-[#0c0f0e] font-medium">
                   <li><span class="text-[#0d6847] font-bold">✓</span> Weekly updated cache definitions for new game patches, AI tools, and OS updates</li>
-                  <li><span class="text-[#0d6847] font-bold">✓</span> Set-and-forget Scheduled Background Auto-Clean with 7-Day Undo Quarantine</li>
-                  <li><span class="text-[#0d6847] font-bold">✓</span> 5-Device license covering Windows, Mac, iPhone &amp; Android with 1-click cancellation anytime</li>
+                  <li><span class="text-[#0d6847] font-bold">✓</span> Optional Scheduled Cleaning with 7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback)</li>
+                  <li><span class="text-[#0d6847] font-bold">✓</span> 5-Device license covering Windows, Mac, Android &amp; iOS (Safari web companion / TestFlight beta) with 1-click cancellation anytime</li>
                 </ul>
               </div>
             </div>
@@ -779,7 +741,7 @@
               <label id="o2MobileBatCard" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-[#e5e7e4] bg-white cursor-pointer select-none">
                 <input type="checkbox" id="o2MobileBatCheckbox" onchange="toggleBatteryCareAddon(this.checked)" class="w-4 h-4 rounded accent-[#0d6847] shrink-0" />
                 <span class="flex-1 flex items-center justify-between gap-2 text-xs">
-                  <span class="text-[#0c0f0e]"><strong>Battery Health Saver</strong> (Stops early wear)</span>
+                  <span class="text-[#0c0f0e]"><strong>Battery Health Saver</strong> (80% cap on ASUS/Dell/Linux; alert elsewhere)</span>
                   <strong id="o2MobileBatPrice" class="text-[#0d6847] tabular-nums shrink-0">+£9.99/yr</strong>
                 </span>
               </label>
@@ -787,7 +749,7 @@
               <label id="o2MobileCloudCard" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-[#e5e7e4] bg-white cursor-pointer select-none">
                 <input type="checkbox" id="o2MobileCloudCheckbox" onchange="toggleCloudVaultAddon(this.checked)" class="w-4 h-4 rounded accent-[#0d6847] shrink-0" />
                 <span class="flex-1 flex items-center justify-between gap-2 text-xs">
-                  <span class="text-[#0c0f0e]"><strong>Private File Lockbox</strong> (Password folder + backup)</span>
+                  <span class="text-[#0c0f0e]"><strong>Private File Lockbox</strong> (Local AES-256 Vault + local sync mirror)</span>
                   <strong id="o2MobileCloudPrice" class="text-[#0d6847] tabular-nums shrink-0">+£9.99/yr</strong>
                 </span>
               </label>
@@ -939,14 +901,14 @@
           <!-- Consent Checkboxes (Positioned above Submit so Express Wallets sit at the top of the box — CHK-02) -->
           <div class="space-y-2.5 text-xs text-gray-700 pt-1">
             <label class="flex items-start gap-2.5 cursor-pointer select-none">
-              <input type="checkbox" id="termsConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+              <input type="checkbox" id="termsConsent" required class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
               <span id="termsConsentLabel" class="leading-snug">
                 I agree to pay £49.99 today which will auto renew at £49.99 annually unless I cancel before my next renewal. I can cancel anytime via my online portal. Prices may change with notice.
               </span>
             </label>
 
             <label class="flex items-start gap-2.5 cursor-pointer select-none">
-              <input type="checkbox" id="legalConsent" required checked class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+              <input type="checkbox" id="legalConsent" required class="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer">
               <span class="leading-snug">
                 I agree to the <a href="/terms" target="_blank" class="text-blue-600 underline font-medium">Terms of Service</a>, <a href="/privacy" target="_blank" class="text-blue-600 underline font-medium">Privacy Policy</a>, and <a href="/refund" target="_blank" class="text-blue-600 underline font-medium">Refund Policy</a>.
               </span>
@@ -995,17 +957,19 @@
   <footer class="py-8 bg-white border-t border-gray-200 text-center text-xs text-gray-500 mt-auto">
     <div class="max-w-6xl mx-auto px-6">
       <div class="flex flex-wrap justify-center gap-4 sm:gap-6 mb-3 font-medium">
+        <a href="/about" class="text-gray-600 hover:text-emerald-700 transition-colors">About</a>
         <a href="/refund" class="text-gray-600 hover:text-emerald-700 transition-colors">Refund Policy</a>
         <a href="/terms" class="text-gray-600 hover:text-emerald-700 transition-colors">Terms of Service</a>
         <a href="/privacy" class="text-gray-600 hover:text-emerald-700 transition-colors">Privacy Policy</a>
         <a href="/support" class="text-gray-600 hover:text-emerald-700 transition-colors">Support &amp; Help</a>
         <a href="#cookie-preferences" data-cookie-preferences="true" onclick="if(window.sweeprOpenCookiePreferences){window.sweeprOpenCookiePreferences();return false;}" class="text-gray-600 hover:text-emerald-700 transition-colors">Cookie Preferences</a>
       </div>
-      <p class="text-gray-400">&copy; 2026 SWEEPR Cleaner Inc. All rights reserved. SWEEPR Cleaner is an independent system optimization software.</p>
+      <p class="text-gray-400">&copy; 2026 Benjamin Cook t/a SWEEPR Cleaner. All rights reserved. SWEEPR Cleaner is independent system optimization software.</p>
+      <p class="text-gray-400 mt-1">Correspondence: 87 Upper Brighton Road, Worthing, West Sussex &middot; Direct developer support (<!--email_off--><a href="mailto:support@sweeprcleaner.com" class="underline hover:text-emerald-700">support@sweeprcleaner.com</a><!--/email_off-->) within 1 business day (UK time).</p>
     </div>
   </footer>
 
-  <!-- 30-SECOND INACTIVITY & EXIT-INTENT INTRODUCTORY OFFER POPUP MODAL -->
+  <!-- INACTIVITY & EXIT-INTENT INTRODUCTORY OFFER POPUP MODAL -->
   <div id="discountModal" class="hidden-modal fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
     <div class="modal-card bg-[#141820] text-white rounded-2xl max-w-2xl sm:max-w-3xl w-full p-6 sm:p-8 relative shadow-2xl border border-emerald-500/25 overflow-hidden">
       
@@ -1045,7 +1009,7 @@
               <div class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
               </div>
-              <span>Deep PC Cleanup, Speed Booster, App Uninstaller &amp; Private File Shredder</span>
+              <span>Deep PC Cleanup, Stale Dev &amp; Docker Inspection, App Uninstaller &amp; 7-Day Undo Quarantine</span>
             </li>
             <li class="flex items-center gap-2.5">
               <div class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
@@ -1096,44 +1060,12 @@
 
         </div>
 
-        <!-- Right Column: Laptop UI Mockup with Sweepr App Displayed -->
+        <!-- Right Column: Real SWEEPR Desktop UI Capture -->
         <div class="hidden md:block md:col-span-5">
-          <div class="laptop-frame">
-            <div class="laptop-screen">
-              <div class="laptop-notch"></div>
-              <!-- Inner App Window -->
-              <div class="bg-gray-900 rounded-lg p-3 text-white text-left font-sans">
-                <!-- App Header -->
-                <div class="flex items-center justify-between border-b border-gray-800 pb-2 mb-2">
-                  <div class="flex items-center gap-1.5">
-                    <img src="/logo-mint-glass.svg" width="14" height="14" class="w-3.5 h-3.5 rounded" alt="SWEEPR Cleaner">
-                    <span class="text-[9px] font-bold tracking-tight">SWEEPR CLEANER PRO</span>
-                  </div>
-                  <span class="text-[8px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold">ACTIVATED</span>
-                </div>
-                <!-- Status Circle -->
-                <div class="text-center py-2">
-                  <div class="w-12 h-12 mx-auto rounded-full bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center text-emerald-400 mb-1 shadow-inner">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                  </div>
-                  <div class="text-[10px] font-bold text-white">System 100% Optimized</div>
-                  <div class="text-[8px] text-gray-400">14.2 GB Junk Cleaned</div>
-                </div>
-                <!-- Mini Stats -->
-                <div class="grid grid-cols-2 gap-1.5 pt-1 text-[8px]">
-                  <div class="bg-gray-800/80 p-1.5 rounded">
-                    <div class="text-gray-400">Cache Cleared</div>
-                    <div class="text-emerald-400 font-bold">8.4 GB</div>
-                  </div>
-                  <div class="bg-gray-800/80 p-1.5 rounded">
-                    <div class="text-gray-400">Duplicates</div>
-                    <div class="text-emerald-400 font-bold">5.8 GB</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="laptop-base"></div>
-          </div>
+          <figure class="space-y-2">
+            <img src="/img/desktop-smart-scan.webp" alt="SWEEPR Cleaner Pro Smart Scan desktop dashboard showing deterministic cleanup categories" width="1280" height="800" loading="lazy" decoding="async" class="w-full h-auto rounded-xl border border-emerald-500/30 shadow-xl" />
+            <figcaption class="text-[11px] text-gray-400 text-center">SWEEPR Cleaner Pro · 6.76 MB Native Rust · Zero-Telemetry / Offline Mode</figcaption>
+          </figure>
         </div>
 
       </div>
@@ -1457,11 +1389,16 @@
           : `Try 1st Month for ${introFmt} →`;
       }
 
+      const perDevMoFmt = formatLocalAmount(Math.floor((p?.annualAmount ?? 4999) / 60));
+      const perDevText = `Covers 5 PCs, Macs & Phones — just ${perDevMoFmt} per device/month (vs $39.95/yr for 1 Mac on CleanMyMac)`;
       const annualPerDeviceCallout = document.getElementById('annualPerDeviceCallout');
       if (annualPerDeviceCallout) {
+        annualPerDeviceCallout.textContent = perDevText;
         if (plan === 'annual') annualPerDeviceCallout.classList.remove('hidden');
         else annualPerDeviceCallout.classList.add('hidden');
       }
+      const o2MobPerDevice = document.getElementById('o2MobileAnnualPerDevice');
+      if (o2MobPerDevice) o2MobPerDevice.textContent = perDevText;
 
       const productPriceTop = document.getElementById('productPriceTop');
       const productPriceSub = document.getElementById('productPriceSub');
@@ -2032,7 +1969,7 @@
       } else {
         col.classList.add('hidden');
         if (btn) btn.setAttribute('aria-expanded', 'false');
-        if (hint) hint.innerHTML = 'Tap to view 2 free bonuses &amp; included items &darr;';
+        if (hint) hint.innerHTML = 'Tap to view included features &amp; optional add-ons &darr;';
       }
     }
 
@@ -2099,6 +2036,7 @@
       // Check URL parameters for selected plan or add-ons
       const planParam = urlParams.get('plan');
       const offerParam = urlParams.get('offer');
+      const introParam = (urlParams.get('intro') || '').trim().toLowerCase();
       const variantParam = (urlParams.get('variant') || '').trim().toUpperCase();
       const errorParam = urlParams.get('error');
       const emailParam = urlParams.get('email');
@@ -2138,8 +2076,15 @@
       try { storedPlan = sessionStorage.getItem('sweepr_selected_plan'); } catch (e) {}
       const effectivePlan = planParam || (restoredDraft && restoredDraft.plan) || storedPlan;
 
-      if (offerParam === 'intro' || planParam === 'intro' || variantParam === 'B' || (restoredDraft && restoredDraft.isDiscountApplied)) {
-        activateDiscountOffer();
+      const explicitIntro =
+        offerParam === 'intro' ||
+        introParam === '1' ||
+        introParam === 'true' ||
+        planParam === 'intro' ||
+        variantParam === 'B';
+
+      if (explicitIntro || (!planParam && restoredDraft && restoredDraft.isDiscountApplied)) {
+        activateDiscountOffer(false);
       } else if (effectivePlan === 'six_month' || effectivePlan === '6month' || effectivePlan === 'sixmonth') {
         selectOrderPlan('six_month');
       } else if (effectivePlan === 'monthly') {
@@ -2149,24 +2094,9 @@
         selectOrderPlan('annual');
       }
 
-      // Wire exit-intent & inactivity rescue offer + A/B experiment assignment
+      // Wire exit-intent & inactivity rescue offer
       setupExitIntent();
       startInactivityTimer();
-      try {
-        fetch('/api/experiments/assign?experiment=order_intro_rescue_v1')
-          .then((r) => (r.ok ? r.json() : null))
-          .then((exp) => {
-            const assigned = exp?.assignments?.order_intro_rescue_v1?.variant || exp?.variant || 'A';
-            window.__SWEEPR_ORDER_EXPERIMENT__ = { experiment: 'order_intro_rescue_v1', variant: assigned };
-            if (assigned === 'B') {
-              const deskBar = document.getElementById('desktopIntroRescueBar');
-              const mobBar = document.getElementById('introRescueOfferBar');
-              if (deskBar) deskBar.classList.add('ring-2', 'ring-emerald-500/40');
-              if (mobBar) mobBar.classList.add('ring-2', 'ring-emerald-500/40');
-            }
-          })
-          .catch(() => {});
-      } catch (e) {}
 
       // Sync draft if ?email= prefilled the form or restoredDraft was loaded
       if (emailParam) {
@@ -2331,11 +2261,35 @@
       }
     }
 
-    async function handleGooglePayClick(cardPaymentMethod) {
+    function validateExplicitConsent() {
       const termsConsent = document.getElementById('termsConsent');
       const legalConsent = document.getElementById('legalConsent');
-      if (termsConsent) termsConsent.checked = true;
-      if (legalConsent) legalConsent.checked = true;
+      if (!termsConsent?.checked || !legalConsent?.checked) {
+        const firstUnchecked = !termsConsent?.checked ? termsConsent : legalConsent;
+        firstUnchecked?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstUnchecked?.focus();
+        showError('Please agree to both the recurring subscription terms and our Terms, Privacy & Refund Policies before completing your order.');
+        return false;
+      }
+      return true;
+    }
+
+    ['termsConsent', 'legalConsent'].forEach((id) => {
+      document.getElementById(id)?.addEventListener('change', () => {
+        const termsConsent = document.getElementById('termsConsent');
+        const legalConsent = document.getElementById('legalConsent');
+        if (termsConsent?.checked && legalConsent?.checked) {
+          const errBox = document.getElementById('checkoutError');
+          if (errBox) {
+            errBox.classList.add('hidden');
+            errBox.textContent = '';
+          }
+        }
+      });
+    });
+
+    async function handleGooglePayClick(cardPaymentMethod) {
+      if (!validateExplicitConsent()) return;
 
       // Prefer Stripe's domain-verified PaymentRequest sheet when ready
       if (paymentRequestInstance && canMakePaymentReady) {
@@ -2469,6 +2423,11 @@
                   height: '44px',
                   type: 'default'
                 }
+              }
+            });
+            prButton.on('click', (ev) => {
+              if (!validateExplicitConsent()) {
+                ev.preventDefault();
               }
             });
             prButton.mount(prBtnMount);
@@ -2647,7 +2606,7 @@
     }
 
     // 6. Activate Introductory Discount Offer (£1.99 1st Month, Renews at standard £9.99/mo)
-    function activateDiscountOffer() {
+    function activateDiscountOffer(shouldScroll = true) {
       closeDiscountModal();
       isDiscountApplied = true;
       const p = checkoutConfig && checkoutConfig.pricing;
@@ -2673,16 +2632,15 @@
       // Switch selection to monthly plan
       selectOrderPlan('monthly');
 
-      // Smooth scroll to checkout box
-      document.getElementById('checkoutBox')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Smooth scroll to checkout box when triggered interactively
+      if (shouldScroll) {
+        document.getElementById('checkoutBox')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
 
     // 7. Express Wallet Trigger (GPay / Apple Pay)
     function triggerExpressWallet() {
-      const termsConsent = document.getElementById('termsConsent');
-      const legalConsent = document.getElementById('legalConsent');
-      if (termsConsent) termsConsent.checked = true;
-      if (legalConsent) legalConsent.checked = true;
+      if (!validateExplicitConsent()) return;
 
       if (paymentRequestInstance && canMakePaymentReady) {
         try {
@@ -2690,14 +2648,11 @@
           return;
         } catch (err) {}
       }
-      triggerCheckout('wallet');
+      triggerCheckout('wallet', true);
     }
 
     function triggerApplePay() {
-      const termsConsent = document.getElementById('termsConsent');
-      const legalConsent = document.getElementById('legalConsent');
-      if (termsConsent) termsConsent.checked = true;
-      if (legalConsent) legalConsent.checked = true;
+      if (!validateExplicitConsent()) return;
 
       if (paymentRequestInstance && canMakePaymentReady) {
         try {
@@ -2709,7 +2664,7 @@
         showError('Apple Pay requires Safari on an iPhone, iPad, or Mac with Apple Wallet enabled. Please use Google Pay, PayPal, or pay by card below.');
         return;
       }
-      triggerCheckout('wallet');
+      triggerCheckout('wallet', true);
     }
 
     // 8. Main Form Submission & Checkout Flow (Direct PayPal Popup / Local Mandate / SEPA IBAN / Wallet / Card)
@@ -2718,29 +2673,19 @@
       errBox.classList.add('hidden');
       errBox.textContent = '';
 
-      const termsConsent = document.getElementById('termsConsent');
-      const legalConsent = document.getElementById('legalConsent');
+      if (!validateExplicitConsent()) return;
+
       const emailInput = document.getElementById('email');
       const email = emailInput ? emailInput.value.trim() : '';
       const isRedirectMethod = ['paypal', 'revolut_pay', 'amazon_pay', 'ideal', 'bancontact', 'cashapp', 'kakao_pay', 'naver_pay'].includes(method);
 
-      // For bottom form checkout, require consents and email upfront. For top 1-click Express buttons, allow immediate click.
       if (!isExpressClick && method !== 'paypal') {
-        if (!termsConsent.checked || !legalConsent.checked) {
-          if (!termsConsent.checked) termsConsent.focus();
-          else legalConsent.focus();
-          showError('Please agree to the subscription terms, Terms of Service, and Privacy Policy to proceed.');
-          return;
-        }
         if (!email || !email.includes('@')) {
           emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
           emailInput.focus();
           showError('Please enter your email address so we can deliver your SWEEPR Cleaner Pro license.');
           return;
         }
-      } else {
-        if (termsConsent) termsConsent.checked = true;
-        if (legalConsent) legalConsent.checked = true;
       }
 
       const rawCardName = (document.getElementById('cardName')?.value || '').trim();
@@ -3341,7 +3286,7 @@
       if (!email || email === lastCapturedLeadEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
       lastCapturedLeadEmail = email;
       const name = (nameEl?.value || '').trim() || undefined;
-      const country = (typeof activePricing !== 'undefined' && activePricing?.country) ? activePricing.country : undefined;
+      const country = checkoutConfig?.country || checkoutConfig?.pricing?.country || undefined;
       fetch('/api/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

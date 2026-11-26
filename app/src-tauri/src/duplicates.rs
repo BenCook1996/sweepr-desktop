@@ -57,13 +57,294 @@ pub struct DiskBreakdownItem {
     pub files: u64,
 }
 
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
+pub struct DiskTreeNode {
+    pub name: String,
+    pub path: String,
+    pub bytes: u64,
+    pub files: u64,
+    pub kind: String, // "dir" | "file" | "other"
+    pub children: Vec<DiskTreeNode>,
+}
+
 #[derive(Serialize, Clone)]
 pub struct LargeFilesReport {
+    pub scanned_dir: String,
     pub total_scanned_bytes: u64,
     pub total_scanned_files: u64,
     pub top_files: Vec<LargeFileEntry>,
     pub by_extension: Vec<DiskBreakdownItem>,
     pub by_folder: Vec<DiskBreakdownItem>,
+    pub folder_tree: Option<DiskTreeNode>,
+}
+
+#[derive(Serialize, Clone, Debug, Default, PartialEq, Eq)]
+pub struct MacosApfsSpaceInfo {
+    pub supported: bool,
+    pub purgeable_bytes: u64,
+    pub local_snapshots: Vec<String>,
+    pub snapshot_count: usize,
+    pub note: String,
+}
+
+const TREE_MAX_DEPTH: usize = 4;
+const TREE_MAX_CHILDREN: usize = 14;
+const TREE_FILE_CHILD_TRACK_LIMIT: usize = 48;
+
+#[derive(Default)]
+struct TreeAcc {
+    name: String,
+    path: String,
+    bytes: u64,
+    files: u64,
+    kind: String,
+    overflow_bytes: u64,
+    overflow_files: u64,
+    children: HashMap<String, TreeAcc>,
+}
+
+impl TreeAcc {
+    fn new_dir(name: String, path: String) -> Self {
+        Self {
+            name,
+            path,
+            bytes: 0,
+            files: 0,
+            kind: "dir".to_string(),
+            overflow_bytes: 0,
+            overflow_files: 0,
+            children: HashMap::new(),
+        }
+    }
+
+    fn add_rel_file(&mut self, current_dir: &Path, rel_comps: &[String], size: u64, depth: usize, max_depth: usize) {
+        self.bytes += size;
+        self.files += 1;
+        if rel_comps.is_empty() || depth >= max_depth {
+            if !rel_comps.is_empty() {
+                self.overflow_bytes += size;
+                self.overflow_files += 1;
+            }
+            return;
+        }
+        let seg = &rel_comps[0];
+        if rel_comps.len() == 1 {
+            let key = format!("f:{seg}");
+            if let Some(child) = self.children.get_mut(&key) {
+                child.bytes += size;
+                child.files += 1;
+            } else if self.children.len() < TREE_FILE_CHILD_TRACK_LIMIT {
+                let file_path = current_dir.join(seg);
+                self.children.insert(
+                    key,
+                    TreeAcc {
+                        name: seg.clone(),
+                        path: file_path.to_string_lossy().into_owned(),
+                        bytes: size,
+                        files: 1,
+                        kind: "file".to_string(),
+                        overflow_bytes: 0,
+                        overflow_files: 0,
+                        children: HashMap::new(),
+                    },
+                );
+            } else {
+                self.overflow_bytes += size;
+                self.overflow_files += 1;
+            }
+        } else {
+            let key = format!("d:{seg}");
+            let next_dir = current_dir.join(seg);
+            let child = self.children.entry(key).or_insert_with(|| {
+                TreeAcc::new_dir(seg.clone(), next_dir.to_string_lossy().into_owned())
+            });
+            child.add_rel_file(&next_dir, &rel_comps[1..], size, depth + 1, max_depth);
+        }
+    }
+
+    fn into_node(self, max_children: usize) -> DiskTreeNode {
+        if self.children.is_empty() {
+            return DiskTreeNode {
+                name: self.name,
+                path: self.path,
+                bytes: self.bytes,
+                files: self.files,
+                kind: self.kind,
+                children: Vec::new(),
+            };
+        }
+
+        let mut built_children: Vec<DiskTreeNode> = self
+            .children
+            .into_values()
+            .map(|c| c.into_node(max_children))
+            .filter(|c| c.bytes > 0 || c.files > 0)
+            .collect();
+        built_children.sort_by(|a, b| b.bytes.cmp(&a.bytes).then_with(|| a.name.cmp(&b.name)));
+
+        let mut other_bytes = self.overflow_bytes;
+        let mut other_files = self.overflow_files;
+        if built_children.len() > max_children {
+            for extra in built_children.drain(max_children..) {
+                other_bytes += extra.bytes;
+                other_files += extra.files;
+            }
+        }
+        if other_bytes > 0 || other_files > 0 {
+            built_children.push(DiskTreeNode {
+                name: "Other items".to_string(),
+                path: self.path.clone(),
+                bytes: other_bytes,
+                files: other_files,
+                kind: "other".to_string(),
+                children: Vec::new(),
+            });
+        }
+
+        DiskTreeNode {
+            name: self.name,
+            path: self.path,
+            bytes: self.bytes,
+            files: self.files,
+            kind: self.kind,
+            children: built_children,
+        }
+    }
+}
+
+#[allow(dead_code)]
+pub fn build_disk_tree(
+    root: &Path,
+    file_entries: &[(PathBuf, u64)],
+    max_depth: usize,
+    max_children: usize,
+) -> DiskTreeNode {
+    let root_name = root
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .filter(|n| !n.is_empty())
+        .unwrap_or_else(|| root.to_string_lossy().into_owned());
+    let mut acc = TreeAcc::new_dir(root_name, root.to_string_lossy().into_owned());
+    for (path, size) in file_entries {
+        let rel_comps: Vec<String> = path
+            .strip_prefix(root)
+            .unwrap_or(path.as_path())
+            .components()
+            .filter_map(|c| match c {
+                std::path::Component::Normal(s) => Some(s.to_string_lossy().into_owned()),
+                _ => None,
+            })
+            .collect();
+        acc.add_rel_file(root, &rel_comps, *size, 0, max_depth);
+    }
+    acc.into_node(max_children)
+}
+
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+pub fn parse_diskutil_apfs_purgeable(raw: &str) -> Option<u64> {
+    for line in raw.lines() {
+        let lower = line.to_ascii_lowercase();
+        if !lower.contains("purgeable") {
+            continue;
+        }
+        // Look for "(123456789 Bytes)" or "123456789 Bytes"
+        for seg in line.split('(') {
+            let trimmed = seg.trim();
+            if let Some(pos) = trimmed.to_ascii_lowercase().find("bytes") {
+                let num_part: String = trimmed[..pos]
+                    .chars()
+                    .filter(|c| c.is_ascii_digit())
+                    .collect();
+                if !num_part.is_empty() {
+                    if let Ok(val) = num_part.parse::<u64>() {
+                        return Some(val);
+                    }
+                }
+            }
+        }
+        // Fallback: parse e.g. "12.5 GB" or "500 MB" after ':'
+        if let Some((_, rhs)) = line.split_once(':') {
+            let tokens: Vec<&str> = rhs.split_whitespace().collect();
+            if tokens.len() >= 2 {
+                if let Ok(num) = tokens[0].replace(',', "").parse::<f64>() {
+                    if num >= 0.0 {
+                        let mult = match tokens[1].to_ascii_uppercase().as_str() {
+                            "TB" => Some(1_000_000_000_000.0),
+                            "TIB" => Some(1_099_511_627_776.0),
+                            "GB" => Some(1_000_000_000.0),
+                            "GIB" => Some(1_073_741_824.0),
+                            "MB" => Some(1_000_000.0),
+                            "MIB" => Some(1_048_576.0),
+                            "KB" => Some(1_000.0),
+                            "KIB" => Some(1024.0),
+                            "B" | "BYTES" => Some(1.0),
+                            _ => None,
+                        };
+                        if let Some(m) = mult {
+                            return Some((num * m).round() as u64);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+pub fn parse_tmutil_local_snapshots(raw: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    for line in raw.lines() {
+        for token in line.split_whitespace() {
+            let cleaned = token.trim_matches(|c: char| matches!(c, '"' | '\'' | ',' | ';'));
+            if cleaned.starts_with("com.apple.TimeMachine.") && !out.iter().any(|s| s == cleaned) {
+                out.push(cleaned.to_string());
+            }
+        }
+    }
+    out
+}
+
+#[cfg(target_os = "macos")]
+fn get_macos_apfs_space_info_blocking() -> MacosApfsSpaceInfo {
+    let diskutil_raw = std::process::Command::new("diskutil")
+        .args(["info", "/"])
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
+        .unwrap_or_default();
+    let tmutil_raw = std::process::Command::new("tmutil")
+        .args(["listlocalsnapshots", "/"])
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
+        .unwrap_or_default();
+    let purgeable_bytes = parse_diskutil_apfs_purgeable(&diskutil_raw).unwrap_or(0);
+    let local_snapshots = parse_tmutil_local_snapshots(&tmutil_raw);
+    let snapshot_count = local_snapshots.len();
+    MacosApfsSpaceInfo {
+        supported: true,
+        purgeable_bytes,
+        local_snapshots,
+        snapshot_count,
+        note: "macOS manages APFS purgeable space and local Time Machine snapshots automatically and reclaims them on demand when free disk space is needed.".to_string(),
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn get_macos_apfs_space_info_blocking() -> MacosApfsSpaceInfo {
+    MacosApfsSpaceInfo {
+        supported: false,
+        purgeable_bytes: 0,
+        local_snapshots: Vec::new(),
+        snapshot_count: 0,
+        note: "APFS purgeable space and local Time Machine snapshots are only available on macOS.".to_string(),
+    }
+}
+
+#[tauri::command]
+pub async fn macos_apfs_space_info() -> AppResult<MacosApfsSpaceInfo> {
+    tauri::async_runtime::spawn_blocking(get_macos_apfs_space_info_blocking)
+        .await
+        .map_err(|e| AppError::Other(format!("background task failed: {e}")))
 }
 
 fn partial_hash_file(path: &Path, size: u64) -> Option<[u8; 32]> {
@@ -117,7 +398,10 @@ pub fn is_protected_system_path(path: &Path) -> bool {
         .to_ascii_lowercase();
 
     if norm.contains(r"\microsoft\windows\start menu\programs\startup")
+        || norm.contains(r"\com.sweepr.cleaner")
         || norm.contains(r"\com.sweepr.app")
+        || norm.ends_with(r"\portable_data")
+        || norm.contains(r"\portable_data\")
         || norm.ends_with(r"\appdata\roaming\sweepr")
         || norm.contains(r"\appdata\roaming\sweepr\")
         || norm.ends_with(r"\appdata\local\sweepr")
@@ -131,6 +415,7 @@ pub fn is_protected_system_path(path: &Path) -> bool {
         .flatten()
     {
         for sub in [
+            "com.sweepr.cleaner",
             "com.sweepr.app",
             "sweepr",
             r"Microsoft\Windows\Start Menu\Programs\Startup",
@@ -714,6 +999,12 @@ pub fn scan_large_files_in(
     let mut heap: BinaryHeap<Reverse<(u64, u64, PathBuf)>> = BinaryHeap::new();
     let mut ext_map: HashMap<String, (u64, u64)> = HashMap::new();
     let mut folder_map: HashMap<String, (u64, u64)> = HashMap::new();
+    let root_label = root
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .filter(|n| !n.is_empty())
+        .unwrap_or_else(|| root.to_string_lossy().into_owned());
+    let mut tree_acc = TreeAcc::new_dir(root_label, root.to_string_lossy().into_owned());
 
     let walker = WalkDir::new(root)
         .follow_links(false)
@@ -750,19 +1041,25 @@ pub fn scan_large_files_in(
         ext_entry.0 += size;
         ext_entry.1 += 1;
 
-        let top_sub = path
+        let rel_comps: Vec<String> = path
             .strip_prefix(root)
             .ok()
-            .and_then(|rel| {
-                let mut comps = rel.components();
-                let first = comps.next()?;
-                if comps.next().is_some() {
-                    Some(first.as_os_str().to_string_lossy().into_owned())
-                } else {
-                    Some("(Root files)".into())
-                }
+            .map(|rel| {
+                rel.components()
+                    .filter_map(|c| match c {
+                        std::path::Component::Normal(s) => Some(s.to_string_lossy().into_owned()),
+                        _ => None,
+                    })
+                    .collect()
             })
-            .unwrap_or_else(|| "(Root files)".into());
+            .unwrap_or_default();
+        tree_acc.add_rel_file(root, &rel_comps, size, 0, TREE_MAX_DEPTH);
+
+        let top_sub = if rel_comps.len() >= 2 {
+            rel_comps[0].clone()
+        } else {
+            "(Root files)".into()
+        };
         let folder_entry = folder_map.entry(top_sub).or_insert((0, 0));
         folder_entry.0 += size;
         folder_entry.1 += 1;
@@ -823,11 +1120,13 @@ pub fn scan_large_files_in(
     by_folder.truncate(8);
 
     Ok(LargeFilesReport {
+        scanned_dir: root.to_string_lossy().into_owned(),
         total_scanned_bytes,
         total_scanned_files,
         top_files,
         by_extension,
         by_folder,
+        folder_tree: Some(tree_acc.into_node(TREE_MAX_CHILDREN)),
     })
 }
 
@@ -1142,6 +1441,8 @@ mod tests {
         //Protected system/startup paths must be recognized
         assert!(is_protected_system_path(Path::new(r"C:\Users\User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\evil.exe")));
         assert!(is_protected_system_path(Path::new(r"C:\Users\User\AppData\Roaming\com.sweepr.app\account.json")));
+        assert!(is_protected_system_path(Path::new(r"C:\Users\User\AppData\Roaming\com.sweepr.cleaner\account.json")));
+        assert!(is_protected_system_path(Path::new(r"D:\Tools\SWEEPR\portable_data\entitlement.jws")));
 
         let moved_to = move_large_file_blocking(
             &d,
@@ -1216,6 +1517,72 @@ mod tests {
         assert!(sim.photo_details[1].hamming_distance <= 8);
 
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn disk_tree_aggregates_depths_and_caps_children() {
+        let dir = std::env::temp_dir().join(format!("sweepr-tree-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("a/b/c/d/e")).unwrap();
+        std::fs::write(dir.join("a/b/c/d/e/deep.bin"), vec![b'd'; 5000]).unwrap();
+        for idx in 0..18 {
+            let sub = dir.join(format!("sub_{idx:02}"));
+            std::fs::create_dir_all(&sub).unwrap();
+            std::fs::write(sub.join("data.bin"), vec![b'x'; (idx + 1) * 100]).unwrap();
+        }
+        std::fs::write(dir.join("root_file.iso"), vec![b'r'; 2000]).unwrap();
+
+        let d = dir.to_string_lossy().to_string();
+        let rep = scan_large_files_in(&d, 1024, MAX_FILES, &[]).unwrap();
+        let tree = rep.folder_tree.expect("folder_tree must be populated");
+        assert_eq!(tree.bytes, rep.total_scanned_bytes);
+        assert_eq!(tree.files, rep.total_scanned_files);
+        assert_eq!(tree.kind, "dir");
+        // 14 top children + 1 "Other items" = 15
+        assert_eq!(tree.children.len(), TREE_MAX_CHILDREN + 1);
+        assert_eq!(tree.children.last().unwrap().name, "Other items");
+        assert_eq!(tree.children.last().unwrap().kind, "other");
+        let children_sum: u64 = tree.children.iter().map(|c| c.bytes).sum();
+        assert_eq!(children_sum, tree.bytes);
+
+        // Verify depth cap: a/b/c/d has total bytes 5000 and no children deeper than max_depth=4
+        let a = tree.children.iter().find(|c| c.name == "a").unwrap();
+        let b = a.children.iter().find(|c| c.name == "b").unwrap();
+        let c = b.children.iter().find(|c| c.name == "c").unwrap();
+        let d_node = c.children.iter().find(|c| c.name == "d").unwrap();
+        assert_eq!(d_node.bytes, 5000);
+        assert!(d_node.children.is_empty());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn macos_apfs_parsers_extract_purgeable_and_snapshots() {
+        let diskutil_sample = r#"
+   Device Identifier:        disk3s1s1
+   Volume Name:              Macintosh HD
+   Purgeable Space:          18.42 GB (18423115776 Bytes) (14.2% free)
+"#;
+        assert_eq!(parse_diskutil_apfs_purgeable(diskutil_sample), Some(18_423_115_776));
+        assert_eq!(
+            parse_diskutil_apfs_purgeable("APFS Volume Purgeable: 2.5 GiB"),
+            Some((2.5 * 1_073_741_824.0) as u64)
+        );
+        assert_eq!(parse_diskutil_apfs_purgeable("Volume Name: Macintosh HD"), None);
+
+        let tmutil_sample = "\
+Snapshots for disk /:
+com.apple.TimeMachine.2026-11-25-120000.local
+com.apple.TimeMachine.2026-11-25-180000.local
+com.apple.TimeMachine.2026-11-25-180000.local
+";
+        assert_eq!(
+            parse_tmutil_local_snapshots(tmutil_sample),
+            vec![
+                "com.apple.TimeMachine.2026-11-25-120000.local".to_string(),
+                "com.apple.TimeMachine.2026-11-25-180000.local".to_string(),
+            ]
+        );
     }
 }
 

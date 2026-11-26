@@ -38,7 +38,7 @@ const RULE_ID_TO_SLUG_HINTS: Record<string, string[]> = {
   windows_prefetch: ["windows-prefetch"],
   windows_update_cache: ["windows-update-download-cache", "delivery-optimization-cache"],
   directx_shader_cache: ["directx-shader-cache", "nvidia-dx-cache", "amd-dx-cache"],
-  thumbnails: ["windows-thumbnail-cache"],
+  thumbnails: ["explorer-thumbnail-cache", "windows-thumbnail-cache"],
   crash_dumps: ["windows-memory-dump", "windows-error-reporting"],
   chrome_cache: ["chrome-service-worker-cache", "google-chrome-cache"],
   edge_cache: ["microsoft-edge-cache", "webview2-ebwebview-cache"],

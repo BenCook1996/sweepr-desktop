@@ -24,10 +24,11 @@ pub struct AppState {
     pub data_dir: PathBuf,
     pub local_data_dir: PathBuf,
     pub licensing: Licensing,
+    pub wipe_running: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    pub wipe_cancel: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    pub initial_scan_dir: std::sync::Mutex<Option<String>>,
 }
 
-/// Lifetime 500 MB Free Starter Clean allowance for `free: true` rules (`temp`).
-pub const FREE_STARTER_ALLOWANCE_BYTES: u64 = 500 * 1024 * 1024;
 const FREE_ALLOWANCE_FILENAME: &str = "free_allowance.json";
 static FREE_ALLOWANCE_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
@@ -47,6 +48,8 @@ pub struct FreeAllowanceStatus {
     pub remaining_bytes: u64,
     pub files_cleaned: u64,
     pub exhausted: bool,
+    #[serde(default)]
+    pub unlimited: bool,
     pub updated_at: u64,
 }
 
@@ -68,14 +71,13 @@ pub fn save_free_allowance(local_data_dir: &Path, rec: &FreeAllowanceRecord) -> 
 }
 
 pub fn compute_free_allowance_status(rec: &FreeAllowanceRecord) -> FreeAllowanceStatus {
-    let used = rec.used_bytes.min(FREE_STARTER_ALLOWANCE_BYTES);
-    let remaining = FREE_STARTER_ALLOWANCE_BYTES.saturating_sub(used);
     FreeAllowanceStatus {
-        used_bytes: used,
-        limit_bytes: FREE_STARTER_ALLOWANCE_BYTES,
-        remaining_bytes: remaining,
+        used_bytes: rec.used_bytes,
+        limit_bytes: 0,
+        remaining_bytes: 0,
         files_cleaned: rec.files_cleaned,
-        exhausted: remaining == 0,
+        exhausted: false,
+        unlimited: true,
         updated_at: rec.updated_at,
     }
 }
@@ -87,7 +89,7 @@ pub fn get_free_allowance(state: State<'_, AppState>) -> FreeAllowanceStatus {
     compute_free_allowance_status(&rec)
 }
 
-fn execute_free_starter_clean(
+pub(crate) fn execute_free_clean(
     selected: &[rules::Rule],
     category_ids: Vec<String>,
     data_dir: &Path,
@@ -99,40 +101,28 @@ fn execute_free_starter_clean(
 
     let _guard = FREE_ALLOWANCE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let mut rec = load_free_allowance(local_data_dir);
-    let mut remaining = FREE_STARTER_ALLOWANCE_BYTES.saturating_sub(rec.used_bytes);
-    if remaining == 0 {
-        return Err(AppError::PaymentRequired);
-    }
 
     let exclusions = safety::load_exclusions(data_dir);
     let mut reports = Vec::with_capacity(selected.len());
     for rule in selected {
-        // Always move Free Starter Clean items into 7-Day Quarantine (`use_trash = false`).
-        let rep = cleaner::clean_with_exclusions_quarantine_and_budget(
+        // Free tier cleans unlimited temp & standard browser caches to OS Recycle Bin/Trash (`use_trash = true`),
+        // keeping 7-Day Undo Quarantine and deep categories Pro-only.
+        let rep = cleaner::clean_with_exclusions_quarantine_and_options(
             rule,
-            false,
+            true,
             &exclusions,
             Some(data_dir),
-            Some(remaining),
+            None,
+            cleaner::QUARANTINE_DEFAULT_BUDGET_BYTES,
         );
-        remaining = remaining.saturating_sub(rep.bytes_freed);
         reports.push(rep);
     }
 
     let total_freed: u64 = reports.iter().map(|r| r.bytes_freed).sum();
     let total_removed: u64 = reports.iter().map(|r| r.files_removed).sum();
-    let total_skipped: u64 = reports.iter().map(|r| r.files_skipped).sum();
-
-    if total_freed == 0 && total_removed == 0 && total_skipped > 0 {
-        // Remaining eligible files on disk exceed the remaining free starter budget.
-        return Err(AppError::PaymentRequired);
-    }
 
     if total_freed > 0 || total_removed > 0 {
-        rec.used_bytes = rec
-            .used_bytes
-            .saturating_add(total_freed)
-            .min(FREE_STARTER_ALLOWANCE_BYTES);
+        rec.used_bytes = rec.used_bytes.saturating_add(total_freed);
         rec.files_cleaned = rec.files_cleaned.saturating_add(total_removed);
         rec.updated_at = now_secs();
         let _ = save_free_allowance(local_data_dir, &rec);
@@ -143,7 +133,7 @@ fn execute_free_starter_clean(
             bytes_freed: total_freed,
             files_removed: total_removed,
             categories: category_ids,
-            mode: "Sweepr Quarantine (7d undo)".into(),
+            mode: "Recycle Bin".into(),
         };
         let _ = append_cleaning_history(data_dir, entry);
     }
@@ -196,10 +186,11 @@ fn append_cleaning_history(data_dir: &Path, entry: CleanHistoryEntry) -> std::io
 
 #[tauri::command]
 pub async fn scan_start(app: AppHandle, state: State<'_, AppState>) -> AppResult<ScanReport> {
-    let exclusions = safety::load_exclusions(&state.data_dir);
-    let disabled = safety::load_disabled_rules(&state.data_dir);
+    let data_dir = state.data_dir.clone();
+    let exclusions = safety::load_exclusions(&data_dir);
+    let disabled = safety::load_disabled_rules(&data_dir);
     tauri::async_runtime::spawn_blocking(move || {
-        let rules: Vec<rules::Rule> = rules::all()
+        let rules: Vec<rules::Rule> = rules::all_with_custom(&data_dir)
             .into_iter()
             .filter(|r| !disabled.contains(&r.id.to_ascii_lowercase()))
             .collect();
@@ -209,6 +200,30 @@ pub async fn scan_start(app: AppHandle, state: State<'_, AppState>) -> AppResult
     })
     .await
     .map_err(join_err)
+}
+
+pub(crate) async fn resolve_clean_is_licensed(
+    licensing: &crate::licensing::Licensing,
+    data_dir: &Path,
+    all_free: bool,
+) -> AppResult<bool> {
+    if !all_free {
+        licensing.require_active().await?;
+        Ok(true)
+    } else if licensing.has_cached_active_token().await {
+        Ok(true)
+    } else if is_telemetry_enabled(data_dir) && licensing.has_local_account().await {
+        Ok(matches!(
+            tokio::time::timeout(
+                std::time::Duration::from_millis(1500),
+                licensing.require_active(),
+            )
+            .await,
+            Ok(Ok(()))
+        ))
+    } else {
+        Ok(false)
+    }
 }
 
 #[tauri::command]
@@ -223,32 +238,19 @@ pub async fn clean_categories(
         if disabled.contains(&id.trim().to_ascii_lowercase()) {
             continue;
         }
-        let rule = rules::find(id).ok_or_else(|| AppError::NotFound(id.clone()))?;
+        let rule = rules::find_with_custom(&state.data_dir, id)
+            .ok_or_else(|| AppError::NotFound(id.clone()))?;
         selected.push(rule);
     }
 
     let all_free = !selected.is_empty() && selected.iter().all(|r| r.free);
-    let is_licensed = if !all_free {
-        state.licensing.require_active().await?;
-        true
-    } else if state.licensing.has_cached_active_token().await {
-        true
-    } else {
-        matches!(
-            tokio::time::timeout(
-                std::time::Duration::from_millis(1500),
-                state.licensing.require_active(),
-            )
-            .await,
-            Ok(Ok(()))
-        )
-    };
+    let is_licensed = resolve_clean_is_licensed(&state.licensing, &state.data_dir, all_free).await?;
 
     if !is_licensed {
         let data_dir_clone = state.data_dir.clone();
         let local_data_dir_clone = state.local_data_dir.clone();
         return tauri::async_runtime::spawn_blocking(move || {
-            execute_free_starter_clean(&selected, ids, &data_dir_clone, &local_data_dir_clone)
+            execute_free_clean(&selected, ids, &data_dir_clone, &local_data_dir_clone)
         })
         .await
         .map_err(join_err)?;
@@ -256,10 +258,20 @@ pub async fn clean_categories(
 
     let exclusions = safety::load_exclusions(&state.data_dir);
     let data_dir_clone = state.data_dir.clone();
+    let q_budget = load_ui_preferences(&state.data_dir).quarantine_budget_bytes;
     let reports = tauri::async_runtime::spawn_blocking(move || {
         selected
             .iter()
-            .map(|r| cleaner::clean_with_exclusions_and_quarantine(r, use_trash, &exclusions, Some(&data_dir_clone)))
+            .map(|r| {
+                cleaner::clean_with_exclusions_quarantine_and_options(
+                    r,
+                    use_trash,
+                    &exclusions,
+                    Some(&data_dir_clone),
+                    None,
+                    q_budget,
+                )
+            })
             .collect::<Vec<CleanReport>>()
     })
     .await
@@ -285,6 +297,12 @@ pub async fn clean_categories(
 #[tauri::command]
 pub fn list_quarantine(state: State<'_, AppState>) -> Vec<QuarantineEntry> {
     cleaner::list_quarantine_entries(&state.data_dir)
+}
+
+#[tauri::command]
+pub fn get_quarantine_status(state: State<'_, AppState>) -> cleaner::QuarantineStatus {
+    let budget = load_ui_preferences(&state.data_dir).quarantine_budget_bytes;
+    cleaner::quarantine_status(&state.data_dir, budget)
 }
 
 #[tauri::command]
@@ -587,16 +605,47 @@ pub struct RuleDefinitionInfo {
 }
 
 #[tauri::command]
-pub fn list_rule_definitions() -> Vec<RuleDefinitionInfo> {
-    rules::all()
+pub fn list_rule_definitions(state: State<'_, AppState>) -> Vec<RuleDefinitionInfo> {
+    rules::all_with_custom(&state.data_dir)
         .into_iter()
         .map(|r| RuleDefinitionInfo {
-            id: r.id.to_string(),
-            name: r.name.into(),
-            description: r.description.into(),
+            id: r.id,
+            name: r.name,
+            description: r.description,
             free: r.free,
         })
         .collect()
+}
+
+#[tauri::command]
+pub fn list_custom_rules(state: State<'_, AppState>) -> AppResult<Vec<rules::CustomRuleView>> {
+    Ok(rules::list_custom_rules_in(&state.data_dir))
+}
+
+#[tauri::command]
+pub fn validate_custom_rule(
+    state: State<'_, AppState>,
+    rule: rules::CustomRuleInput,
+) -> AppResult<rules::CustomRuleValidation> {
+    Ok(rules::validate_custom_rule_in(&state.data_dir, &rule))
+}
+
+#[tauri::command]
+pub fn import_custom_rules(
+    state: State<'_, AppState>,
+    json: String,
+    replace: Option<bool>,
+) -> AppResult<Vec<rules::CustomRuleView>> {
+    rules::import_custom_rules_in(&state.data_dir, &json, replace.unwrap_or(false))
+        .map_err(AppError::Other)
+}
+
+#[tauri::command]
+pub fn remove_custom_rule(
+    state: State<'_, AppState>,
+    id: String,
+) -> AppResult<Vec<rules::CustomRuleView>> {
+    rules::remove_custom_rule_in(&state.data_dir, &id).map_err(AppError::Other)
 }
 
 #[tauri::command]
@@ -2137,6 +2186,10 @@ pub struct UiPreferences {
     pub language: String,
     #[serde(default)]
     pub sidebar_collapsed: bool,
+    #[serde(default = "default_quarantine_budget_bytes")]
+    pub quarantine_budget_bytes: u64,
+    #[serde(default)]
+    pub telemetry_enabled: bool,
 }
 
 fn default_theme_light() -> String {
@@ -2147,18 +2200,28 @@ fn default_lang_en() -> String {
     "en".to_string()
 }
 
+fn default_quarantine_budget_bytes() -> u64 {
+    cleaner::QUARANTINE_DEFAULT_BUDGET_BYTES
+}
+
 impl Default for UiPreferences {
     fn default() -> Self {
         Self {
             theme: default_theme_light(),
             language: default_lang_en(),
             sidebar_collapsed: false,
+            quarantine_budget_bytes: default_quarantine_budget_bytes(),
+            telemetry_enabled: false,
         }
     }
 }
 
 fn ui_preferences_file(data_dir: &Path) -> PathBuf {
     data_dir.join("ui_preferences.json")
+}
+
+pub fn is_telemetry_enabled(data_dir: &Path) -> bool {
+    load_ui_preferences(data_dir).telemetry_enabled
 }
 
 pub fn load_ui_preferences(data_dir: &Path) -> UiPreferences {
@@ -2178,6 +2241,7 @@ pub fn load_ui_preferences(data_dir: &Path) -> UiPreferences {
     } else {
         "en".to_string()
     };
+    prefs.quarantine_budget_bytes = cleaner::clamp_quarantine_budget(prefs.quarantine_budget_bytes);
     prefs
 }
 
@@ -2198,6 +2262,8 @@ pub fn save_ui_preferences_to(data_dir: &Path, prefs: &UiPreferences) -> AppResu
             }
         },
         sidebar_collapsed: prefs.sidebar_collapsed,
+        quarantine_budget_bytes: cleaner::clamp_quarantine_budget(prefs.quarantine_budget_bytes),
+        telemetry_enabled: prefs.telemetry_enabled,
     };
     let json = serde_json::to_string_pretty(&normalized).map_err(|e| AppError::Other(e.to_string()))?;
     std::fs::write(ui_preferences_file(data_dir), json).map_err(|e| AppError::Other(e.to_string()))?;
@@ -2215,6 +2281,8 @@ pub fn save_ui_preferences(
     theme: Option<String>,
     language: Option<String>,
     sidebar_collapsed: Option<bool>,
+    quarantine_budget_bytes: Option<u64>,
+    telemetry_enabled: Option<bool>,
 ) -> AppResult<UiPreferences> {
     let mut current = load_ui_preferences(&state.data_dir);
     if let Some(t) = theme {
@@ -2225,6 +2293,12 @@ pub fn save_ui_preferences(
     }
     if let Some(sc) = sidebar_collapsed {
         current.sidebar_collapsed = sc;
+    }
+    if let Some(qb) = quarantine_budget_bytes {
+        current.quarantine_budget_bytes = qb;
+    }
+    if let Some(te) = telemetry_enabled {
+        current.telemetry_enabled = te;
     }
     save_ui_preferences_to(&state.data_dir, &current)
 }
@@ -2297,30 +2371,32 @@ pub fn app_info(app: AppHandle, state: State<'_, AppState>) -> AppInfo {
     if installer_mode && !ui_preferences_file(&state.data_dir).exists() {
         let _ = save_ui_preferences_to(&state.data_dir, &UiPreferences::default());
     }
+    let preferences = load_ui_preferences(&state.data_dir);
     let flag_path = state.data_dir.join("installed_v1.flag");
     if !installer_mode && !flag_path.exists() {
         let _ = std::fs::create_dir_all(&state.data_dir);
         let _ = std::fs::write(&flag_path, b"1");
-        let api_url = state.licensing.api_url().to_string();
-        let device_id = state.licensing.device_id().to_string();
-        let version = app.package_info().version.to_string();
-        let data_dir = state.data_dir.clone();
-        let props = serde_json::json!({
-            "source": "first_run_launch",
-        });
-        tauri::async_runtime::spawn(async move {
-            let _ = dispatch_telemetry_event_with_dir(
-                &api_url,
-                &device_id,
-                &version,
-                "app_installed",
-                Some(props),
-                Some(&data_dir),
-            )
-            .await;
-        });
+        if preferences.telemetry_enabled {
+            let api_url = state.licensing.api_url().to_string();
+            let device_id = state.licensing.device_id().to_string();
+            let version = app.package_info().version.to_string();
+            let data_dir = state.data_dir.clone();
+            let props = serde_json::json!({
+                "source": "first_run_launch",
+            });
+            tauri::async_runtime::spawn(async move {
+                let _ = dispatch_telemetry_event_with_dir(
+                    &api_url,
+                    &device_id,
+                    &version,
+                    "app_installed",
+                    Some(props),
+                    Some(&data_dir),
+                )
+                .await;
+            });
+        }
     }
-    let preferences = load_ui_preferences(&state.data_dir);
     AppInfo {
         version: app.package_info().version.to_string(),
         platform: std::env::consts::OS.to_string(),
@@ -2351,6 +2427,11 @@ pub async fn dispatch_telemetry_event_with_dir(
     properties: Option<serde_json::Value>,
     data_dir: Option<&Path>,
 ) -> AppResult<serde_json::Value> {
+    if let Some(dir) = data_dir {
+        if !is_telemetry_enabled(dir) {
+            return Ok(serde_json::json!({ "ok": false, "skipped": "zero_telemetry" }));
+        }
+    }
     let trimmed_event = event_name.trim();
     if trimmed_event.is_empty() {
         return Ok(serde_json::json!({ "ok": false, "error": "empty_event_name" }));
@@ -2454,6 +2535,9 @@ pub async fn send_telemetry_event(
     event_name: String,
     properties: Option<serde_json::Value>,
 ) -> AppResult<serde_json::Value> {
+    if !is_telemetry_enabled(&state.data_dir) {
+        return Ok(serde_json::json!({ "ok": false, "skipped": "zero_telemetry" }));
+    }
     let api_url = state.licensing.api_url().to_string();
     let device_id = state.licensing.device_id().to_string();
     let version = app.package_info().version.to_string();
@@ -2478,7 +2562,7 @@ pub async fn finalize_install(
     let first_run = !flag_path.exists();
     let _ = std::fs::create_dir_all(&state.data_dir);
     let _ = std::fs::write(&flag_path, b"1");
-    if first_run {
+    if first_run && is_telemetry_enabled(&state.data_dir) {
         let api_url = state.licensing.api_url().to_string();
         let device_id = state.licensing.device_id().to_string();
         let version = app.package_info().version.to_string();
@@ -2535,7 +2619,7 @@ pub async fn complete_installation(
     let _ = std::fs::create_dir_all(&state.data_dir);
     let _ = std::fs::write(&flag_path, b"1");
     let _ = memory::set_autostart_enabled(launch_on_startup);
-    if first_run {
+    if first_run && is_telemetry_enabled(&state.data_dir) {
         let api_url = state.licensing.api_url().to_string();
         let device_id = state.licensing.device_id().to_string();
         let version = app.package_info().version.to_string();
@@ -3538,11 +3622,19 @@ pub async fn scan_stale_dev_artifacts(
     let exclusions = safety::load_exclusions(&state.data_dir);
     let days = min_inactive_days.unwrap_or(30).max(1);
     let roots: Vec<PathBuf> = match custom_roots {
-        Some(list) if !list.is_empty() => list
-            .into_iter()
-            .map(|s| PathBuf::from(s.trim()))
-            .filter(|p| p.is_absolute() && p.is_dir())
-            .collect(),
+        Some(list) if !list.is_empty() => {
+            let valid: Vec<PathBuf> = list
+                .into_iter()
+                .map(|s| PathBuf::from(s.trim()))
+                .filter(|p| p.is_absolute() && p.is_dir())
+                .collect();
+            if valid.is_empty() {
+                return Err(AppError::Other(
+                    "Selected path is not an accessible folder.".into(),
+                ));
+            }
+            valid
+        }
         _ => scanner::default_dev_project_roots(),
     };
     tauri::async_runtime::spawn_blocking(move || {
@@ -3609,6 +3701,102 @@ pub fn open_macos_fda_settings() -> AppResult<()> {
             .map_err(|e| AppError::Other(format!("Could not open System Settings: {e}")))?;
     }
     Ok(())
+}
+
+/// Consumes and returns any `--scan-dir <PATH>` passed at GUI launch (at most once).
+#[tauri::command]
+pub fn take_initial_scan_dir(state: State<'_, AppState>) -> Option<String> {
+    let mut guard = state.initial_scan_dir.lock().unwrap_or_else(|e| e.into_inner());
+    guard.take()
+}
+
+pub fn normalize_exe_path_for_shell(exe: &Path) -> String {
+    let s = exe.to_string_lossy();
+    s.strip_prefix(r"\\?\").unwrap_or(&s).to_string()
+}
+
+pub fn build_explorer_scan_command(exe: &Path) -> String {
+    format!("\"{}\" --scan-dir \"%1\"", normalize_exe_path_for_shell(exe))
+}
+
+pub fn build_explorer_icon_value(exe: &Path) -> String {
+    format!("\"{}\",0", normalize_exe_path_for_shell(exe))
+}
+
+#[cfg(target_os = "windows")]
+const EXPLORER_SCAN_KEY: &str = r"Software\Classes\Directory\shell\SWEEPRScan";
+
+#[tauri::command]
+pub fn get_explorer_context_menu_enabled() -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::enums::HKEY_CURRENT_USER;
+        use winreg::RegKey;
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        let Ok(verb_key) = hkcu.open_subkey(EXPLORER_SCAN_KEY) else {
+            return false;
+        };
+        if verb_key.get_raw_value("LegacyDisable").is_ok() {
+            return false;
+        }
+        let Ok(cmd_key) = verb_key.open_subkey("command") else {
+            return false;
+        };
+        cmd_key
+            .get_value::<String, _>("")
+            .map(|v| !v.trim().is_empty())
+            .unwrap_or(false)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        false
+    }
+}
+
+#[tauri::command]
+pub fn set_explorer_context_menu_enabled(enabled: bool) -> AppResult<bool> {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::enums::{HKEY_CURRENT_USER, KEY_READ, KEY_WRITE};
+        use winreg::RegKey;
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        if enabled {
+            let exe = std::env::current_exe()
+                .map_err(|e| AppError::Other(format!("Could not locate executable path: {e}")))?;
+            let (verb_key, _) = hkcu
+                .create_subkey(EXPLORER_SCAN_KEY)
+                .map_err(|e| AppError::Other(format!("Could not write Explorer context menu key: {e}")))?;
+            let _ = verb_key.delete_value("LegacyDisable");
+            verb_key
+                .set_value("", &"Scan with SWEEPR")
+                .map_err(|e| AppError::Other(format!("Could not set Explorer verb label: {e}")))?;
+            verb_key
+                .set_value("MUIVerb", &"Scan with SWEEPR")
+                .map_err(|e| AppError::Other(format!("Could not set Explorer MUIVerb: {e}")))?;
+            verb_key
+                .set_value("Icon", &build_explorer_icon_value(&exe))
+                .map_err(|e| AppError::Other(format!("Could not set Explorer icon: {e}")))?;
+            let (cmd_key, _) = verb_key
+                .create_subkey("command")
+                .map_err(|e| AppError::Other(format!("Could not write Explorer command subkey: {e}")))?;
+            cmd_key
+                .set_value("", &build_explorer_scan_command(&exe))
+                .map_err(|e| AppError::Other(format!("Could not set Explorer command value: {e}")))?;
+        } else if let Ok(shell_key) = hkcu.open_subkey_with_flags(
+            r"Software\Classes\Directory\shell",
+            KEY_READ | KEY_WRITE,
+        ) {
+            let _ = shell_key.delete_subkey_all("SWEEPRScan");
+        }
+        Ok(get_explorer_context_menu_enabled())
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = enabled;
+        Err(AppError::Other(
+            "Windows File Explorer context menu integration is only supported on Windows.".into(),
+        ))
+    }
 }
 
 #[cfg(test)]
@@ -3763,36 +3951,66 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("sweepr-prefs-test-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
 
-        // Fresh install defaults to light mode, English, expanded sidebar
+        // Fresh install defaults to light mode, English, expanded sidebar, 5 GB quarantine budget, Zero-Telemetry ON
         let initial = load_ui_preferences(&dir);
         assert_eq!(initial.theme, "light");
         assert_eq!(initial.language, "en");
         assert!(!initial.sidebar_collapsed);
+        assert_eq!(initial.quarantine_budget_bytes, cleaner::QUARANTINE_DEFAULT_BUDGET_BYTES);
+        assert!(!initial.telemetry_enabled);
+        assert!(!is_telemetry_enabled(&dir));
 
-        // User switches to dark mode, German, collapsed sidebar -> persisted on disk
+        // User switches to dark mode, German, collapsed sidebar, 8 GB quarantine, telemetry enabled -> persisted on disk
+        let eight_gb = 8 * 1024 * 1024 * 1024;
         let updated = save_ui_preferences_to(
             &dir,
             &UiPreferences {
                 theme: "dark".into(),
                 language: "de".into(),
                 sidebar_collapsed: true,
+                quarantine_budget_bytes: eight_gb,
+                telemetry_enabled: true,
             },
         )
         .unwrap();
         assert_eq!(updated.theme, "dark");
         assert_eq!(updated.language, "de");
         assert!(updated.sidebar_collapsed);
+        assert_eq!(updated.quarantine_budget_bytes, eight_gb);
+        assert!(updated.telemetry_enabled);
+        assert!(is_telemetry_enabled(&dir));
+
+        // Quarantine budget clamps cleanly to [2 GB, 10 GB]
+        let clamped_low = save_ui_preferences_to(
+            &dir,
+            &UiPreferences {
+                quarantine_budget_bytes: 128,
+                ..updated.clone()
+            },
+        )
+        .unwrap();
+        assert_eq!(clamped_low.quarantine_budget_bytes, cleaner::QUARANTINE_MIN_BUDGET_BYTES);
+
+        let clamped_high = save_ui_preferences_to(
+            &dir,
+            &UiPreferences {
+                quarantine_budget_bytes: 100 * 1024 * 1024 * 1024,
+                ..updated.clone()
+            },
+        )
+        .unwrap();
+        assert_eq!(clamped_high.quarantine_budget_bytes, cleaner::QUARANTINE_MAX_BUDGET_BYTES);
 
         // Re-opening the app loads the saved preferences from disk
         let reopened = load_ui_preferences(&dir);
-        assert_eq!(reopened, updated);
+        assert_eq!(reopened, clamped_high);
 
         let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
-    fn free_starter_clean_enforces_500mb_lifetime_cap_and_7d_quarantine() {
-        let dir = std::env::temp_dir().join(format!("sweepr-free-allowance-test-{}", std::process::id()));
+    fn free_clean_is_unlimited_routes_to_trash_and_rejects_pro_rules() {
+        let dir = std::env::temp_dir().join(format!("sweepr-free-unlimited-test-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         let data_dir = dir.join("data");
         let local_data_dir = dir.join("local_data");
@@ -3803,97 +4021,192 @@ mod tests {
 
         // 1. Pro rule (`free: false`) is rejected with PaymentRequired for unlicensed users.
         let pro_rule = rules::Rule {
-            id: "shader_cache",
-            name: "Gaming Shaders",
-            description: "Pro rule",
+            id: "shader_cache".into(),
+            name: "Gaming Shaders".into(),
+            description: "Pro rule".into(),
             group: rules::Group::System,
             roots: vec![temp_root.clone()],
+            file_targets: Vec::new(),
             min_age_hours: 0,
             free: false,
         };
         assert!(matches!(
-            execute_free_starter_clean(&[pro_rule], vec!["shader_cache".into()], &data_dir, &local_data_dir),
+            execute_free_clean(&[pro_rule.clone()], vec!["shader_cache".into()], &data_dir, &local_data_dir),
             Err(AppError::PaymentRequired)
         ));
 
-        // 2. Unlicensed user cleans `free: true` rule (`temp`) -> moved into 7-Day Quarantine & tracked in free_allowance.json.
-        std::fs::write(temp_root.join("cache_1.tmp"), vec![b'x'; 1024]).unwrap();
-        std::fs::write(temp_root.join("cache_2.tmp"), vec![b'y'; 2048]).unwrap();
+        // 2. Mixed selection `[free, pro]` is rejected with PaymentRequired.
         let free_rule = rules::Rule {
-            id: "temp",
-            name: "Temporary files",
-            description: "Free temp rule",
-            group: rules::Group::System,
+            id: "chrome".into(),
+            name: "Google Chrome cache".into(),
+            description: "Free browser cache rule".into(),
+            group: rules::Group::Browsers,
             roots: vec![temp_root.clone()],
+            file_targets: Vec::new(),
             min_age_hours: 0,
             free: true,
         };
-
-        let reports = execute_free_starter_clean(
-            std::slice::from_ref(&free_rule),
-            vec!["temp".into()],
-            &data_dir,
-            &local_data_dir,
-        )
-        .expect("free starter clean should succeed under 500 MB");
-        assert_eq!(reports.len(), 1);
-        assert_eq!(reports[0].bytes_freed, 3072);
-        assert_eq!(reports[0].files_removed, 2);
-        assert!(!reports[0].moved_to_trash);
-
-        // Verify 7-Day Quarantine entries created in `data_dir`
-        let quarantined = cleaner::list_quarantine_entries(&data_dir);
-        assert_eq!(quarantined.len(), 2);
-
-        // Verify `<app_local_data_dir>/free_allowance.json` persisted
-        assert!(local_data_dir.join("free_allowance.json").is_file());
-        let allowance = compute_free_allowance_status(&load_free_allowance(&local_data_dir));
-        assert_eq!(allowance.used_bytes, 3072);
-        assert_eq!(allowance.limit_bytes, FREE_STARTER_ALLOWANCE_BYTES);
-        assert_eq!(allowance.remaining_bytes, FREE_STARTER_ALLOWANCE_BYTES - 3072);
-        assert!(!allowance.exhausted);
-
-        // 3. Simulate reaching 500 MB cap -> further unlicensed cleans return PaymentRequired.
-        save_free_allowance(
-            &local_data_dir,
-            &FreeAllowanceRecord {
-                used_bytes: FREE_STARTER_ALLOWANCE_BYTES - 500,
-                files_cleaned: 10,
-                updated_at: 1700000000,
-            },
-        )
-        .unwrap();
-        std::fs::write(temp_root.join("fits.tmp"), vec![b'1'; 500]).unwrap();
-        std::fs::write(temp_root.join("overflow.tmp"), vec![b'2'; 600]).unwrap();
-
-        let capped = execute_free_starter_clean(
-            std::slice::from_ref(&free_rule),
-            vec!["temp".into()],
-            &data_dir,
-            &local_data_dir,
-        )
-        .expect("exact remaining 500 bytes should succeed");
-        assert_eq!(capped[0].bytes_freed, 500);
-        assert_eq!(capped[0].files_skipped, 1);
-        assert!(temp_root.join("overflow.tmp").exists());
-
-        let exhausted = compute_free_allowance_status(&load_free_allowance(&local_data_dir));
-        assert_eq!(exhausted.used_bytes, FREE_STARTER_ALLOWANCE_BYTES);
-        assert_eq!(exhausted.remaining_bytes, 0);
-        assert!(exhausted.exhausted);
-
-        // Next clean attempt now returns PaymentRequired immediately!
         assert!(matches!(
-            execute_free_starter_clean(
-                std::slice::from_ref(&free_rule),
-                vec!["temp".into()],
+            execute_free_clean(
+                &[free_rule.clone(), pro_rule],
+                vec!["chrome".into(), "shader_cache".into()],
                 &data_dir,
                 &local_data_dir,
             ),
             Err(AppError::PaymentRequired)
         ));
 
+        // 3. Even if prior usage exceeds the old 500 MB cap, free clean is NOT capped or rejected!
+        save_free_allowance(
+            &local_data_dir,
+            &FreeAllowanceRecord {
+                used_bytes: 900 * 1024 * 1024,
+                files_cleaned: 42,
+                updated_at: 1700000000,
+            },
+        )
+        .unwrap();
+        let pre_status = compute_free_allowance_status(&load_free_allowance(&local_data_dir));
+        assert!(!pre_status.exhausted);
+        assert!(pre_status.unlimited);
+        assert_eq!(pre_status.limit_bytes, 0);
+        assert_eq!(pre_status.remaining_bytes, 0);
+
+        std::fs::write(temp_root.join("cache_1.tmp"), vec![b'x'; 1024]).unwrap();
+        std::fs::write(temp_root.join("cache_2.tmp"), vec![b'y'; 2048]).unwrap();
+
+        let reports = execute_free_clean(
+            std::slice::from_ref(&free_rule),
+            vec!["chrome".into()],
+            &data_dir,
+            &local_data_dir,
+        )
+        .expect("unlimited free clean should never fail with PaymentRequired");
+        assert_eq!(reports.len(), 1);
+        assert!(reports[0].moved_to_trash, "Free clean must route to OS Recycle Bin / Trash");
+        assert_eq!(reports[0].quarantined_count, 0, "7-Day Quarantine stays Pro-only");
+        assert!(cleaner::list_quarantine_entries(&data_dir).is_empty());
+
+        if reports[0].files_removed == 2 {
+            assert_eq!(reports[0].bytes_freed, 3072);
+            let after = compute_free_allowance_status(&load_free_allowance(&local_data_dir));
+            assert!(!after.exhausted);
+            assert!(after.unlimited);
+            assert_eq!(after.used_bytes, 900 * 1024 * 1024 + 3072);
+            assert_eq!(after.files_cleaned, 44);
+        }
+
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn telemetry_gate_blocks_dispatch_when_disabled() {
+        let dir = std::env::temp_dir().join(format!("sweepr-telemetry-gate-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        // Default is Zero-Telemetry ON (`telemetry_enabled == false`)
+        assert!(!is_telemetry_enabled(&dir));
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let res = rt
+            .block_on(dispatch_telemetry_event_with_dir(
+                "http://127.0.0.1:1",
+                "dev_1",
+                "0.1.0",
+                "app_installed",
+                None,
+                Some(&dir),
+            ))
+            .unwrap();
+        assert_eq!(res.get("ok").and_then(|v| v.as_bool()), Some(false));
+        assert_eq!(res.get("skipped").and_then(|v| v.as_str()), Some("zero_telemetry"));
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn free_clean_licensing_resolution_skips_network_when_unactivated_or_zero_telemetry() {
+        use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+        use std::sync::Arc;
+
+        let dir = std::env::temp_dir().join(format!("sweepr-free-nonet-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        listener.set_nonblocking(true).unwrap();
+
+        let hits = Arc::new(AtomicUsize::new(0));
+        let stop = Arc::new(AtomicBool::new(false));
+        let hits_bg = Arc::clone(&hits);
+        let stop_bg = Arc::clone(&stop);
+        let handle = std::thread::spawn(move || {
+            while !stop_bg.load(Ordering::Relaxed) {
+                match listener.accept() {
+                    Ok(_) => {
+                        hits_bg.fetch_add(1, Ordering::SeqCst);
+                    }
+                    Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                        std::thread::sleep(std::time::Duration::from_millis(10));
+                    }
+                    Err(_) => break,
+                }
+            }
+        });
+
+        let lic = crate::licensing::Licensing::new_with_api_for_test(dir.clone(), format!("http://{addr}"));
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+
+        // 1. Default Zero-Telemetry + unactivated => all_free resolves to Ok(false) with 0 network calls
+        assert!(!rt.block_on(resolve_clean_is_licensed(&lic, &dir, true)).unwrap());
+        assert_eq!(hits.load(Ordering::SeqCst), 0);
+
+        // 2. Pro category when unactivated + Zero-Telemetry => PaymentRequired with 0 network calls
+        assert!(matches!(
+            rt.block_on(resolve_clean_is_licensed(&lic, &dir, false)),
+            Err(AppError::PaymentRequired)
+        ));
+        assert_eq!(hits.load(Ordering::SeqCst), 0);
+
+        // 3. Even with telemetry_enabled=true, unactivated Free user without local account makes 0 calls for all_free
+        save_ui_preferences_to(
+            &dir,
+            &UiPreferences {
+                telemetry_enabled: true,
+                ..UiPreferences::default()
+            },
+        )
+        .unwrap();
+        assert!(!rt.block_on(resolve_clean_is_licensed(&lic, &dir, true)).unwrap());
+        assert_eq!(hits.load(Ordering::SeqCst), 0);
+
+        stop.store(true, Ordering::Relaxed);
+        let _ = handle.join();
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn explorer_scan_command_quotes_exe_and_strips_verbatim_prefix() {
+        let verbatim = Path::new(r"\\?\C:\Program Files\SWEEPR Cleaner\sweepr.exe");
+        assert_eq!(
+            normalize_exe_path_for_shell(verbatim),
+            r"C:\Program Files\SWEEPR Cleaner\sweepr.exe"
+        );
+        assert_eq!(
+            build_explorer_scan_command(verbatim),
+            r#""C:\Program Files\SWEEPR Cleaner\sweepr.exe" --scan-dir "%1""#
+        );
+        assert_eq!(
+            build_explorer_icon_value(verbatim),
+            r#""C:\Program Files\SWEEPR Cleaner\sweepr.exe",0"#
+        );
     }
 }
 

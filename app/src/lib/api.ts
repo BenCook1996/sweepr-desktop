@@ -27,13 +27,30 @@ export interface CategoryResult {
 }
 export interface ScanReport { categories: CategoryResult[]; total_bytes: number; total_files: number; duration_ms: number }
 export interface ScanProgress { done: number; total: number; category_id: string; category_name: string; bytes_so_far: number }
-export interface CleanReport { category_id: string; bytes_freed: number; files_removed: number; files_skipped: number; moved_to_trash: boolean }
+export interface CleanReport {
+  category_id: string;
+  bytes_freed: number;
+  files_removed: number;
+  files_skipped: number;
+  moved_to_trash: boolean;
+  quarantined_count: number;
+  quarantine_fallback_count: number;
+}
+export interface QuarantineStatus {
+  item_count: number;
+  used_bytes: number;
+  budget_bytes: number;
+  min_budget_bytes: number;
+  max_budget_bytes: number;
+  retention_days: number;
+}
 export interface FreeAllowanceStatus {
   used_bytes: number;
   limit_bytes: number;
   remaining_bytes: number;
   files_cleaned: number;
   exhausted: boolean;
+  unlimited?: boolean;
   updated_at: number;
 }
 export interface PaywallContext {
@@ -97,11 +114,26 @@ export interface UnplugAlert {
 }
 export interface AppMemory { name: string; bytes: number; processes: number }
 export interface MemoryOverview { total_bytes: number; used_bytes: number; available_bytes: number; top_apps: AppMemory[] }
-export interface StartupItem { name: string; command: string; scope: string; enabled?: boolean; impact?: string }
+export interface StartupItem {
+  name: string;
+  command: string;
+  scope: string;
+  enabled?: boolean;
+  impact?: string;
+  rss_bytes?: number | null;
+  cpu_percent?: number | null;
+  running_processes?: number;
+}
+export const QUARANTINE_MIN_BUDGET_BYTES = 2 * 1024 * 1024 * 1024;
+export const QUARANTINE_DEFAULT_BUDGET_BYTES = 5 * 1024 * 1024 * 1024;
+export const QUARANTINE_MAX_BUDGET_BYTES = 10 * 1024 * 1024 * 1024;
+
 export interface UiPreferences {
   theme: "light" | "dark";
   language: string;
   sidebar_collapsed: boolean;
+  quarantine_budget_bytes: number;
+  telemetry_enabled: boolean;
 }
 export interface AppInfo {
   version: string;
@@ -116,12 +148,53 @@ export interface AppError { kind: "payment_required" | "network" | "license" | "
 
 export interface LargeFileEntry { path: string; name: string; ext: string; size: number; modified_at: number }
 export interface DiskBreakdownItem { label: string; bytes: number; files: number }
+export interface DiskTreeNode {
+  name: string;
+  path: string;
+  bytes: number;
+  files: number;
+  kind: "dir" | "file" | "other" | string;
+  children: DiskTreeNode[];
+}
 export interface LargeFilesReport {
+  scanned_dir?: string;
   total_scanned_bytes: number;
   total_scanned_files: number;
   top_files: LargeFileEntry[];
   by_extension: DiskBreakdownItem[];
   by_folder: DiskBreakdownItem[];
+  folder_tree?: DiskTreeNode | null;
+}
+export interface MacosApfsSpaceInfo {
+  supported: boolean;
+  purgeable_bytes: number;
+  local_snapshots: string[];
+  snapshot_count: number;
+  note: string;
+}
+
+export interface StaleDevArtifactEntry {
+  artifact_path: string;
+  project_root: string;
+  artifact_kind: string;
+  size_bytes: number;
+  files_count: number;
+  last_source_modified_secs: number;
+  inactive_days: number;
+}
+
+export interface DockerDiskInspection {
+  vhdx_files: FileEntry[];
+  total_vhdx_bytes: number;
+  buildkit_reclaimable_bytes: number;
+}
+
+export interface StaleDevArtifactsReport {
+  artifacts: StaleDevArtifactEntry[];
+  total_artifact_bytes: number;
+  total_artifact_files: number;
+  docker: DockerDiskInspection;
+  duration_ms: number;
 }
 
 export interface OutdatedApp {
@@ -188,6 +261,16 @@ export const requestActivation = (context?: PaywallContext) =>
 /** Ask the Home screen to open its "Recently Cleaned / Undo" drawer (used by the quick rail). */
 export const OPEN_UNDO_EVENT = "sweepr-open-undo";
 
+let telemetryEnabled = false;
+
+export function isTelemetryEnabled(): boolean {
+  return telemetryEnabled;
+}
+
+export function setTelemetryEnabled(enabled: boolean): void {
+  telemetryEnabled = Boolean(enabled);
+}
+
 function getTelemetryClientId(): string {
   try {
     const key = "sweepr_telemetry_client_id";
@@ -204,11 +287,14 @@ function getTelemetryClientId(): string {
 
 /**
  * Privacy-friendly funnel & scan telemetry event dispatcher (`POST /v1/telemetry/event`).
- * Dispatches via native Rust Tauri command `send_telemetry_event` (using `reqwest` outside WebView CSP / adblockers).
+ * Strictly opt-in: blocked completely when Zero-Telemetry / Offline Mode is active (`!telemetryEnabled`).
  * Non-blocking and never throws.
  */
 export function trackAppEvent(eventName: string, metadata?: Record<string, unknown>): void {
   try {
+    if (!telemetryEnabled) {
+      return;
+    }
     if (eventName === "scan_completed" && metadata) {
       const scanBytes = Number(metadata.bytes_found ?? metadata.reclaimable_bytes ?? metadata.total_bytes ?? 0);
       if (Number.isFinite(scanBytes) && scanBytes > 0) {
@@ -253,6 +339,11 @@ export const api = {
   fetchApps: () => invoke<InstalledApp[]>("fetch_apps"),
   /** Only the app id is sent; Rust looks up the uninstaller in the registry. */
   uninstallApp: (id: string) => invoke<void>("uninstall_app", { id }),
+  uninstallAppsBatch: (ids: string[]) => invoke<BatchUninstallReport>("uninstall_apps_batch", { ids }),
+  onBatchUninstallProgress: (cb: (p: BatchUninstallProgress) => void): Promise<UnlistenFn> =>
+    listen<BatchUninstallProgress>("uninstaller://batch-progress", (e) => cb(e.payload)),
+  previewForceRemoveApp: (id: string) => invoke<ForceRemovePreview>("preview_force_remove_app", { id }),
+  forceRemoveApp: (id: string) => invoke<ForceRemoveReport>("force_remove_app", { id }),
   scanAppRemnants: () => invoke<AppRemnant[]>("scan_app_remnants"),
   cleanAppRemnant: (path: string) => invoke<void>("clean_app_remnant", { path }),
   checkOutdatedSoftware: () => invoke<OutdatedApp[]>("check_outdated_software"),
@@ -264,12 +355,18 @@ export const api = {
     invoke<LargeFilesReport>("scan_large_files", { dir, minBytes }),
   deleteLargeFile: (dir: string, file: string, useTrash = true) =>
     invoke<number>("delete_large_file", { dir, file, useTrash, path: file }),
+  scanStaleDevArtifacts: (customRoots?: string[], minInactiveDays = 30) =>
+    invoke<StaleDevArtifactsReport>("scan_stale_dev_artifacts", {
+      customRoots: customRoots && customRoots.length > 0 ? customRoots : null,
+      minInactiveDays,
+    }),
   scan: () => invoke<ScanReport>("scan_start"),
   onScanProgress: (cb: (p: ScanProgress) => void): Promise<UnlistenFn> =>
     listen<ScanProgress>("scan://progress", (e) => cb(e.payload)),
   clean: (ids: string[], useTrash: boolean) => invoke<CleanReport[]>("clean_categories", { ids, useTrash }),
   getFreeAllowance: () => invoke<FreeAllowanceStatus>("get_free_allowance"),
   listQuarantine: () => invoke<QuarantineEntry[]>("list_quarantine"),
+  getQuarantineStatus: () => invoke<QuarantineStatus>("get_quarantine_status"),
   restoreQuarantineItem: (id: string) => invoke<string>("restore_quarantine_item", { id }),
   getCleaningHistory: () => invoke<CleanHistoryEntry[]>("get_cleaning_history"),
   recordCleaningHistory: (bytesFreed: number, filesRemoved: number, categories: string[] = [], mode = "Manual") =>
@@ -364,26 +461,60 @@ export const api = {
   pickFolder: (title?: string) => invoke<string | null>("pick_folder", { title: title ?? null }),
   pickFile: (title?: string) => invoke<string | null>("pick_file", { title: title ?? null }),
   detectDriveMediaType: (path: string) => invoke<DriveMediaInfo>("detect_drive_media_type", { path }),
+  listWipeableDrives: () => invoke<DriveSummary[]>("list_wipeable_drives"),
+  wipeFreeSpace: (path: string) => invoke<WipeFreeSpaceReport>("wipe_free_space", { path }),
+  cancelWipeFreeSpace: () => invoke<boolean>("cancel_wipe_free_space"),
+  onWipeFreeSpaceProgress: (cb: (p: WipeProgress) => void): Promise<UnlistenFn> =>
+    listen<WipeProgress>("shredder://wipe-progress", (e) => cb(e.payload)),
+  listCustomRules: () => invoke<CustomRuleView[]>("list_custom_rules"),
+  validateCustomRule: (rule: CustomRuleInput) =>
+    invoke<CustomRuleValidation>("validate_custom_rule", { rule }),
+  importCustomRules: (json: string, replace = false) =>
+    invoke<CustomRuleView[]>("import_custom_rules", { json, replace }),
+  removeCustomRule: (id: string) => invoke<CustomRuleView[]>("remove_custom_rule", { id }),
   scanRegistry: () => invoke<RegistryIssue[]>("scan_registry"),
   fixRegistryIssue: (key_path: string) => invoke<void>("fix_registry_issue", { keyPath: key_path }),
   listRegistryBackups: () => invoke<RegistryBackupEntry[]>("list_registry_backups"),
   restoreRegistryBackup: (backupId: string) => invoke<void>("restore_registry_backup", { backupId }),
-  appInfo: () => invoke<AppInfo>("app_info"),
-  sendTelemetryEvent: (eventName: string, properties?: Record<string, unknown>) =>
-    invoke<unknown>("send_telemetry_event", {
+  appInfo: async () => {
+    const res = await invoke<AppInfo>("app_info");
+    setTelemetryEnabled(Boolean(res.preferences?.telemetry_enabled ?? false));
+    return res;
+  },
+  sendTelemetryEvent: (eventName: string, properties?: Record<string, unknown>) => {
+    if (!telemetryEnabled) {
+      return Promise.resolve({ ok: false, skipped: "zero_telemetry" });
+    }
+    return invoke<unknown>("send_telemetry_event", {
       eventName,
       event_name: eventName,
       properties: properties ?? {},
-    }),
+    });
+  },
   finalizeInstall: (source?: string) =>
     invoke<void>("finalize_install", { source: source ?? null }),
-  getUiPreferences: () => invoke<UiPreferences>("get_ui_preferences"),
-  saveUiPreferences: (prefs: { theme?: "light" | "dark"; language?: string; sidebarCollapsed?: boolean }) =>
-    invoke<UiPreferences>("save_ui_preferences", {
+  getUiPreferences: async () => {
+    const prefs = await invoke<UiPreferences>("get_ui_preferences");
+    setTelemetryEnabled(Boolean(prefs.telemetry_enabled));
+    return prefs;
+  },
+  saveUiPreferences: async (prefs: {
+    theme?: "light" | "dark";
+    language?: string;
+    sidebarCollapsed?: boolean;
+    quarantineBudgetBytes?: number;
+    telemetryEnabled?: boolean;
+  }) => {
+    const saved = await invoke<UiPreferences>("save_ui_preferences", {
       theme: prefs.theme ?? null,
       language: prefs.language ?? null,
       sidebarCollapsed: prefs.sidebarCollapsed ?? null,
-    }),
+      quarantineBudgetBytes: prefs.quarantineBudgetBytes ?? null,
+      telemetryEnabled: prefs.telemetryEnabled ?? null,
+    });
+    setTelemetryEnabled(Boolean(saved.telemetry_enabled));
+    return saved;
+  },
   quitApp: () => invoke<void>("quit_app"),
   completeInstallation: (
     desktopShortcut: boolean,
@@ -401,6 +532,18 @@ export const api = {
     invoke<void>("reveal_in_folder", { path }).catch(() => revealItemInDir(path).catch(() => {})),
   checkMacosFullDiskAccess: () => invoke<boolean>("check_macos_full_disk_access"),
   openMacosFdaSettings: () => invoke<void>("open_macos_fda_settings"),
+  takeInitialScanDir: () => invoke<string | null>("take_initial_scan_dir"),
+  getExplorerContextMenuEnabled: () => invoke<boolean>("get_explorer_context_menu_enabled"),
+  setExplorerContextMenuEnabled: (enabled: boolean) =>
+    invoke<boolean>("set_explorer_context_menu_enabled", { enabled }),
+  macosApfsSpaceInfo: () => invoke<MacosApfsSpaceInfo>("macos_apfs_space_info"),
+  osSecurityHealth: () => invoke<OsSecurityHealthReport>("os_security_health"),
+  runMacosMaintenance: (task: "spotlight_reindex" | "launch_services_rebuild" | "dns_flush") =>
+    invoke<MacosMaintenanceResult>("run_macos_maintenance", { task }),
+  listOptimizableDrives: () => invoke<OptimizableDrive[]>("list_optimizable_drives"),
+  optimizeDrive: (driveLetter: string) => invoke<DriveOptimizeReport>("optimize_drive", { driveLetter }),
+  hibernationStatus: () => invoke<HibernationStatus>("hibernation_status"),
+  setHibernationEnabled: (enabled: boolean) => invoke<HibernationStatus>("set_hibernation_enabled", { enabled }),
 };
 
 export interface RuleDefinitionInfo { id: string; name: string; description: string; free: boolean; }
@@ -421,7 +564,114 @@ export interface ScheduleConfig {
   last_cloud_files_synced?: number | null;
   last_cloud_bytes_synced?: number | null;
 }
-export interface InstalledApp { id: string; name: string; publisher: string; version: string; install_date: string; estimated_size: number; }
+export interface InstalledApp {
+  id: string;
+  name: string;
+  publisher: string;
+  version: string;
+  install_date: string;
+  estimated_size: number;
+  kind?: "win32" | "uwp" | "macos" | "linux" | string;
+  can_force_remove?: boolean;
+}
+export interface BatchUninstallItemResult {
+  id: string;
+  name: string;
+  ok: boolean;
+  status: "removed" | "launched" | "failed" | string;
+  message: string;
+}
+export interface BatchUninstallReport {
+  total: number;
+  succeeded: number;
+  failed: number;
+  results: BatchUninstallItemResult[];
+}
+export interface BatchUninstallProgress {
+  done: number;
+  total: number;
+  id: string;
+  name: string;
+  status: string;
+}
+export interface ForceRemovePreview {
+  id: string;
+  app_name: string;
+  registry_key: string;
+  install_dir: string | null;
+  install_dir_bytes: number;
+  remnant_dirs: AppRemnant[];
+  total_bytes: number;
+  requires_elevation_for_registry: boolean;
+  warnings: string[];
+}
+export interface ForceRemoveReport {
+  id: string;
+  app_name: string;
+  registry_removed: boolean;
+  paths_trashed: string[];
+  bytes_freed: number;
+  warnings: string[];
+}
+export interface SecurityCheckItem {
+  id: string;
+  label: string;
+  status: "ok" | "warning" | "critical" | "unavailable" | string;
+  detail: string;
+}
+export interface SuspiciousStartupEntry {
+  scope: string;
+  name: string;
+  command: string;
+  reason: string;
+  severity: "high" | "medium" | "low" | string;
+}
+export interface OsSecurityHealthReport {
+  platform: string;
+  overall_status: "healthy" | "attention" | "warning" | string;
+  summary: string;
+  antivirus_enabled: boolean | null;
+  antivirus_name: string | null;
+  firewall_enabled: boolean | null;
+  gatekeeper_enabled: boolean | null;
+  xprotect_version: string | null;
+  checks: SecurityCheckItem[];
+  suspicious_entries: SuspiciousStartupEntry[];
+  checked_at: number;
+  local_only: boolean;
+}
+export interface MacosMaintenanceResult {
+  task: string;
+  success: boolean;
+  message: string;
+  output: string;
+}
+export interface OptimizableDrive {
+  drive_letter: string;
+  mount_point: string;
+  name: string;
+  media_kind: "ssd" | "hdd" | "removable" | "unknown" | string;
+  media_label: string;
+  optimizable: boolean;
+  recommended_action: "retrim" | "defrag" | "unsupported" | string;
+  block_reason: string | null;
+  available_bytes: number;
+  total_bytes: number;
+}
+export interface DriveOptimizeReport {
+  drive_letter: string;
+  action: string;
+  success: boolean;
+  message: string;
+}
+export interface HibernationStatus {
+  supported: boolean;
+  enabled: boolean;
+  hiberfil_exists: boolean;
+  hiberfil_bytes: number;
+  fast_startup_enabled: boolean;
+  note: string;
+}
 export interface AppRemnant { name: string; path: string; location: string; bytes: number; files: number; }
 export interface PhotoMemberDetail {
   path: string;
@@ -453,7 +703,75 @@ export interface ContextMenuItem { id: string; name: string; command: string; sc
 export interface BrokenItem { path: string; name: string; kind: "broken_shortcut" | "empty_folder" | string; detail: string; }
 export interface BrowserExtensionItem { id: string; browser: string; name: string; version: string; description: string; permissions_count: number; path: string; }
 export interface RecycleBinInfo { bytes: number; items: number; }
-export interface DriveMediaInfo { is_ssd: boolean; media_label: string; recommended_passes: number; }
+export interface DriveMediaInfo {
+  is_ssd: boolean;
+  media_label: string;
+  recommended_passes: number;
+  kind?: "hdd" | "ssd" | "removable" | "unknown" | string;
+  is_removable?: boolean;
+  mount_point?: string;
+  available_bytes?: number;
+  total_bytes?: number;
+  free_space_wipe_allowed?: boolean;
+  block_reason?: string | null;
+}
+
+export interface DriveSummary {
+  mount_point: string;
+  name: string;
+  kind: "hdd" | "ssd" | "removable" | "unknown" | string;
+  is_removable: boolean;
+  available_bytes: number;
+  total_bytes: number;
+  media_label: string;
+  free_space_wipe_allowed: boolean;
+  block_reason: string | null;
+}
+
+export interface WipeFreeSpaceReport {
+  mount_point: string;
+  bytes_zeroed: number;
+  cancelled: boolean;
+  reached_disk_full: boolean;
+  duration_ms: number;
+}
+
+export interface WipeProgress {
+  bytes_written: number;
+  total_bytes: number;
+  percent: number;
+  status: string;
+}
+
+export interface CustomRuleInput {
+  id?: string;
+  name: string;
+  description?: string;
+  group?: Group;
+  paths: string[];
+  min_age_hours?: number;
+  enabled?: boolean;
+}
+
+export interface CustomRuleView {
+  id: string;
+  name: string;
+  description: string;
+  group: Group;
+  paths: string[];
+  min_age_hours: number;
+  enabled: boolean;
+  valid: boolean;
+  warnings: string[];
+  resolved_roots: string[];
+}
+
+export interface CustomRuleValidation {
+  valid: boolean;
+  errors: string[];
+  resolved_paths: string[];
+  normalized_id: string;
+}
 
 export interface BrowserAppRam {
   id: string;

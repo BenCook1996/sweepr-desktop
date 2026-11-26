@@ -20,6 +20,7 @@
   let scheduleSync = $state(false);
   let scheduleFreq = $state("daily");
   let addonPriceLabel = $state("£9.99/yr");
+  let osPlatform = $state("");
   const hasCloudBundle = $derived(
     Boolean(
       license?.dev_unlock ||
@@ -33,11 +34,15 @@
     api
       .appInfo()
       .then((info) => {
+        if (info.platform) osPlatform = info.platform.toLowerCase();
+        if (!info.preferences?.telemetry_enabled) {
+          return null;
+        }
         const base = (info.api_url || "https://sweeprcleaner.com").replace(/\/+$/, "");
         const qs = clientTz ? `?tz=${encodeURIComponent(clientTz)}` : "";
         return fetch(`${base}/api/pricing${qs}`);
       })
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => (r && r.ok ? r.json() : null))
       .then((cfg) => {
         const p = cfg?.pricing;
         if (p?.cloudVaultAnnualFormatted) {
@@ -126,6 +131,25 @@
   let unlocked = $state(false);
   let vaultBusy = $state(false);
   let vaultDragOver = $state(false);
+  let vaultSwitchSeq = 0;
+
+  const isWindowsHost = $derived(
+    osPlatform
+      ? osPlatform === "windows"
+      : typeof navigator !== "undefined"
+        ? /Windows|Win32|Win64|WOW64/i.test(`${navigator.platform || ""} ${navigator.userAgent || ""}`)
+        : true
+  );
+
+  function isAbsoluteVaultPath(p: string): boolean {
+    if (!p || /[\r\n]/.test(p) || p.split(/[\\/]/).some((seg) => seg === "..")) {
+      return false;
+    }
+    if (isWindowsHost) {
+      return /^(?:[A-Za-z]:[\\/]|\\\\[^\\/]+[\\/][^\\/]+)/.test(p);
+    }
+    return /^(?:[A-Za-z]:[\\/]|\\\\[^\\/]+[\\/][^\\/]+|\/)/.test(p);
+  }
 
   const pwTooShort = $derived(password.length > 0 && password.length < 8);
   const needsConfirmPassword = $derived(entries.length === 0 && !unlocked);
@@ -150,13 +174,29 @@
   }
 
   async function pickVaultDir() {
+    error = "";
     const picked = await api
       .pickFolder("Choose a folder for your locked vault (for example, inside OneDrive or Google Drive)")
       .catch(() => null);
     if (picked?.trim()) {
-      vaultDir = picked.trim();
+      await switchVaultDir(picked.trim());
+    }
+  }
+
+  async function switchVaultDir(nextDir: string) {
+    const trimmed = nextDir.trim();
+    if (!trimmed) return;
+    const seq = ++vaultSwitchSeq;
+    try {
+      const listed = await cloudApi.vaultList(trimmed, undefined);
+      if (seq !== vaultSwitchSeq) return;
+      error = "";
+      vaultDir = trimmed;
+      entries = listed;
       unlocked = false;
-      await refreshVault();
+    } catch (e) {
+      if (seq !== vaultSwitchSeq) return;
+      error = errorMessage(e);
     }
   }
 
@@ -404,7 +444,46 @@
         {vaultBusy ? "Locking…" : "Lock Files"}
       </button>
 
-      <div class="row small muted" style="justify-content: space-between; align-items: center;">
+      <div
+        class="row small muted"
+        style="justify-content: space-between; align-items: center;"
+        ondragover={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          vaultDragOver = false;
+        }}
+        ondrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          vaultDragOver = false;
+          const item = e.dataTransfer?.items?.[0];
+          const entry = item?.webkitGetAsEntry?.();
+          const f = e.dataTransfer?.files?.[0] as (File & { path?: string }) | undefined;
+          if (entry ? !entry.isDirectory : Boolean(f && (f.type !== "" || f.size > 0))) {
+            error = "Please drop a folder, not a file, to choose your vault location.";
+            return;
+          }
+          const filePath = f?.path?.trim();
+          const textPath =
+            !filePath && Boolean(entry?.isDirectory)
+              ? e.dataTransfer?.getData("text/plain")?.trim().replace(/^"+|"+$/g, "")
+              : "";
+          const p = filePath || textPath;
+          if (!p) {
+            if (e.dataTransfer?.getData("text/plain")?.trim()) {
+              error = "Please drop a folder, not text or a file, to choose your vault location.";
+            }
+            return;
+          }
+          if (!isAbsoluteVaultPath(p)) {
+            error = "Please drop a valid absolute folder path for the vault location.";
+            return;
+          }
+          void switchVaultDir(p);
+        }}
+        role="region"
+        aria-label="Vault folder drop target"
+      >
         <span class="path" title={vaultDir || "SWEEPR Private Vault"}>
           {vaultDir ? shortenPath(vaultDir, 38) : "SWEEPR Private Vault"}
         </span>

@@ -1,9 +1,10 @@
 import { escapeHtml } from "./security.js";
 
 export const ORGANIZATION_SAME_AS: readonly string[] = [
+  "https://github.com/BenCook1996",
   "https://github.com/BenCook1996/sweepr-desktop",
   "https://github.com/BenCook1996/scoop-sweepr",
-  "https://github.com/microsoft/winget-pkgs/pull/480164",
+  "https://github.com/microsoft/winget-pkgs/tree/master/manifests/s/Sweepr/SweeprCleaner",
   "https://alternativeto.net/software/sweeprcleaner/",
   "https://www.saashub.com/sweepr-cleaner",
   "https://sourceforge.net/software/product/SWEEPR-Cleaner/",
@@ -13,6 +14,8 @@ export const ORGANIZATION_SAME_AS: readonly string[] = [
   "https://www.indiehackers.com/product/sweepr-cleaner",
   "https://devhunt.org/tool/sweepr-cleaner",
 ];
+
+export const ORGANIZATION_LOGO_URL = "https://sweeprcleaner.com/icon-512.png";
 
 export const BRAND_SVG_MARK = `<svg width="34" height="34" viewBox="0 0 100 100" aria-hidden="true">
   <defs>
@@ -88,7 +91,7 @@ export function renderEditorialHead(opts: {
 </head>`;
 }
 
-export type ActiveNavSection = "guides" | "tools" | "pricing" | "compare" | "study" | "support" | "none";
+export type ActiveNavSection = "guides" | "tools" | "pricing" | "about" | "compare" | "study" | "support" | "none";
 
 export function renderSiteHeader(active: ActiveNavSection = "none"): string {
   const link = (href: string, label: string, id: ActiveNavSection) =>
@@ -106,11 +109,12 @@ export function renderSiteHeader(active: ActiveNavSection = "none"): string {
         ${link("/clean", "Guides", "guides")}
         ${link("/tools", "Tools", "tools")}
         ${link("/pricing", "Pricing", "pricing")}
+        ${link("/about", "About", "about")}
         ${link("/dashboard", "My Account", "none")}
       </nav>
 
       <div class="header-controls">
-        <a href="/download" class="header-cta btn-press" rel="nofollow">Free Download</a>
+        <a href="/download" class="header-cta btn-press">Free Download</a>
         <button type="button" id="siteMobileMenuBtn" class="mobile-nav-toggle" aria-expanded="false" aria-controls="siteMobileDrawer">Menu</button>
       </div>
     </div>
@@ -122,6 +126,7 @@ export function renderSiteHeader(active: ActiveNavSection = "none"): string {
         <a href="/tools/pc-cache-calculator">PC Cache Calculator</a>
         <a href="/state-of-windows-storage">2026 Storage Study</a>
         <a href="/pricing">Pricing</a>
+        <a href="/about">About</a>
         <a href="/dashboard">My Account</a>
       </div>
     </div>
@@ -144,8 +149,8 @@ export function renderSiteFooter(): string {
   return `<footer class="site-footer">
     <div class="footer-inner">
       <div>
-        <strong>SWEEPR Cleaner Inc.</strong> &middot; Fast, safe storage cleanup for Windows, Mac, iPhone &amp; Android.<br />
-        <span>&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</span>
+        <strong>SWEEPR Cleaner</strong> (Benjamin Cook) &middot; Storage cleanup for Windows, Mac, Android &amp; iOS (Safari web companion / TestFlight beta).<br />
+        <span>&copy; 2026 Benjamin Cook t/a SWEEPR Cleaner. All rights reserved.</span>
       </div>
       <div class="footer-links">
         <a href="/clean">Storage Guides</a>
@@ -158,6 +163,7 @@ export function renderSiteFooter(): string {
         <a href="/vs/cleanmymac">vs CleanMyMac</a>
         <a href="/alternatives/cleanmymac">CleanMyMac Alternatives</a>
         <a href="/pricing">Pricing</a>
+        <a href="/about">About</a>
         <a href="/support">Support</a>
         <a href="/privacy">Privacy Policy</a>
         <a href="/terms">Terms of Service</a>

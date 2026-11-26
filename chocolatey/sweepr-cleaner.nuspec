@@ -15,8 +15,8 @@
     <docsUrl>https://sweeprcleaner.com/clean</docsUrl>
     <bugTrackerUrl>https://sweeprcleaner.com/support</bugTrackerUrl>
     <tags>sweepr cleaner disk-cleanup storage uninstaller ccleaner-alternative windows-11 rust</tags>
-    <summary>Native Rust PC &amp; SSD storage cleaner for Windows 10 and 11 with a 7-day undo safety net.</summary>
-    <description>SWEEPR Cleaner is a fast, lightweight native Rust PC cleaner and speed booster for Windows 10 and Windows 11. Features 60-second junk cleanup, complete app uninstaller, GPU shader &amp; game launcher cache cleaner, duplicate finder, and a 7-day undo safety net with zero background telemetry.</description>
+    <summary>Native Rust PC &amp; SSD cleaner for Windows 10/11: unlimited free temp/browser cache clean and 7-Day Undo Quarantine (5 GB default).</summary>
+    <description>SWEEPR Cleaner is a fast, lightweight native Rust PC cleaner and storage optimizer for Windows 10 and Windows 11. SWEEPR Free: Unlimited Temp &amp; Browser Cache Clean (to OS Recycle Bin); Pro unlocks Deep GPU/AI/Dev Caches, SHA-256 Duplicates, Uninstaller, Scheduler &amp; 7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget; excludes shredded files, browser DBs, and registry edits). Includes Zero-Telemetry Offline Mode toggle.</description>
     <releaseNotes>https://sweeprcleaner.com/state-of-windows-storage</releaseNotes>
   </metadata>
   <files>

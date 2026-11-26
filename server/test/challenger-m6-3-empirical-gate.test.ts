@@ -73,13 +73,13 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       // Tag balance checks
       const openUrls = (xml.match(/<url>/g) || []).length;
       const closeUrls = (xml.match(/<\/url>/g) || []).length;
-      assert.equal(openUrls, 96, `Expected exactly 96 <url> tags, found ${openUrls}`);
-      assert.equal(closeUrls, 96, `Expected exactly 96 </url> tags, found ${closeUrls}`);
+      assert.equal(openUrls, 101, `Expected exactly 101 <url> tags, found ${openUrls}`);
+      assert.equal(closeUrls, 101, `Expected exactly 101 </url> tags, found ${closeUrls}`);
 
       const openLocs = (xml.match(/<loc>/g) || []).length;
       const closeLocs = (xml.match(/<\/loc>/g) || []).length;
-      assert.equal(openLocs, 96, `Expected exactly 96 <loc> tags, found ${openLocs}`);
-      assert.equal(closeLocs, 96, `Expected exactly 96 </loc> tags, found ${closeLocs}`);
+      assert.equal(openLocs, 101, `Expected exactly 101 <loc> tags, found ${openLocs}`);
+      assert.equal(closeLocs, 101, `Expected exactly 101 </loc> tags, found ${closeLocs}`);
 
       // Ensure no raw unescaped ampersands in URLs
       const locContents = [...xml.matchAll(/<loc>([\s\S]*?)<\/loc>/g)].map((m) => m[1]);
@@ -88,18 +88,19 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       }
     });
 
-    test("1.3: Static sitemap contains EXACTLY 96 curated Tier-1 URLs with required components", () => {
+    test("1.3: Static sitemap contains EXACTLY 101 curated Tier-1 URLs with required components", () => {
       const xml = readFileSync("public/sitemap.xml", "utf8");
       const urls = parseSitemap(xml);
-      assert.equal(urls.length, 96, `Expected exact 96 URLs, got ${urls.length}`);
+      assert.equal(urls.length, 101, `Expected exact 101 URLs, got ${urls.length}`);
 
       // Check unique URLs (no duplicates)
       const uniqueUrls = new Set(urls);
-      assert.equal(uniqueUrls.size, 96, `Duplicate URLs found in sitemap: ${urls.length} vs ${uniqueUrls.size} unique`);
+      assert.equal(uniqueUrls.size, 101, `Duplicate URLs found in sitemap: ${urls.length} vs ${uniqueUrls.size} unique`);
 
-      // 6 Indexable Core Hubs + 4 Policy Pages + /tools/pc-cache-calculator (/download & /bloat-watch excluded)
+      // 6 Indexable Core Hubs + /about + 4 Policy Pages + /tools/pc-cache-calculator (/download & /bloat-watch excluded)
       const requiredHubs = [
         "https://sweeprcleaner.com/",
+        "https://sweeprcleaner.com/about",
         "https://sweeprcleaner.com/pricing",
         "https://sweeprcleaner.com/clean",
         "https://sweeprcleaner.com/safe-to-delete",
@@ -117,19 +118,19 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       assert.equal(uniqueUrls.has("https://sweeprcleaner.com/download"), false, "Noindexed /download must NOT appear in static sitemap.xml");
       assert.equal(uniqueUrls.has("https://sweeprcleaner.com/bloat-watch"), false, "Retired /bloat-watch must NOT appear in static sitemap.xml");
 
-      // 16 Surviving Switchers (9 /vs/* and 7 /alternatives/*)
+      // 20 Switchers (10 /vs/* and 10 /alternatives/*)
       const vsCompetitors = [
-        "ccleaner", "cleanmymac", "bleachbit", "avast-cleanup", "daisydisk", "pearcleaner",
+        "ccleaner", "cleanmymac", "bleachbit", "avast-cleanup", "daisydisk", "pearcleaner", "onyx",
         "cleanmypc", "glary-utilities", "wise-disk-cleaner",
       ];
       for (const comp of vsCompetitors) {
         assert.ok(uniqueUrls.has(`https://sweeprcleaner.com/vs/${comp}`), `Missing /vs/${comp}`);
       }
-      for (const comp of ["ccleaner", "cleanmymac", "avast-cleanup", "bleachbit", "cleanmypc", "glary-utilities", "wise-disk-cleaner"]) {
+      for (const comp of ["ccleaner", "cleanmymac", "avast-cleanup", "bleachbit", "cleanmypc", "glary-utilities", "wise-disk-cleaner", "daisydisk", "pearcleaner", "onyx"]) {
         assert.ok(uniqueUrls.has(`https://sweeprcleaner.com/alternatives/${comp}`), `Missing /alternatives/${comp}`);
       }
 
-      // Exactly 69 indexed clean guides (96 - 6 hubs - 4 policy - 1 tool - 16 switchers = 69)
+      // Exactly 69 indexed clean guides (101 - 6 hubs - 1 about - 4 policy - 1 tool - 20 switchers = 69)
       const guideUrls = urls.filter((u) => u.includes("/clean/"));
       assert.equal(guideUrls.length, 69, `Expected exactly 69 clean guide URLs, got ${guideUrls.length}`);
     });
@@ -179,8 +180,8 @@ describe("Milestone 6 Challenger 1 (challenger_m6_3): Final Adversarial Acceptan
       const dynXml = await dynRes.text();
       const dynUrls = parseSitemap(dynXml);
 
-      assert.equal(staticUrls.length, 96, "Static sitemap count must be 96");
-      assert.equal(dynUrls.length, 96, "Dynamic sitemap count must be 96");
+      assert.equal(staticUrls.length, 101, "Static sitemap count must be 101");
+      assert.equal(dynUrls.length, 101, "Dynamic sitemap count must be 101");
       assert.deepEqual(dynUrls, staticUrls, "Dynamic and static URLs must match identically in count and sequence");
     });
   });

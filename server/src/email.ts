@@ -231,12 +231,12 @@ export async function sendSubscriptionEmail(
       : "";
 
   const body = isOtp
-    ? `Hi,\n\nHere is your one-time login code for SWEEPR Cleaner: ${planOrCode}\n\nThis code will expire in 15 minutes.\n\nBest,\nThe SWEEPR Cleaner Team`
+    ? `Hi,\n\nHere is your one-time login code for SWEEPR Cleaner: ${planOrCode}\n\nThis code will expire in 15 minutes.\n\nBest,\nBenjamin Cook (SWEEPR Cleaner)`
     : isActivated
     ? activationCode
       ? `Hi ${name || "Customer"},\n\nYour SWEEPR Cleaner ${planOrCode.toUpperCase()} subscription is now active! You can start using the app immediately.${receiptTextBlock}\nYour Subscription Activation Key: ${activationCode}\nRegistered Email: ${recipient}\n\nHow to activate SWEEPR Cleaner Pro:\n1. Download SWEEPR Cleaner: https://sweeprcleaner.com/download\n2. Launch the app and open the "Account & Settings" tab (or visit https://sweeprcleaner.com/login?email=${encodeURIComponent(recipient)}&step=otp).\n3. Enter your email (${recipient}) and your Subscription Key (${activationCode}) to unlock all Pro features.\n\nThank you for choosing SWEEPR Cleaner.`
       : `Hi ${name || "Customer"},\n\nYour SWEEPR Cleaner ${planOrCode.toUpperCase()} subscription is now active! You can start using the app immediately.${receiptTextBlock}\nThank you for choosing SWEEPR Cleaner.`
-    : `Hi ${name || "Customer"},\n\nYour SWEEPR Cleaner subscription has been canceled. We're sorry to see you go. You will have access until the end of your billing period.\n\nBest regards,\nThe SWEEPR Cleaner Team`;
+    : `Hi ${name || "Customer"},\n\nYour SWEEPR Cleaner subscription has been canceled. We're sorry to see you go. You will have access until the end of your billing period.\n\nBest regards,\nBenjamin Cook (SWEEPR Cleaner)`;
 
   if (isProduction) {
     // Never print bodies (which may contain login codes) in production logs.
@@ -331,7 +331,7 @@ export async function sendSubscriptionEmail(
     <a href="https://sweeprcleaner.com/login?email=${encodeURIComponent(recipient)}&step=otp" style="font-size: 13px; font-weight: 600; color: #059669; text-decoration: underline;">Open Online Customer Portal &rarr;</a>
   </div>
   <div style="border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center; font-size: 12px; color: #94a3b8;">
-    &copy; 2026 SWEEPR Cleaner Inc. &bull; Need help? Reply to this email or visit <a href="https://sweeprcleaner.com/support" style="color: #64748b;">sweeprcleaner.com/support</a>
+    &copy; 2026 Benjamin Cook t/a SWEEPR Cleaner &bull; Need help? Reply to this email or visit <a href="https://sweeprcleaner.com/support" style="color: #64748b;">sweeprcleaner.com/support</a>
   </div>
 </div>`
     : undefined;
@@ -374,7 +374,7 @@ export async function sendRenewalReminderEmail(opts: {
     `To review your billing settings or cancel anytime in 1 click, visit your Customer Portal: https://sweeprcleaner.com/dashboard`,
     ``,
     `Best regards,`,
-    `The SWEEPR Cleaner Team`,
+    `Benjamin Cook (SWEEPR Cleaner)`,
   ].join("\n");
 
   const htmlBody = `
@@ -390,7 +390,7 @@ export async function sendRenewalReminderEmail(opts: {
     <a href="https://sweeprcleaner.com/dashboard" style="display: inline-block; background: #0d6847; color: #ffffff; font-weight: 700; font-size: 13px; text-decoration: none; padding: 11px 22px; border-radius: 10px;">Manage Subscription &rarr;</a>
   </div>
   <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 12px; color: #94a3b8;">
-    &copy; 2026 SWEEPR Cleaner Inc. &bull; <a href="https://sweeprcleaner.com/support" style="color: #64748b;">Support</a>
+    &copy; 2026 Benjamin Cook t/a SWEEPR Cleaner &bull; <a href="https://sweeprcleaner.com/support" style="color: #64748b;">Support</a>
   </div>
 </div>`;
 

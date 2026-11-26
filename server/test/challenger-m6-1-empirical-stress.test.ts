@@ -63,18 +63,19 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       assert.ok(!text.includes("\uFEFF"), "Text must not contain unicode BOM zero-width character");
     });
 
-    test("1.2: Static server/public/sitemap.xml contains exact 96 Tier-1 URLs", () => {
+    test("1.2: Static server/public/sitemap.xml contains exact 101 Tier-1 URLs", () => {
       const xml = readFileSync("public/sitemap.xml", "utf8");
       const urls = parseSitemap(xml);
-      assert.equal(urls.length, 96, `Expected exactly 96 Tier-1 URLs, got ${urls.length}`);
+      assert.equal(urls.length, 101, `Expected exactly 101 Tier-1 URLs, got ${urls.length}`);
 
       // Count check by regex
       const locTags = (xml.match(/<loc>/g) || []).length;
-      assert.equal(locTags, 96, `Expected exactly 96 <loc> tags, got ${locTags}`);
+      assert.equal(locTags, 101, `Expected exactly 101 <loc> tags, got ${locTags}`);
 
-      // All 6 Indexable Core Hubs + 4 Policy Pages + /tools/pc-cache-calculator present (/download & /bloat-watch excluded)
+      // All 6 Indexable Core Hubs + /about + 4 Policy Pages + /tools/pc-cache-calculator present (/download & /bloat-watch excluded)
       const coreHubs = [
         "https://sweeprcleaner.com/",
+        "https://sweeprcleaner.com/about",
         "https://sweeprcleaner.com/pricing",
         "https://sweeprcleaner.com/clean",
         "https://sweeprcleaner.com/safe-to-delete",
@@ -88,9 +89,9 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       assert.equal(urls.includes("https://sweeprcleaner.com/download"), false, "Noindexed /download must NOT appear in static sitemap.xml");
       assert.equal(urls.includes("https://sweeprcleaner.com/bloat-watch"), false, "Retired /bloat-watch must NOT appear in static sitemap.xml");
 
-      // All 16 Surviving Switchers present (12 Windows + 4 macOS; 4 thin macOS switchers retired via 301)
+      // All 20 Switchers present (12 Windows + 8 macOS)
       const vsSwitchers = [
-        "ccleaner", "cleanmymac", "bleachbit", "avast-cleanup", "daisydisk", "pearcleaner",
+        "ccleaner", "cleanmymac", "bleachbit", "avast-cleanup", "daisydisk", "pearcleaner", "onyx",
         "cleanmypc", "glary-utilities", "wise-disk-cleaner",
       ];
       for (const sw of vsSwitchers) {
@@ -98,6 +99,7 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       }
       const altSwitchers = [
         "ccleaner", "cleanmymac", "avast-cleanup", "bleachbit", "cleanmypc", "glary-utilities", "wise-disk-cleaner",
+        "daisydisk", "pearcleaner", "onyx",
       ];
       for (const sw of altSwitchers) {
         assert.ok(urls.includes(`https://sweeprcleaner.com/alternatives/${sw}`), `Missing /alternatives/${sw}`);
@@ -154,8 +156,8 @@ describe("Milestone 6 Challenger 1: Empirical SEO, Sitemap & Routing Stress Gate
       const dynamicXml = await dynamicRes.text();
       const dynamicUrls = parseSitemap(dynamicXml);
 
-      assert.equal(staticUrls.length, 96, "Static sitemap count must be 96");
-      assert.equal(dynamicUrls.length, 96, "Dynamic sitemap count must be 96");
+      assert.equal(staticUrls.length, 101, "Static sitemap count must be 101");
+      assert.equal(dynamicUrls.length, 101, "Dynamic sitemap count must be 101");
       assert.deepEqual(dynamicUrls, staticUrls, "Dynamic and static sitemaps must have identical URL list in identical order");
     });
   });

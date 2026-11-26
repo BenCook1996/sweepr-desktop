@@ -8,16 +8,24 @@
   import {
     api,
     errorMessage,
+    QUARANTINE_DEFAULT_BUDGET_BYTES,
+    QUARANTINE_MAX_BUDGET_BYTES,
+    QUARANTINE_MIN_BUDGET_BYTES,
     requestActivation,
     type AppInfo,
     type AppUpdateInfo,
     type LicenseStatus,
+    type QuarantineStatus,
+    type UiPreferences,
   } from "../lib/api";
+  import { formatBytes } from "../lib/format";
   import { lang, setLang, LANGUAGES, t, type Lang } from "../lib/i18n";
 
   let {
     license,
     info,
+    preferences = null,
+    onPreferencesChange,
     theme = "light",
     onToggleTheme,
     onRefresh,
@@ -25,6 +33,8 @@
   }: {
     license: LicenseStatus | null;
     info: AppInfo | null;
+    preferences?: UiPreferences | null;
+    onPreferencesChange?: (prefs: UiPreferences) => void;
     theme?: "light" | "dark";
     onToggleTheme?: () => void;
     onRefresh: () => Promise<void>;
@@ -59,6 +69,66 @@
   // Scan Exclusions
   let exclusions = $state<string[]>([]);
   let newExclusionPath = $state("");
+
+  // Privacy (Zero-Telemetry / Offline Mode) & 7-Day Quarantine Budget
+  let telemetryEnabled = $state(false);
+  const zeroTelemetryMode = $derived(!telemetryEnabled);
+  let quarantineBudgetBytes = $state(QUARANTINE_DEFAULT_BUDGET_BYTES);
+  const quarantineBudgetGb = $derived(
+    Math.min(10, Math.max(2, Math.round(quarantineBudgetBytes / (1024 * 1024 * 1024))))
+  );
+  let quarantineStatus = $state<QuarantineStatus | null>(null);
+  let savingPrefs = $state(false);
+  let prefsInitialized = false;
+
+  $effect(() => {
+    if (preferences && !prefsInitialized) {
+      telemetryEnabled = Boolean(preferences.telemetry_enabled);
+      quarantineBudgetBytes =
+        preferences.quarantine_budget_bytes || QUARANTINE_DEFAULT_BUDGET_BYTES;
+    }
+  });
+
+  async function setZeroTelemetryMode(enableZeroTelemetry: boolean) {
+    const nextTelemetryEnabled = !enableZeroTelemetry;
+    const prev = telemetryEnabled;
+    telemetryEnabled = nextTelemetryEnabled;
+    savingPrefs = true;
+    error = null;
+    try {
+      const saved = await api.saveUiPreferences({ telemetryEnabled: nextTelemetryEnabled });
+      telemetryEnabled = Boolean(saved.telemetry_enabled);
+      onPreferencesChange?.(saved);
+    } catch (e) {
+      telemetryEnabled = prev;
+      error = errorMessage(e);
+    } finally {
+      savingPrefs = false;
+    }
+  }
+
+  async function setQuarantineBudgetGb(gb: number) {
+    const clampedGb = Math.min(10, Math.max(2, Math.round(gb)));
+    const nextBytes = Math.min(
+      QUARANTINE_MAX_BUDGET_BYTES,
+      Math.max(QUARANTINE_MIN_BUDGET_BYTES, clampedGb * 1024 * 1024 * 1024)
+    );
+    const prev = quarantineBudgetBytes;
+    quarantineBudgetBytes = nextBytes;
+    savingPrefs = true;
+    error = null;
+    try {
+      const saved = await api.saveUiPreferences({ quarantineBudgetBytes: nextBytes });
+      quarantineBudgetBytes = saved.quarantine_budget_bytes;
+      onPreferencesChange?.(saved);
+      quarantineStatus = await api.getQuarantineStatus().catch(() => quarantineStatus);
+    } catch (e) {
+      quarantineBudgetBytes = prev;
+      error = errorMessage(e);
+    } finally {
+      savingPrefs = false;
+    }
+  }
 
   async function addScanExclusion() {
     const p = newExclusionPath.trim();
@@ -172,8 +242,24 @@
 
   $effect(() => {
     api
-      .checkAppUpdate()
-      .then((u) => (updateInfo = u))
+      .getUiPreferences()
+      .then((prefs) => {
+        prefsInitialized = true;
+        telemetryEnabled = Boolean(prefs.telemetry_enabled);
+        quarantineBudgetBytes =
+          prefs.quarantine_budget_bytes || QUARANTINE_DEFAULT_BUDGET_BYTES;
+        onPreferencesChange?.(prefs);
+        if (prefs.telemetry_enabled) {
+          api
+            .checkAppUpdate()
+            .then((u) => (updateInfo = u))
+            .catch(() => {});
+        }
+      })
+      .catch(() => {});
+    api
+      .getQuarantineStatus()
+      .then((qs) => (quarantineStatus = qs))
       .catch(() => {});
     api
       .listExclusions()
@@ -525,6 +611,77 @@
             {/each}
           </select>
         </div>
+      </div>
+
+      <!-- Zero-Telemetry / Offline Mode -->
+      <div class="card box">
+        <div class="row" style="justify-content: space-between; gap: 10px;">
+          <div>
+            <strong>Zero-Telemetry / Offline Mode</strong>
+            <div class="muted small" style="margin-top: 2px;">
+              {zeroTelemetryMode
+                ? "Active · 0 background network requests"
+                : "Diagnostics opted-in"}
+            </div>
+          </div>
+          <input
+            type="checkbox"
+            aria-label="Zero-Telemetry / Offline Mode"
+            checked={zeroTelemetryMode}
+            disabled={savingPrefs}
+            onchange={(e) =>
+              void setZeroTelemetryMode((e.currentTarget as HTMLInputElement).checked)}
+            style="width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer;"
+          />
+        </div>
+        <p class="muted small" style="margin: 0; line-height: 1.45;">
+          ON by default. Blocks startup update pings, crash report uploads, passive pricing lookups, and usage telemetry. Explicit user actions (activating Pro, manual update checks, or sending a support message) only connect when you trigger them.
+        </p>
+      </div>
+
+      <!-- 7-Day Undo Quarantine Storage Budget -->
+      <div class="card box">
+        <div class="row" style="justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+          <strong>7-Day Undo Quarantine Budget</strong>
+          <span class="badge free">{quarantineBudgetGb} GB limit</span>
+        </div>
+        <div class="row" style="gap: 8px; align-items: center;">
+          <input
+            type="range"
+            min="2"
+            max="10"
+            step="1"
+            aria-label="7-Day Undo Quarantine disk budget in GB"
+            value={quarantineBudgetGb}
+            disabled={savingPrefs}
+            onchange={(e) =>
+              void setQuarantineBudgetGb(Number((e.currentTarget as HTMLInputElement).value))}
+            style="flex: 1; accent-color: var(--accent);"
+          />
+          <div class="row" style="gap: 4px;">
+            {#each [2, 5, 10] as presetGb}
+              <button
+                type="button"
+                class={quarantineBudgetGb === presetGb ? "primary small-btn" : "ghost small-btn"}
+                style="padding: 4px 10px; font-size: 11.5px;"
+                disabled={savingPrefs}
+                onclick={() => void setQuarantineBudgetGb(presetGb)}
+              >
+                {presetGb} GB
+              </button>
+            {/each}
+          </div>
+        </div>
+        <div class="muted small">
+          {#if quarantineStatus}
+            Using {formatBytes(quarantineStatus.used_bytes)} of {formatBytes(quarantineStatus.budget_bytes)} ({quarantineStatus.item_count} file{quarantineStatus.item_count === 1 ? "" : "s"}).
+          {:else}
+            Default 5 GB rolling budget (configurable 2–10 GB).
+          {/if}
+        </div>
+        <p class="muted small" style="margin: 0; line-height: 1.45;">
+          7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget; excludes shredded files, browser DBs, and registry edits).
+        </p>
       </div>
 
       <!-- Scan Exclusions -->

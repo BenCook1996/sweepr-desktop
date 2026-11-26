@@ -100,13 +100,344 @@ pub fn system_overview() -> SystemOverview {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct StartupItem {
     pub name: String,
     pub command: String,
     pub scope: String,
     pub enabled: bool,
     pub impact: String,
+    pub rss_bytes: Option<u64>,
+    pub cpu_percent: Option<f32>,
+    pub running_processes: u32,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct StartupMatchTarget {
+    pub exe_path: Option<String>,
+    pub app_dir: Option<String>,
+    pub stem: String,
+}
+
+#[derive(Clone, Debug)]
+pub struct ProcessSample {
+    pub exe_path: Option<String>,
+    pub stem: String,
+    pub rss_bytes: u64,
+    pub cpu_percent: f32,
+}
+
+fn norm_match_path(raw: &str) -> String {
+    let trimmed = raw.trim().trim_matches('"');
+    let no_verb = trimmed
+        .strip_prefix(r"\\?\")
+        .unwrap_or(trimmed);
+    if cfg!(windows) || no_verb.as_bytes().get(1) == Some(&b':') {
+        no_verb.replace('/', "\\").trim_end_matches('\\').to_ascii_lowercase()
+    } else {
+        no_verb.trim_end_matches('/').to_string()
+    }
+}
+
+fn stem_from_binary_str(bin: &str) -> String {
+    let norm = bin.trim().trim_matches('"').replace('\\', "/");
+    let fname = norm.rsplit('/').next().unwrap_or(&norm);
+    let lower = fname.to_ascii_lowercase();
+    for ext in [".exe", ".app", ".bin"] {
+        if let Some(s) = lower.strip_suffix(ext) {
+            return s.to_string();
+        }
+    }
+    lower
+}
+
+pub fn is_generic_startup_binary(stem: &str) -> bool {
+    matches!(
+        stem.trim().to_ascii_lowercase().as_str(),
+        ""
+            | "cmd"
+            | "powershell"
+            | "pwsh"
+            | "wscript"
+            | "cscript"
+            | "mshta"
+            | "rundll32"
+            | "regsvr32"
+            | "svchost"
+            | "explorer"
+            | "conhost"
+            | "javaw"
+            | "java"
+            | "python"
+            | "pythonw"
+            | "node"
+            | "bash"
+            | "sh"
+            | "zsh"
+            | "osascript"
+            | "open"
+            | "launchctl"
+            | "env"
+            | "update"
+            | "helper"
+            | "launcher"
+            | "setup"
+            | "installer"
+    )
+}
+
+fn is_shared_system_or_root_dir(dir_norm: &str) -> bool {
+    let d = dir_norm.trim_end_matches(['\\', '/']).to_ascii_lowercase();
+    if d.is_empty() || d.len() <= 3 {
+        return true;
+    }
+    if matches!(
+        d.as_str(),
+        "/usr/bin"
+            | "/bin"
+            | "/usr/local/bin"
+            | "/sbin"
+            | "/usr/sbin"
+            | "/system"
+            | "/applications"
+    ) {
+        return true;
+    }
+    d.ends_with(r"\windows")
+        || d.ends_with(r"\system32")
+        || d.ends_with(r"\syswow64")
+        || d.ends_with(r"\program files")
+        || d.ends_with(r"\program files (x86)")
+        || d.ends_with(r"\appdata\local")
+        || d.ends_with(r"\appdata\roaming")
+}
+
+fn extract_plist_exec_path(plist_xml: &str) -> Option<String> {
+    for key in ["Program", "ProgramArguments"] {
+        let needle = format!("<key>{key}</key>");
+        if let Some(idx) = plist_xml.find(&needle) {
+            let rest = &plist_xml[idx + needle.len()..];
+            if let Some(s_start) = rest.find("<string>") {
+                let after = &rest[s_start + 8..];
+                if let Some(s_end) = after.find("</string>") {
+                    let val = after[..s_end].trim();
+                    if !val.is_empty() {
+                        return Some(val.to_string());
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+fn extract_desktop_exec_path(desktop_raw: &str) -> Option<String> {
+    for line in desktop_raw.lines() {
+        let t = line.trim();
+        if let Some(val) = t.strip_prefix("Exec=") {
+            let mut rest = val.trim();
+            if let Some(after_env) = rest.strip_prefix("env ") {
+                rest = after_env.trim_start();
+            }
+            loop {
+                if let Some(quoted) = rest.strip_prefix('"') {
+                    if let Some(end) = quoted.find('"') {
+                        let tok = &quoted[..end];
+                        if !tok.is_empty() {
+                            return Some(tok.to_string());
+                        }
+                    }
+                    break;
+                }
+                let (tok, tail) = match rest.split_once(char::is_whitespace) {
+                    Some((a, b)) => (a, b.trim_start()),
+                    None => (rest, ""),
+                };
+                if tok.contains('=') && !tok.starts_with('/') && !tail.is_empty() {
+                    rest = tail;
+                    continue;
+                }
+                if !tok.is_empty() {
+                    return Some(tok.to_string());
+                }
+                break;
+            }
+        }
+    }
+    None
+}
+
+fn parse_squirrel_process_start(args: &str) -> Option<String> {
+    let lower = args.to_ascii_lowercase();
+    let idx = lower.find("--processstart")?;
+    let after = args[idx + "--processstart".len()..].trim_start();
+    let after = after.strip_prefix('=').unwrap_or(after).trim_start();
+    if let Some(q) = after.strip_prefix('"') {
+        let end = q.find('"').unwrap_or(q.len());
+        let val = q[..end].trim();
+        if !val.is_empty() {
+            return Some(val.to_string());
+        }
+    } else if let Some(tok) = after.split_whitespace().next() {
+        if !tok.is_empty() {
+            return Some(tok.to_string());
+        }
+    }
+    None
+}
+
+pub fn extract_startup_match_target(command: &str) -> StartupMatchTarget {
+    extract_startup_match_target_with_content(command, None)
+}
+
+pub fn extract_startup_match_target_with_content(
+    command: &str,
+    entry_content: Option<&str>,
+) -> StartupMatchTarget {
+    let trimmed = command.trim();
+    if trimmed.is_empty() {
+        return StartupMatchTarget {
+            exe_path: None,
+            app_dir: None,
+            stem: String::new(),
+        };
+    }
+
+    // Handle macOS .plist / Linux .desktop file references
+    let effective_cmd = if let Some(content) = entry_content {
+        if trimmed.to_ascii_lowercase().ends_with(".plist") {
+            extract_plist_exec_path(content).unwrap_or_else(|| trimmed.to_string())
+        } else if trimmed.to_ascii_lowercase().ends_with(".desktop") {
+            extract_desktop_exec_path(content).unwrap_or_else(|| trimmed.to_string())
+        } else {
+            trimmed.to_string()
+        }
+    } else {
+        trimmed.to_string()
+    };
+
+    let expanded = crate::cmdline::expand_env(&effective_cmd);
+    let (raw_exe, raw_args) = crate::cmdline::split_command(&expanded);
+    let exe_clean = raw_exe.trim();
+    if exe_clean.is_empty() {
+        return StartupMatchTarget {
+            exe_path: None,
+            app_dir: None,
+            stem: String::new(),
+        };
+    }
+
+    let norm_exe = norm_match_path(exe_clean);
+    let is_abs = std::path::Path::new(exe_clean).is_absolute()
+        || (exe_clean.len() >= 3
+            && exe_clean.as_bytes()[0].is_ascii_alphabetic()
+            && exe_clean.as_bytes()[1] == b':');
+
+    let app_dir = if is_abs {
+        let dir_sep_pos = norm_exe.rfind(['\\', '/']);
+        dir_sep_pos
+            .map(|pos| norm_exe[..pos].to_string())
+            .filter(|d| !is_shared_system_or_root_dir(d))
+    } else {
+        None
+    };
+
+    let base_stem = stem_from_binary_str(exe_clean);
+    if base_stem == "update" {
+        if let Some(target_exe) = parse_squirrel_process_start(&raw_args) {
+            let target_stem = stem_from_binary_str(&target_exe);
+            return StartupMatchTarget {
+                exe_path: None,
+                app_dir,
+                stem: target_stem,
+            };
+        }
+    }
+
+    StartupMatchTarget {
+        exe_path: if is_abs { Some(norm_exe) } else { None },
+        app_dir,
+        stem: base_stem,
+    }
+}
+
+pub fn match_startup_item_processes(
+    target: &StartupMatchTarget,
+    procs: &[ProcessSample],
+) -> (Option<u64>, Option<f32>, u32) {
+    let mut rss: u64 = 0;
+    let mut cpu: f32 = 0.0;
+    let mut count: u32 = 0;
+
+    // Tier 1: Exact path match or same application directory (captures multi-process Electron/browsers)
+    for p in procs {
+        let matched = match (&p.exe_path, &target.exe_path, &target.app_dir) {
+            (Some(pe), Some(te), _) if pe == te => true,
+            (Some(pe), _, Some(dir)) => {
+                let sep = if dir.contains('\\') { '\\' } else { '/' };
+                pe.starts_with(dir)
+                    && pe.as_bytes().get(dir.len()).copied() == Some(sep as u8)
+            }
+            _ => false,
+        };
+        if matched {
+            rss = rss.saturating_add(p.rss_bytes);
+            cpu += p.cpu_percent;
+            count += 1;
+        }
+    }
+
+    // Tier 2: Unique non-generic basename fallback when Tier 1 matched nothing
+    if count == 0 && !target.stem.is_empty() && !is_generic_startup_binary(&target.stem) {
+        for p in procs {
+            if p.stem.eq_ignore_ascii_case(&target.stem) {
+                rss = rss.saturating_add(p.rss_bytes);
+                cpu += p.cpu_percent;
+                count += 1;
+            }
+        }
+    }
+
+    if count == 0 {
+        (None, None, 0)
+    } else {
+        let rounded_cpu = (cpu * 10.0).round() / 10.0;
+        (Some(rss), Some(rounded_cpu), count)
+    }
+}
+
+fn collect_process_samples() -> Vec<ProcessSample> {
+    use sysinfo::{ProcessRefreshKind, UpdateKind};
+
+    let mut sys = System::new();
+    let kind = ProcessRefreshKind::nothing()
+        .with_cpu()
+        .with_memory()
+        .with_exe(UpdateKind::OnlyIfNotSet);
+    sys.refresh_processes_specifics(ProcessesToUpdate::All, true, kind);
+    std::thread::sleep(
+        sysinfo::MINIMUM_CPU_UPDATE_INTERVAL.max(std::time::Duration::from_millis(200)),
+    );
+    sys.refresh_processes_specifics(ProcessesToUpdate::All, true, kind);
+
+    let logical_cores = std::thread::available_parallelism()
+        .map(|n| n.get() as f32)
+        .unwrap_or(1.0)
+        .max(1.0);
+
+    sys.processes()
+        .values()
+        .map(|p| {
+            let exe_path = p.exe().map(|ep| norm_match_path(&ep.to_string_lossy()));
+            let stem = stem_from_binary_str(&p.name().to_string_lossy());
+            ProcessSample {
+                exe_path,
+                stem,
+                rss_bytes: p.memory(),
+                cpu_percent: p.cpu_usage() / logical_cores,
+            }
+        })
+        .collect()
 }
 
 pub fn estimate_startup_impact(name: &str, command: &str) -> String {
@@ -139,18 +470,25 @@ pub fn startup_items() -> Vec<StartupItem> {
     use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
     use winreg::RegKey;
 
+    let procs = collect_process_samples();
     let mut out = Vec::new();
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     if let Ok(key) = hkcu.open_subkey(RUN_KEY) {
         for (name, value) in key.enum_values().flatten() {
             let command = value.to_string();
             let impact = estimate_startup_impact(&name, &command);
+            let target = extract_startup_match_target(&command);
+            let (rss_bytes, cpu_percent, running_processes) =
+                match_startup_item_processes(&target, &procs);
             out.push(StartupItem {
                 name,
                 command,
                 scope: "Current user".into(),
                 enabled: true,
                 impact,
+                rss_bytes,
+                cpu_percent,
+                running_processes,
             });
         }
     }
@@ -161,12 +499,18 @@ pub fn startup_items() -> Vec<StartupItem> {
             }
             let command = value.to_string();
             let impact = estimate_startup_impact(&name, &command);
+            let target = extract_startup_match_target(&command);
+            let (rss_bytes, cpu_percent, running_processes) =
+                match_startup_item_processes(&target, &procs);
             out.push(StartupItem {
                 name,
                 command,
                 scope: "Current user".into(),
                 enabled: false,
                 impact,
+                rss_bytes,
+                cpu_percent,
+                running_processes,
             });
         }
     }
@@ -174,12 +518,18 @@ pub fn startup_items() -> Vec<StartupItem> {
         for (name, value) in key.enum_values().flatten() {
             let command = value.to_string();
             let impact = estimate_startup_impact(&name, &command);
+            let target = extract_startup_match_target(&command);
+            let (rss_bytes, cpu_percent, running_processes) =
+                match_startup_item_processes(&target, &procs);
             out.push(StartupItem {
                 name,
                 command,
                 scope: "All users".into(),
                 enabled: true,
                 impact,
+                rss_bytes,
+                cpu_percent,
+                running_processes,
             });
         }
     }
@@ -188,6 +538,7 @@ pub fn startup_items() -> Vec<StartupItem> {
 
 #[cfg(unix)]
 pub fn startup_items() -> Vec<StartupItem> {
+    let procs = collect_process_samples();
     let mut dirs_to_check: Vec<(std::path::PathBuf, &str, &str, bool)> = Vec::new();
     if let Some(h) = dirs::home_dir() {
         #[cfg(target_os = "macos")]
@@ -211,13 +562,20 @@ pub fn startup_items() -> Vec<StartupItem> {
                 if p.extension().and_then(|x| x.to_str()) == Some(ext) {
                     let name = p.file_stem().unwrap_or_default().to_string_lossy().into_owned();
                     let command = p.to_string_lossy().into_owned();
+                    let content = std::fs::read_to_string(&p).ok();
                     let impact = estimate_startup_impact(&name, &command);
+                    let target = extract_startup_match_target_with_content(&command, content.as_deref());
+                    let (rss_bytes, cpu_percent, running_processes) =
+                        match_startup_item_processes(&target, &procs);
                     out.push(StartupItem {
                         name,
                         command,
                         scope: scope.into(),
                         enabled,
                         impact,
+                        rss_bytes,
+                        cpu_percent,
+                        running_processes,
                     });
                 }
             }
@@ -1208,7 +1566,7 @@ pub fn list_context_menu_items() -> Vec<ContextMenuItem> {
             } else {
                 raw_label.replace('&', "")
             };
-            let enabled = sub_key.get_value::<String, _>("LegacyDisable").is_err();
+            let enabled = sub_key.get_raw_value("LegacyDisable").is_err();
             items.push(ContextMenuItem {
                 id: format!("{hive_label}:{kind}:{sub_name}"),
                 name: clean_name,
@@ -1651,6 +2009,64 @@ mod tests {
         assert!(kill_process_by_name("SWEEPRCleaner.exe").is_err());
         assert!(kill_process_by_name("MsMpEng.exe").is_err());
         assert!(kill_process_by_name("SecurityHealthService.exe").is_err());
+    }
+
+    #[test]
+    fn startup_process_matching_avoids_wrappers_and_sums_app_dir() {
+        let discord_target = extract_startup_match_target(
+            r#""C:\Users\alice\AppData\Local\Discord\Update.exe" --processStart Discord.exe"#,
+        );
+        assert_eq!(discord_target.stem, "discord");
+        assert_eq!(
+            discord_target.app_dir.as_deref(),
+            Some(r"c:\users\alice\appdata\local\discord")
+        );
+
+        let plist_target = extract_startup_match_target_with_content(
+            "/Users/alice/Library/LaunchAgents/com.spotify.client.plist",
+            Some("<plist><dict><key>ProgramArguments</key><array><string>/Applications/Spotify.app/Contents/MacOS/Spotify</string></array></dict></plist>"),
+        );
+        assert_eq!(plist_target.stem, "spotify");
+
+        let desktop_target = extract_startup_match_target_with_content(
+            "/home/alice/.config/autostart/slack.desktop",
+            Some("[Desktop Entry]\nExec=env WAYLAND_DISPLAY=wayland-0 /usr/bin/slack --startup %U\n"),
+        );
+        assert_eq!(desktop_target.stem, "slack");
+
+        let cmd_target = extract_startup_match_target(r#"C:\Windows\System32\cmd.exe /c echo hi"#);
+        assert!(is_generic_startup_binary(&cmd_target.stem));
+
+        let procs = vec![
+            ProcessSample {
+                exe_path: Some(r"c:\users\alice\appdata\local\discord\app-1.0\discord.exe".into()),
+                stem: "discord".into(),
+                rss_bytes: 150_000_000,
+                cpu_percent: 1.24,
+            },
+            ProcessSample {
+                exe_path: Some(r"c:\users\alice\appdata\local\discord\app-1.0\discord_helper.exe".into()),
+                stem: "discord_helper".into(),
+                rss_bytes: 50_000_000,
+                cpu_percent: 0.31,
+            },
+            ProcessSample {
+                exe_path: Some(r"c:\windows\system32\cmd.exe".into()),
+                stem: "cmd".into(),
+                rss_bytes: 10_000_000,
+                cpu_percent: 0.5,
+            },
+        ];
+
+        // Multi-process app in same app_dir sums both processes
+        let (rss, cpu, cnt) = match_startup_item_processes(&discord_target, &procs);
+        assert_eq!(cnt, 2);
+        assert_eq!(rss, Some(200_000_000));
+        assert_eq!(cpu, Some(1.6));
+
+        // Generic wrapper in another folder does NOT false-match via Tier 2 basename
+        let cmd_other = extract_startup_match_target(r#"D:\Scripts\cmd.exe"#);
+        assert_eq!(match_startup_item_processes(&cmd_other, &procs), (None, None, 0));
     }
 }
 

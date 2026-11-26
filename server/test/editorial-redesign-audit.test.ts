@@ -72,6 +72,7 @@ const SURVIVING_VS = [
   "avast-cleanup",
   "daisydisk",
   "pearcleaner",
+  "onyx",
   "cleanmypc",
   "glary-utilities",
   "wise-disk-cleaner",
@@ -85,6 +86,9 @@ const SURVIVING_ALT = [
   "cleanmypc",
   "glary-utilities",
   "wise-disk-cleaner",
+  "daisydisk",
+  "pearcleaner",
+  "onyx",
 ];
 
 const COMPETITOR_LABELS: Record<string, string[]> = {
@@ -94,6 +98,7 @@ const COMPETITOR_LABELS: Record<string, string[]> = {
   "avast-cleanup": ["Avast Cleanup", "Avast"],
   daisydisk: ["DaisyDisk"],
   pearcleaner: ["Pearcleaner"],
+  onyx: ["OnyX"],
   cleanmypc: ["CleanMyPC"],
   "glary-utilities": ["Glary Utilities"],
   "wise-disk-cleaner": ["Wise Disk Cleaner"],
@@ -135,7 +140,7 @@ const PRUNED_30_SLUGS = [
 describe("Editorial Redesign, Internal Linking & Consolidation Audit", () => {
   const { app } = setup();
 
-  test("1. Sitemap & cleanup parity (96 Tier-1 URLs, all 200 indexable, 0 overlap)", async () => {
+  test("1. Sitemap & cleanup parity (101 Tier-1 URLs, all 200 indexable, 0 overlap)", async () => {
     const staticXml = readFileSync("public/sitemap.xml", "utf8");
     const staticUrls = parseSitemap(staticXml);
 
@@ -143,8 +148,8 @@ describe("Editorial Redesign, Internal Linking & Consolidation Audit", () => {
     assert.equal(dynRes.status, 200);
     const dynamicUrls = parseSitemap(await dynRes.text());
 
-    assert.equal(staticUrls.length, 96, `Expected 96 static sitemap URLs, got ${staticUrls.length}`);
-    assert.equal(dynamicUrls.length, 96, `Expected 96 dynamic sitemap URLs, got ${dynamicUrls.length}`);
+    assert.equal(staticUrls.length, 101, `Expected 101 static sitemap URLs, got ${staticUrls.length}`);
+    assert.equal(dynamicUrls.length, 101, `Expected 101 dynamic sitemap URLs, got ${dynamicUrls.length}`);
     assert.deepEqual(dynamicUrls, staticUrls, "Static and dynamic sitemaps must match identically");
 
     const cleanupUrls = new Set(parseSitemap(readFileSync("public/sitemap-cleanup.xml", "utf8")));
@@ -210,7 +215,7 @@ describe("Editorial Redesign, Internal Linking & Consolidation Audit", () => {
     }
   });
 
-  test("3. Full internal link-graph crawl across all 96 sitemap URLs", async () => {
+  test("3. Full internal link-graph crawl across all 101 sitemap URLs", async () => {
     const sitemapUrls = parseSitemap(readFileSync("public/sitemap.xml", "utf8"));
     const intentionalNoindexPaths = new Set(["/download", "/order", "/login", "/dashboard"]);
     const responseCache = new Map<string, { status: number; indexable: boolean; reason?: string }>();
@@ -258,8 +263,10 @@ describe("Editorial Redesign, Internal Linking & Consolidation Audit", () => {
           continue;
         }
 
-        if (targetPath === "/download" || targetPath === "/order") {
+        if (targetPath === "/order" || (targetPath === "/download" && rawHref.includes("?"))) {
           assert.match(tag, /\brel="nofollow"/i, `CTA link on ${sourcePath} to ${rawHref} missing rel="nofollow": ${tag}`);
+        } else if (targetPath === "/download") {
+          assert.doesNotMatch(tag, /\brel="nofollow"/i, `Clean /download link on ${sourcePath} must not carry rel="nofollow": ${tag}`);
         }
 
         const info = await inspectTarget(targetPath);
@@ -308,11 +315,11 @@ describe("Editorial Redesign, Internal Linking & Consolidation Audit", () => {
     assert.deepEqual(
       starvedGuides,
       [],
-      `Guides with fewer than 4 inbound internal links across the 96-URL graph: ${JSON.stringify(starvedGuides)}`
+      `Guides with fewer than 4 inbound internal links across the 101-URL graph: ${JSON.stringify(starvedGuides)}`
     );
   });
 
-  test("4. All retired URLs (tools, bloat-watch, retired switchers) return single-hop 301 to 200 indexable targets", async () => {
+  test("4. All retired URLs (tools, bloat-watch) return single-hop 301 to 200 indexable targets", async () => {
     const bloatWatchSlugs = [
       "windows-11-24h2-8gb-update-cache-bug",
       "nvidia-rtx-shader-cache-10gb-limit-fix",
@@ -327,13 +334,9 @@ describe("Editorial Redesign, Internal Linking & Consolidation Audit", () => {
       ...Object.keys(RETIRED_TOOL_REDIRECTS).map((slug) => `/tools/${slug}`),
       "/bloat-watch",
       ...bloatWatchSlugs.map((slug) => `/bloat-watch/${slug}`),
-      "/vs/onyx",
-      "/alternatives/daisydisk",
-      "/alternatives/onyx",
-      "/alternatives/pearcleaner",
     ];
 
-    assert.equal(retiredPaths.length, 22, "Expected 22 retired redirect URLs (10 tools + 1 bloat-watch + 7 posts + 4 switchers)");
+    assert.equal(retiredPaths.length, 18, "Expected 18 retired redirect URLs (10 tools + 1 bloat-watch + 7 posts)");
 
     for (const path of retiredPaths) {
       const res = await app.request(path, { redirect: "manual" });
@@ -395,6 +398,106 @@ describe("Editorial Redesign, Internal Linking & Consolidation Audit", () => {
         false,
         `Non-Chromium guide ${slug} must not render id="consolidated-subcache-modules"`
       );
+    }
+  });
+
+  test("7. All 8 Mac comparison pages enforce editorial shell, plain-text JSON-LD, Mac CTA & Contracts 1-3", async () => {
+    const macPages = [
+      "/vs/onyx",
+      "/alternatives/pearcleaner",
+      "/alternatives/onyx",
+      "/alternatives/daisydisk",
+      "/vs/cleanmymac",
+      "/vs/pearcleaner",
+      "/vs/daisydisk",
+      "/alternatives/cleanmymac",
+    ];
+    const forbiddenStrings = [
+      "SWEEPR Cleaner Inc.",
+      "4.9 / 5.0",
+      "CleanMyMac X",
+      "500 MB",
+      "<50 MB",
+      "&lt;50 MB",
+      "300 rolling",
+      "max 300 items",
+      "6.52 MB",
+      "~190 MB",
+      "Audit Your Suspicious Windows Folders",
+      "/vendor/tailwind.min.css",
+      "/style.css",
+      "DaisyDisk & OnyX",
+    ];
+
+    for (const route of macPages) {
+      const res = await app.request(route);
+      assert.equal(res.status, 200, `${route} must return HTTP 200`);
+      const html = await res.text();
+
+      for (const bad of forbiddenStrings) {
+        assert.equal(html.includes(bad), false, `${route} must not contain stale string "${bad}"`);
+      }
+
+      assert.ok(html.includes("/sweepr-editorial.css"), `${route} must load /sweepr-editorial.css`);
+      assert.ok(html.includes("Benjamin Cook t/a SWEEPR Cleaner"), `${route} missing legal entity`);
+      assert.ok(html.includes("When to keep"), `${route} missing "When to keep" card`);
+      assert.ok(html.includes('id="switcher-interactive-audit-cta"'), `${route} missing #switcher-interactive-audit-cta`);
+      assert.ok(html.includes("~/Library/Caches"), `${route} CTA must reference ~/Library/Caches`);
+      assert.ok(html.includes("/clean/mac/system-data-huge"), `${route} CTA must link /clean/mac/system-data-huge`);
+      assert.match(html, /Safari\s+web\s+companion\s*\/\s*TestFlight\s+beta/i, `${route} missing qualified iOS framing`);
+      assert.equal(html.includes("iOS web/TestFlight beta"), false, `${route} must not use shorthand iOS web/TestFlight beta`);
+      assert.match(html, /Unlimited\s+Temp\s+&(?:amp;)?\s*Browser\s+Cache\s+Clean/i, `${route} missing Contract 1 copy`);
+      assert.match(html, /2[–-]10\s*GB/i, `${route} missing Contract 2 2-10 GB budget`);
+      assert.match(html, /5\s*GB\s+default/i, `${route} missing Contract 2 5 GB default`);
+      assert.ok(html.includes("1800DBEA6FE847D384E549D02CA372C3D45D8B81"), `${route} missing Authenticode thumbprint`);
+      assert.ok(html.includes("certutil") || html.includes("Get-AuthenticodeSignature"), `${route} missing #5 Windows Authenticode CLI snippet`);
+      assert.ok(html.includes("shasum"), `${route} missing #5 macOS shasum snippet`);
+      assert.ok(html.includes("codesign"), `${route} missing #5 macOS codesign snippet`);
+      assert.ok(html.includes("spctl"), `${route} missing #5 macOS spctl snippet`);
+      assert.ok(html.includes("/release-manifest.json"), `${route} missing #5 /release-manifest.json reference`);
+      assert.ok(html.includes("brew install --cask sweepr-cleaner"), `${route} missing Homebrew Cask command`);
+
+      // #18 Local macOS maintenance helpers without claiming Mac App Store or Setapp is live
+      assert.ok(html.includes("mdutil"), `${route} missing #18 Spotlight mdutil helper`);
+      assert.ok(html.includes("lsregister"), `${route} missing #18 LaunchServices lsregister helper`);
+      assert.ok(
+        html.includes("dscacheutil") || html.includes("mDNSResponder"),
+        `${route} missing #18 DNS flush dscacheutil/mDNSResponder helper`
+      );
+      assert.equal(
+        /SWEEPR[^<.]{0,80}(?:Mac App Store|Setapp)|(?:available|download|distributed|live)\s+(?:on|via)\s+(?:the\s+)?(?:Mac App Store|Setapp)/i.test(html),
+        false,
+        `${route} must not claim Mac App Store or Setapp distribution is live for SWEEPR`
+      );
+
+      if (route === "/alternatives/pearcleaner" || route === "/vs/pearcleaner") {
+        assert.ok(html.includes("docs/public-rules-catalog.json"), `${route} missing public-rules-catalog.json reference`);
+      }
+
+      const ldBlocks = [...html.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
+      assert.ok(ldBlocks.length > 0, `${route} must include JSON-LD`);
+      let itemListNames: string[] = [];
+      for (const m of ldBlocks) {
+        const parsed = JSON.parse(m[1]);
+        const nodes: any[] = Array.isArray(parsed["@graph"]) ? parsed["@graph"] : [parsed];
+        for (const node of nodes) {
+          if (node["@type"] === "Article") {
+            assert.equal(/<[^>]+>|&amp;/.test(String(node.headline || "")), false, `${route} JSON-LD headline contains HTML/entity: ${node.headline}`);
+          }
+          if (node["@type"] === "ItemList") {
+            assert.equal(node.numberOfItems, 5, `${route} ItemList must have numberOfItems=5`);
+            assert.equal(Array.isArray(node.itemListElement) ? node.itemListElement.length : 0, 5, `${route} ItemList must have 5 ListItem elements`);
+            itemListNames = (node.itemListElement as any[]).map((el) => String(el?.name || "").trim());
+          }
+        }
+      }
+
+      if (route.startsWith("/alternatives/")) {
+        assert.equal(itemListNames.length, 5, `${route} missing 5-item ItemList`);
+        const numberedHeadings = [...html.matchAll(/<h3\b[^>]*class="ed-h3"[^>]*>\s*[1-5]\.\s*([^<]+)<\/h3>/gi)].map((m) => m[1].trim());
+        assert.equal(numberedHeadings.length, 5, `${route} must render exactly 5 numbered <article> cards, found ${numberedHeadings.length}`);
+        assert.deepEqual(itemListNames, numberedHeadings, `${route} ItemList names must match the 5 rendered <h3 class="ed-h3"> card titles`);
+      }
     }
   });
 });

@@ -45,7 +45,7 @@ pub struct FileEntry {
     pub size: u64,
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct CategoryResult {
     pub id: String,
     pub name: String,
@@ -401,6 +401,49 @@ pub fn for_each_target_with_exclusions(rule: &Rule, exclusions: &[PathBuf], mut 
             f(entry.path(), md.len());
         }
     }
+
+    for ft in &rule.file_targets {
+        if !safety::is_safe_scan_root(&ft.dir, rule.min_age_hours)
+            || safety::is_excluded(&ft.dir, exclusions)
+        {
+            continue;
+        }
+        let Ok(dir_md) = std::fs::symlink_metadata(&ft.dir) else { continue };
+        if !dir_md.is_dir() || safety::metadata_is_link_like(&dir_md) {
+            continue;
+        }
+        let Ok(rd) = std::fs::read_dir(&ft.dir) else { continue };
+        let mut matched_files = 0usize;
+        for entry in rd.flatten() {
+            if matched_files >= MAX_FILES_PER_ROOT {
+                break;
+            }
+            let path = entry.path();
+            let Ok(md) = std::fs::symlink_metadata(&path) else { continue };
+            if !md.is_file() || safety::metadata_is_link_like(&md) {
+                continue;
+            }
+            if safety::is_excluded(&path, exclusions) {
+                continue;
+            }
+            let file_name = entry.file_name().to_string_lossy().into_owned();
+            if !crate::rules::segment_matches(&ft.pattern, &file_name) {
+                continue;
+            }
+            if check_unused {
+                if !is_file_old_and_unused(&path, &md, cutoff, &recent_names) {
+                    continue;
+                }
+            } else if rule.min_age_hours > 0 {
+                match md.modified() {
+                    Ok(m) if m <= cutoff => {}
+                    _ => continue,
+                }
+            }
+            matched_files += 1;
+            f(&path, md.len());
+        }
+    }
 }
 
 fn scan_rule(rule: &Rule, exclusions: &[PathBuf]) -> CategoryResult {
@@ -427,15 +470,24 @@ fn scan_rule(rule: &Rule, exclusions: &[PathBuf]) -> CategoryResult {
         .collect();
     top.sort_by(|a, b| b.size.cmp(&a.size));
 
+    let mut roots: Vec<String> = rule
+        .roots
+        .iter()
+        .map(|r| r.to_string_lossy().into_owned())
+        .collect();
+    for ft in &rule.file_targets {
+        roots.push(ft.dir.join(&ft.pattern).to_string_lossy().into_owned());
+    }
+
     CategoryResult {
-        id: rule.id.to_string(),
-        name: rule.name.to_string(),
-        description: rule.description.to_string(),
+        id: rule.id.clone(),
+        name: rule.name.clone(),
+        description: rule.description.clone(),
         group: rule.group,
         free: rule.free,
         bytes,
         files,
-        roots: rule.roots.iter().map(|r| r.to_string_lossy().into_owned()).collect(),
+        roots,
         top_files: top,
     }
 }
@@ -812,13 +864,14 @@ mod tests {
         std::fs::write(&f_excl, vec![b'c'; 4000]).unwrap();
 
         let rule = Rule {
-            id: "test_cache",
-            name: "Test Cache",
-            description: "Temporary test cache",
+            id: "test_cache".into(),
+            name: "Test Cache".into(),
+            description: "Temporary test cache".into(),
             group: Group::System,
             free: true,
             min_age_hours: 0,
             roots: vec![cache_root.clone()],
+            file_targets: Vec::new(),
         };
         let exclusions = vec![excluded_sub.clone()];
 
@@ -868,13 +921,14 @@ mod tests {
         std::fs::write(&tiny2, b"small").unwrap();
 
         let dup_rule = Rule {
-            id: "duplicates",
-            name: "Duplicate Files",
-            description: "Device duplicates",
+            id: "duplicates".into(),
+            name: "Duplicate Files".into(),
+            description: "Device duplicates".into(),
             group: Group::System,
             free: false,
             min_age_hours: 0,
             roots: vec![dir.clone()],
+            file_targets: Vec::new(),
         };
 
         let report = scan_all_with_exclusions(&[dup_rule], &[], |_| {});
@@ -916,5 +970,115 @@ mod tests {
         assert_eq!(zero_day_report.artifacts[1].artifact_kind, "node_modules");
 
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn file_targets_privacy_traces_scan_clean_and_restore() {
+        let dir = std::env::temp_dir().join(format!("sweepr-privacy-trace-scan-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let data_dir = dir.join("data");
+        let explorer = dir.join("Explorer");
+        let recent = dir.join("Recent");
+        let auto_dest = recent.join("AutomaticDestinations");
+        std::fs::create_dir_all(&data_dir).unwrap();
+        std::fs::create_dir_all(&explorer).unwrap();
+        std::fs::create_dir_all(&auto_dest).unwrap();
+
+        let thumb1 = explorer.join("thumbcache_256.db");
+        let icon1 = explorer.join("iconcache_32.db");
+        let lnk1 = recent.join("report.lnk");
+        let ini1 = recent.join("desktop.ini");
+        let nested_lnk = auto_dest.join("nested.lnk");
+        std::fs::write(&thumb1, vec![b't'; 1024]).unwrap();
+        std::fs::write(&icon1, vec![b'i'; 2048]).unwrap();
+        std::fs::write(&lnk1, vec![b'l'; 512]).unwrap();
+        std::fs::write(&ini1, b"[ViewState]").unwrap();
+        std::fs::write(&nested_lnk, vec![b'n'; 256]).unwrap();
+
+        let rule = Rule {
+            id: "thumbnails".into(),
+            name: "Privacy Traces".into(),
+            description: "Test privacy globs".into(),
+            group: Group::System,
+            roots: Vec::new(),
+            file_targets: vec![
+                crate::rules::FileGlobTarget {
+                    dir: explorer.clone(),
+                    pattern: "thumbcache_*.db".to_string(),
+                },
+                crate::rules::FileGlobTarget {
+                    dir: recent.clone(),
+                    pattern: "*.lnk".to_string(),
+                },
+            ],
+            min_age_hours: 0,
+            free: false,
+        };
+
+        let scan_rep = scan_all_with_exclusions(std::slice::from_ref(&rule), &[], |_| {});
+        assert_eq!(scan_rep.total_files, 2);
+        assert_eq!(scan_rep.total_bytes, 1536);
+
+        let clean_rep = cleaner::clean_with_exclusions_and_quarantine(
+            &rule,
+            false,
+            &[],
+            Some(&data_dir),
+        );
+        assert_eq!(clean_rep.files_removed, 2);
+        assert_eq!(clean_rep.bytes_freed, 1536);
+        assert!(!thumb1.exists());
+        assert!(!lnk1.exists());
+        // Non-matching files and nested subdirs must remain untouched
+        assert!(icon1.exists());
+        assert!(ini1.exists());
+        assert!(nested_lnk.exists());
+        assert!(auto_dest.is_dir());
+
+        // Quarantined files under std::env::temp_dir() are restorable
+        let q_entries = cleaner::list_quarantine_entries(&data_dir);
+        assert_eq!(q_entries.len(), 2);
+        for q in &q_entries {
+            cleaner::restore_quarantine_entry(&data_dir, &q.id).unwrap();
+        }
+        assert!(thumb1.exists());
+        assert!(lnk1.exists());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    #[ignore = "manual local hardware benchmark"]
+    fn benchmark_local_windows_scan() {
+        let rules = crate::rules::all();
+        let report = scan_all_with_exclusions(&rules, &[], |_| {});
+        let secs = (report.duration_ms as f64) / 1000.0;
+        let files_per_sec = if secs > 0.0 {
+            (report.total_files as f64) / secs
+        } else {
+            0.0
+        };
+        let gib = (report.total_bytes as f64) / (1024.0 * 1024.0 * 1024.0);
+        let gb = (report.total_bytes as f64) / 1_000_000_000.0;
+        println!(
+            "BENCHMARK_SUMMARY total_files={} duration_ms={} files_per_sec={:.1} total_bytes={} gib={:.2} gb={:.2} rules={}",
+            report.total_files,
+            report.duration_ms,
+            files_per_sec,
+            report.total_bytes,
+            gib,
+            gb,
+            rules.len()
+        );
+        for cat in report
+            .categories
+            .iter()
+            .filter(|c| c.bytes > 0 || c.files > 0)
+        {
+            println!(
+                "CATEGORY id={} name={:?} free={} files={} bytes={}",
+                cat.id, cat.name, cat.free, cat.files, cat.bytes
+            );
+        }
     }
 }

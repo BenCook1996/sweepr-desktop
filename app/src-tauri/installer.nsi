@@ -72,7 +72,7 @@ Var OldMainBinaryName
 Var InteractiveLaunch
 
 Name "${PRODUCTNAME}"
-Caption "SWEEPR Cleaner 0.1.0 Installer"
+Caption "SWEEPR Cleaner ${VERSION} Installer"
 BrandingText "SWEEPR Cleaner • Safe, Honest PC Cleaner"
 OutFile "${OUTFILE}"
 
@@ -167,7 +167,7 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 ; 1. Welcome Page
 !define MUI_WELCOMEPAGE_TITLE "Welcome to SWEEPR Cleaner"
 !define MUI_WELCOMEPAGE_TITLE_3LINES
-!define MUI_WELCOMEPAGE_TEXT "Smart Performance, Deep Cleaning and Privacy for your PC.$\r$\n$\r$\nSWEEPR Cleaner safely removes temporary junk, optimizes memory and startup programs, and protects your privacy with DoD 5220.22-M file shredding.$\r$\n$\r$\nClick Install to begin."
+!define MUI_WELCOMEPAGE_TEXT "Smart Performance, Deep Cleaning and Privacy for your PC.$\r$\n$\r$\nSWEEPR Cleaner safely removes temporary junk, optimizes memory and startup programs, and protects your privacy with SSD-aware 1-pass / HDD 3-pass file shredding and optional HDD free-space zeroing.$\r$\n$\r$\nClick Install to begin."
 Function WelcomeShow
   GetDlgItem $0 $HWNDPARENT 1
   SendMessage $0 ${WM_SETTEXT} 0 "STR:Install"

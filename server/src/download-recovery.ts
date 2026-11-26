@@ -125,7 +125,7 @@ export async function sendDownloadRecoveryEmail(opts: {
     "",
     `We noticed you downloaded ${installerFile} and started setting up your account, but Windows may have paused the launch.`,
     "",
-    "Because v0.1.0 is a freshly compiled 5 MB native Rust binary (0 MB background RAM), Windows Defender SmartScreen sometimes shows a prompt while our EV reputation builds:",
+    "Because v0.1.0 is a freshly compiled 6.76 MB native Rust installer (runs on-demand, signed with an SSL.com Individual Validation (IV) Authenticode certificate for CN=Benjamin Cook), Windows Defender SmartScreen can still prompt while SmartScreen reputation builds:",
     '1. Click "More info" on the Windows prompt.',
     '2. Click "Run anyway" to launch SWEEPR Cleaner.',
     "",
@@ -136,7 +136,7 @@ export async function sendDownloadRecoveryEmail(opts: {
     `Or activate your Web Pro license first (instant SWEEPR-PRO-... license key): ${orderUrl}`,
     "",
     "Need a hand? Just reply to this email.",
-    "— The SWEEPR Cleaner Team",
+    "— Benjamin Cook (SWEEPR Cleaner)",
   ].join("\n");
 
   const htmlBody = `
@@ -144,7 +144,7 @@ export async function sendDownloadRecoveryEmail(opts: {
   <div style="text-align: center; margin-bottom: 20px;">
     <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; background: #0d6847; color: #ffffff; font-weight: 800; font-size: 22px; border-radius: 12px;">S</div>
     <h2 style="font-size: 20px; font-weight: 800; margin: 14px 0 6px 0; color: #0f172a;">Did Windows SmartScreen pause your install?</h2>
-    <p style="color: #475569; font-size: 14px; margin: 0;">Here is the 10-second walkthrough to launch <strong>${escapeHtml(installerFile)}</strong> safely.</p>
+    <p style="color: #475569; font-size: 14px; margin: 0;">Here is the quick 2-step walkthrough to launch <strong>${escapeHtml(installerFile)}</strong> safely.</p>
   </div>
   <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; margin: 20px 0;">
     <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 10px;">2-Step Windows SmartScreen Fix:</div>
@@ -897,7 +897,7 @@ export async function getVisitorRecoveryStatus(
     sha256_msi: SWEEPR_WINDOWS_MSI_SHA256,
     smartscreen_steps: [
       'Click "More info" on the Windows SmartScreen prompt',
-      'Click "Run anyway" to launch SWEEPR Cleaner (5 MB native Rust binary)',
+      'Click "Run anyway" to launch SWEEPR Cleaner (6.76 MB native Rust installer)',
     ],
     order_url: `/order?plan=annual&utm_source=smartscreen_recovery&attribution_id=${encodeURIComponent(session.attribution_id)}`,
     download_url: `/download?platform=windows&utm_source=smartscreen_recovery&attribution_id=${encodeURIComponent(session.attribution_id)}`,
@@ -1506,7 +1506,7 @@ export async function dispatchPostCleanAhaMilestoneEmail(
     `Share your personal invite link with a friend or teammate—when they activate, both of you receive +30 Days of SWEEPR Pro Free:`,
     referralUrl,
     "",
-    `Enjoying SWEEPR's 5.8 MB native Rust speed? Leave a quick review on AlternativeTo or Trustpilot to help independent privacy-first software grow!`,
+    `Enjoying SWEEPR's 6.76 MB native Rust speed? Leave a quick review on AlternativeTo or Trustpilot to help independent privacy-first software grow!`,
   ].join("\n");
 
   const htmlBody = `

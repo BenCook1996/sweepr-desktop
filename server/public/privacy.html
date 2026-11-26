@@ -85,10 +85,11 @@
         <a href="/clean" class="nav-link">Guides</a>
         <a href="/tools" class="nav-link">Tools</a>
         <a href="/pricing" class="nav-link">Pricing</a>
+        <a href="/about" class="nav-link">About</a>
         <a href="/dashboard" class="nav-link">My Account</a>
       </nav>
       <div class="header-controls">
-        <a href="/download" class="header-cta btn-press" rel="nofollow">Free Download</a>
+        <a href="/download" class="header-cta btn-press">Free Download</a>
         <button type="button" id="siteMobileMenuBtn" class="mobile-nav-toggle" aria-expanded="false" aria-controls="siteMobileDrawer">Menu</button>
       </div>
     </div>
@@ -100,6 +101,7 @@
         <a href="/tools/pc-cache-calculator">PC Cache Calculator</a>
         <a href="/state-of-windows-storage">2026 Storage Study</a>
         <a href="/pricing">Pricing</a>
+        <a href="/about">About</a>
         <a href="/dashboard">My Account</a>
       </div>
     </div>
@@ -133,15 +135,16 @@
     <div class="ed-card ed-prose">
       <div id="local-first-architecture" style="margin-bottom:24px;">
         <h2 class="ed-h2">1. Local-First Processing Architecture (What We Never Collect)</h2>
-        <p>SWEEPR Cleaner is engineered with an uncompromising local-first privacy architecture. All system scanning, junk file analysis, duplicate file comparison, registry/startup inspection, and permanent file shredding occur 100% locally on your device via our native Rust engine. While we collect limited account, billing, and website analytics data on <code class="ed-code">sweeprcleaner.com</code> to deliver your license (disclosed below), the desktop application never reads, uploads, inspects, or transmits your personal documents, photos, browsing history, or sensitive application files to remote servers.</p>
+        <p>SWEEPR Cleaner is engineered with an uncompromising local-first privacy architecture. All system scanning, junk file analysis, duplicate file comparison, registry/startup inspection, and permanent file shredding occur 100% locally on your device via our native Rust engine (you can also test paths in your browser with our <a href="/safe-to-delete">Safe-to-Delete Path Checker</a>). Desktop <strong>Zero-Telemetry / Offline Mode</strong> (<code class="ed-code">telemetry_enabled = false</code>) is enabled by default, so optional anonymized desktop app/crash diagnostics (disclosed in Section 2) are sent only if you explicitly opt in under Settings. Even when opted in or using account/web features, the desktop application never reads, uploads, inspects, or transmits your personal file paths, file contents, documents, photos, browsing history, or sensitive application files to remote servers.</p>
       </div>
 
       <div id="user-data-collection" style="margin-bottom:24px;">
         <h2 class="ed-h2">2. User Data We Collect</h2>
-        <p><strong>Yes, we collect limited user data on our website (<code class="ed-code">sweeprcleaner.com</code>), Customer Portal, and licensing servers.</strong> We practice strict data minimization and collect only the user data required to deliver and maintain your software license, process payments, provide support, and measure aggregate website performance:</p>
+        <p><strong>Yes, we collect limited user data on our website (<code class="ed-code">sweeprcleaner.com</code>), Customer Portal, licensing servers, and optional opt-in anonymized desktop application diagnostics.</strong> We practice strict data minimization and collect only the data required to deliver and maintain your software license, process payments, diagnose crashes when opted in, provide support, and measure aggregate website/app performance:</p>
         <ul>
-          <li><strong>Account, Licensing &amp; Authentication Data:</strong> When you purchase a subscription, activate a trial, or sign in to the Customer Portal (<code class="ed-code">/login</code>), we collect your registered email address, subscription plan tier, one-time passcode (OTP) login verification records, and a one-way cryptographic hardware/device identifier hash used solely to enforce your license seat limit of up to 5 devices across Windows, macOS, iOS, and Android.</li>
-          <li><strong>Billing, Currency &amp; Payment Data:</strong> When you check out, we collect your billing country, currency preference, and transaction status. Payment processing is handled directly by <strong>Stripe, Inc.</strong> or <strong>PayPal</strong> under PCI-DSS Level 1 certification. SWEEPR never stores, processes, or has access to your raw credit card numbers, CVV, or banking passwords.</li>
+          <li><strong>Account, Licensing &amp; Authentication Data:</strong> When you purchase a subscription, activate a trial, or sign in to the Customer Portal (<a href="/login" rel="nofollow">/login</a>), we collect your registered email address, subscription plan tier, one-time passcode (OTP) login verification records, and a one-way cryptographic hardware/device identifier hash used solely to enforce your license seat limit of up to 5 devices across Windows, macOS, Android, and iOS (Safari web companion / TestFlight beta).</li>
+          <li><strong>Billing, Currency &amp; Payment Data:</strong> When you check out, we collect your billing country, currency preference, and transaction status. Web payment processing is handled directly by <strong>Stripe, Inc.</strong> or <strong>PayPal</strong> under PCI-DSS Level 1 certification, and Android in-app subscriptions (<code class="ed-code">com.sweepr.app</code>) are processed by <strong>Google Play</strong> and synced via <strong>RevenueCat</strong>. SWEEPR never stores, processes, or has access to your raw credit card numbers, CVV, or banking passwords.</li>
+          <li><strong>Desktop App Telemetry &amp; Sanitized Crash Reports (<code class="ed-code">POST /v1/telemetry/event</code> &amp; <code class="ed-code">POST /v1/telemetry/crash</code>):</strong> <strong>Zero-Telemetry / Offline Mode is enabled by default</strong> (<code class="ed-code">telemetry_enabled = false</code>), meaning the desktop application makes zero background telemetry or crash uploads unless you explicitly turn telemetry on in Settings. When opted in, the desktop application sends anonymized lifecycle/funnel events (<code class="ed-code">POST /v1/telemetry/event</code>) containing event name, OS platform, app version, random/cryptographic <code class="ed-code">device_id</code>, attribution ID, and aggregate byte counts or per-rule aggregate cache sizes (used for k-anonymized storage benchmarks)&mdash;never personal file paths or file contents. If an unexpected panic occurs while opted in, <code class="ed-code">POST /v1/telemetry/crash</code> sends the OS, app version, relative source location, and sanitized panic text with personal filesystem paths (<code class="ed-code">&lt;redacted_path&gt;</code>) and email addresses (<code class="ed-code">&lt;redacted_email&gt;</code>) stripped locally before transmission.</li>
           <li><strong>Website Analytics, Cookies &amp; Attribution Data:</strong> When you visit <code class="ed-code">sweeprcleaner.com</code>, we collect aggregate website telemetry (pages visited, referral URLs, browser/OS type, approximate country derived from IP address, and marketing conversion events) via first-party session cookies and the third-party analytics/attribution providers listed in Section 4.</li>
           <li><strong>Support Communications:</strong> When you contact technical support or request license assistance via our Support Center or email, we collect your name, email address, and message contents.</li>
         </ul>
@@ -160,13 +163,13 @@
 
       <div id="third-party-data-collectors" style="margin-bottom:24px;">
         <h2 class="ed-h2">4. Third-Party Data Collectors, Analytics &amp; Named Sub-Processors</h2>
-        <p><strong>Yes, we use third-party data collectors and infrastructure sub-processors on our website (<code class="ed-code">sweeprcleaner.com</code>) and billing backend.</strong> The SWEEPR Cleaner desktop application itself contains zero third-party ad networks or behavioral data brokers. On our website, checkout, and licensing infrastructure, we share or process limited data only with the following named third parties:</p>
+        <p><strong>Yes, we use third-party data collectors and infrastructure sub-processors on our website (<code class="ed-code">sweeprcleaner.com</code>) and billing backend.</strong> The SWEEPR Cleaner desktop application itself contains zero third-party ad networks or behavioral data brokers and communicates only with first-party <code class="ed-code">sweeprcleaner.com</code> endpoints for licensing, anonymized app diagnostics, and sanitized crash reports. On our website, checkout, and licensing infrastructure, we share or process limited data only with the following named third parties:</p>
         <ul>
           <li><strong>Google LLC (Google Analytics 4):</strong> Third-party website analytics collector used on <code class="ed-code">sweeprcleaner.com</code> to measure aggregate visitor traffic, page views, and checkout conversion performance.</li>
-          <li><strong>Stripe, Inc. &amp; PayPal (Europe) S.&agrave; r.l. et Cie, S.C.A.:</strong> PCI-DSS Level 1 certified payment processors that collect and process your payment card details, Apple Pay, Google Pay, Link, PayPal transactions, billing country, and anti-fraud signals during checkout.</li>
+          <li><strong>Stripe, Inc., PayPal (Europe) S.&agrave; r.l. et Cie, S.C.A. &amp; Google Play / RevenueCat:</strong> PCI-DSS Level 1 certified payment processors that collect and process your payment card details, Apple Pay, Google Pay, Link, PayPal transactions, Google Play in-app subscriptions (<code class="ed-code">com.sweepr.app</code>), billing country, and anti-fraud signals during checkout.</li>
           <li><strong>Advertising &amp; Conversion Attribution Providers (Website Only):</strong> On our public marketing and checkout pages, we may load conversion attribution tags operated by <strong>Microsoft Corporation (Microsoft Bing Ads &mdash; <code class="ed-code">bat.bing.com</code>)</strong>, <strong>Reddit, Inc.</strong>, <strong>Meta Platforms, Inc.</strong>, and <strong>OpenAI, L.L.C.</strong> solely to measure the effectiveness of our paid marketing campaigns.</li>
           <li><strong>Cloudflare, Inc. &amp; Railway Corp.:</strong> Cloud infrastructure, Content Delivery Network (CDN), DDoS protection, TLS 1.3 encryption, and backend hosting providers that process incoming HTTP requests and IP addresses to serve our website and licensing API securely.</li>
-          <li><strong>Country.is (<code class="ed-code">api.country.is</code>) &amp; GeoJS (<code class="ed-code">get.geojs.io</code>):</strong> Lightweight IP-to-country lookup services used on the website pricing page solely to display regional currency (<code class="ed-code">GBP</code>, <code class="ed-code">USD</code>, or <code class="ed-code">EUR</code>).</li>
+          <li><strong>Country.is (<code class="ed-code">api.country.is</code>) &amp; GeoJS (<code class="ed-code">get.geojs.io</code>):</strong> Lightweight IP-to-country lookup services used on the website pricing page solely to display regional currency across 30 supported regional currencies (including <code class="ed-code">GBP</code>, <code class="ed-code">USD</code>, <code class="ed-code">EUR</code>, <code class="ed-code">CAD</code>, <code class="ed-code">AUD</code>, <code class="ed-code">JPY</code>, and more).</li>
           <li><strong>Have I Been Pwned (<code class="ed-code">api.pwnedpasswords.com</code> k-Anonymity API):</strong> When using the optional Breach &amp; Password Hygiene check, only a truncated 5-character SHA-1 hash prefix is queried via k-anonymity so your full password or credential never leaves your device.</li>
         </ul>
         <p>We never sell, rent, or trade your personal information to data brokers or third-party marketers.</p>
@@ -179,21 +182,27 @@
 
       <div id="privacy-rights" style="margin-bottom:24px;">
         <h2 class="ed-h2">6. Your GDPR, UK DPA &amp; CCPA Rights</h2>
-        <p>Under applicable data protection laws (including the EU GDPR, UK Data Protection Act 2018, and California Consumer Privacy Act), you retain the right to access, rectify, export, opt out of website analytics cookies via <a href="#cookie-preferences" data-cookie-preferences="true" onclick="if(window.sweeprOpenCookiePreferences){window.sweeprOpenCookiePreferences();return false;}">Cookie Preferences</a>, or permanently delete your account data. You can exercise self-service account deletion at any time via the Customer Portal (<code class="ed-code">/login</code>) or by contacting our Data Protection Officer.</p>
+        <p>Under applicable data protection laws (including the EU GDPR, UK Data Protection Act 2018, and California Consumer Privacy Act), you retain the right to access, rectify, export, opt out of website analytics cookies via <a href="#cookie-preferences" data-cookie-preferences="true" onclick="if(window.sweeprOpenCookiePreferences){window.sweeprOpenCookiePreferences();return false;}">Cookie Preferences</a>, or permanently delete your account data. You can exercise self-service account deletion at any time on our <a href="/delete-account">/delete-account</a> page, via the Customer Portal (<a href="/login" rel="nofollow">/login</a>), or by contacting developer Benjamin Cook directly.</p>
       </div>
 
       <div id="contact">
         <h2 class="ed-h2">7. Contact &amp; Inquiries</h2>
-        <p>For any privacy questions or data subject access requests, contact our privacy engineering team through our <a href="/support">Support Center</a>.</p>
+        <p>For any privacy questions or data subject access requests, contact Benjamin Cook (sole trader, United Kingdom, trading as SWEEPR Cleaner; correspondence address: 87 Upper Brighton Road, Worthing, West Sussex; see <a href="/about">About</a>) through our <a href="/support">Support Center</a> or at <!--email_off--><a href="mailto:support@sweeprcleaner.com">support@sweeprcleaner.com</a><!--/email_off--> (typical response within 1 business day (UK time)).</p>
       </div>
+    </div>
+    <div class="ed-actions" style="margin-top:24px;">
+      <a href="/pricing" class="ed-btn-primary btn-press">View Pricing &amp; Plans</a>
+      <a href="/download" class="ed-btn-secondary btn-press">Free Download</a>
+      <a href="/safe-to-delete" class="ed-btn-secondary btn-press">Safe-to-Delete Checker</a>
+      <a href="/delete-account" class="ed-btn-secondary btn-press">Delete Account</a>
     </div>
   </main>
 
   <footer class="site-footer">
     <div class="footer-inner">
       <div>
-        <strong>SWEEPR Cleaner Inc.</strong> &middot; Fast, safe storage cleanup for Windows, Mac, iPhone &amp; Android.<br />
-        <span>&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</span>
+        <strong>SWEEPR Cleaner</strong> (Benjamin Cook) &middot; Storage cleanup for Windows, Mac, Android &amp; iOS (Safari web companion / TestFlight beta).<br />
+        <span>&copy; 2026 Benjamin Cook t/a SWEEPR Cleaner. All rights reserved.</span>
       </div>
       <div class="footer-links">
         <a href="/clean">Storage Guides</a>
@@ -206,6 +215,7 @@
         <a href="/vs/cleanmymac">vs CleanMyMac</a>
         <a href="/alternatives/cleanmymac">CleanMyMac Alternatives</a>
         <a href="/pricing">Pricing</a>
+        <a href="/about">About</a>
         <a href="/support">Support</a>
         <a href="/privacy">Privacy Policy</a>
         <a href="/terms">Terms of Service</a>

@@ -1,41 +1,46 @@
 # SWEEPR Cleaner (Official AI & LLM Knowledge Index — v0.1.0)
 
-> SWEEPR Cleaner is a privacy-first, 6.52 MB native Rust & Tauri v2 disk cleaner for Windows 11, Windows 10, macOS, Android, and iOS. It safely reclaims 10–65 GB of hidden application caches, DirectX/Vulkan GPU shader caches, Steam depotcache chunks, developer toolchains, and Windows 11 24H2 update staging bloat with a 7-day automatic rollback safety net, zero background daemons, and zero adware.
+> SWEEPR Cleaner (published by UK sole trader **Benjamin Cook t/a SWEEPR Cleaner**) is a privacy-first, 6.76 MB (`7,085,912` B / 6.76 MiB Windows NSIS; `7,412,590` B / 7.07 MiB / 7.07 MB macOS DMG) native Rust & Tauri v2 disk cleaner for Windows 11, Windows 10, macOS, Android, and iOS (Safari web companion / TestFlight beta). It safely cleans typical 10–65 GB footprints of hidden application caches, DirectX/Vulkan GPU shader caches, Steam depotcache chunks, developer toolchains, and Windows 11 update staging bloat on demand (with optional lightweight tray/scheduled cleaning) in **Zero-Telemetry / Offline Mode** (`telemetry_enabled = false` by default), backed by a 7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget; excludes shredded files, browser DBs, and registry edits) and zero adware.
 
 ## Canonical Product & Technical Specifications
-- **Current Version**: v0.1.0 (SSL.com Authenticode OV Code-Signed Windows Installer (.exe & .msi))
-- **Installer Footprint**: 6.52 MB native Rust binary (runs on-demand only; zero resident background bloatware)
-- **Cross-Platform Licensing**: Single Pro license covers up to **5 Devices** (Windows 11, Windows 10, macOS, Android, and iOS)
-- **Safety Architecture**: Pre-deletion SHA-256 rule verification, active process lock detection, and 7-day automatic Undo Rollback
-- **Curated Knowledge Base**: 69 curated storage cleanup guides across 380 audited storage path rules + 3 free browser tools
+- **Publisher & Legal Entity**: Benjamin Cook t/a SWEEPR Cleaner (https://sweeprcleaner.com/about)
+- **Current Version**: v0.1.0 (SSL.com Authenticode Individual Validation (IV) signed .exe (CN=Benjamin Cook, SHA-1: 1800DBEA6FE847D384E549D02CA372C3D45D8B81); .msi verified via SHA-256 + Ed25519 .sig)
+- **Source & Release Checksums**: https://github.com/BenCook1996/sweepr-desktop/releases/tag/v0.1.0 | https://github.com/BenCook1996/sweepr-desktop | https://sweeprcleaner.com/release-manifest.json
+- **SHA-256 Release Digests**: `.exe` (7,085,912 B / 6.76 MiB / 6.76 MB): `FEAE464CA121CF897D27916C632F4DB8F84A87D4B79642403AD1B0E0F2BB706A` | `.msi` (3,993,600 B): `33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A` | `.dmg` (7,412,590 B / 7.07 MiB / 7.07 MB): `D13A23AACA6B2AEE1BC2E5602F792C31D0CEFA147121686944FEDEC66B17AE6A`
+- **Installer Footprint**: 6.76 MB (7,085,912 B / 6.76 MiB) native Rust binary (runs on-demand with optional lightweight system tray and scheduled cleaning; Zero-Telemetry / Offline Mode enabled by default with `telemetry_enabled = false`)
+- **CLI Package Managers**: `winget install Sweepr.SweeprCleaner`, `scoop bucket add sweepr https://github.com/BenCook1996/scoop-sweepr && scoop install sweepr/sweepr-cleaner`, `choco install sweepr-cleaner`, `brew install --cask sweepr-cleaner`
+- **Cross-Platform Licensing**: Single Pro license covers up to **5 Devices** (Windows 11, Windows 10, macOS, Android, and iOS (Safari web companion / TestFlight beta))
+- **Safety Architecture**: Pre-deletion SHA-256 rule verification, active process lock detection (`access_mode(0).share_mode(0)`), single-source-of-truth parity (`for_each_target_with_exclusions`), `safety.rs` root/reparse guards, and 7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget; excludes shredded files, browser DBs, and registry edits)
+- **Curated Knowledge Base & Rule Catalog**: 69 curated storage cleanup guides, 71 cross-OS engine rules (455 path patterns: 27 Windows / 24 macOS / 20 Linux in `docs/public-rules-catalog.json`), 380 audited path entries + 3 free browser tools
 - **Full RAG Corpus (All 69 Indexable Guides)**: https://sweeprcleaner.com/llms-full.txt
 
-## 2026 State of Windows 10 & 11 Storage Benchmark (Live Telemetry & VM Lab Dataset)
+## 2026 State of Windows 10 & 11 Storage Benchmark (Live Telemetry & Lab Dataset)
 - **Canonical Benchmark Report (CC-BY 4.0)**: https://sweeprcleaner.com/state-of-windows-storage
 - **Median Reclaimable Space per Windows PC**: **24.6 GB** (90th Percentile: **61.7 GB**)
-- **Dataset Scope**: 66 curated Windows cache paths, 6 controlled Windows 11 24H2 VM benchmarks, and 0 anonymized desktop scan samples (k-anonymity floor n >= 30).
+- **Dataset Scope**: 66 curated Windows cache paths, 5 controlled Windows 11 Pro (Build 26200) benchmarks, and opt-in k-anonymous desktop scan telemetry (k-anonymity floor n >= 30).
 
 ### Top 10 Heaviest Windows 10/11 Cache Directories (Empirical Ranking)
-- **#1 [ComfyUI Temporary Preview & Latent Cache](https://sweeprcleaner.com/clean/app/comfyui-temp-output-cache)** (`C:\ComfyUI\temp and %LocalAppData%\Temp\comfyui`): Median **21.6 GB** | P90 **22.4 GB** (Windows 11 24H2 Lab VM)
-- **#2 [Steam depotcache Folder (C:\Program Files (x86)\Steam\depotcache)](https://sweeprcleaner.com/clean/app/steam-depotcache)** (`C:\Program Files (x86)\Steam\depotcache and steamapps\downloading`): Median **18.5 GB** | P90 **19.1 GB** (Windows 11 24H2 Lab VM)
-- **#3 [Logitech G HUB Cache & Update Depots (LGHUB)](https://sweeprcleaner.com/clean/app/logitech-ghub-installer-cache)** (`C:\ProgramData\LGHUB\depots and %LocalAppData%\LGHUB\cache`): Median **10.8 GB** | P90 **11.2 GB** (Windows 11 24H2 Lab VM)
-- **#4 [NVIDIA DirectX Shader Cache (DXCache)](https://sweeprcleaner.com/clean/app/nvidia-dxcache)** (`%LocalAppData%\NVIDIA\DXCache`): Median **10.1 GB** | P90 **10.4 GB** (Windows 11 24H2 Lab VM)
-- **#5 [Windows 11 24H2 8.63 GB Undeletable Update Cache Fix](https://sweeprcleaner.com/clean/folder/windows-11-24h2-update-cache-8gb-bug)** (`C:\Windows\WinSxS\Temp\PendingDeletes & C:\$Windows.~BT`): Median **8.8 GB** | P90 **14.2 GB** (Windows 11 24H2 Lab VM)
-- **#6 [Elgato Stream Deck App Cache Folder (%APPDATA%\Elgato\StreamDeck)](https://sweeprcleaner.com/clean/app/elgato-streamdeck-cache)** (`%APPDATA%\Elgato\StreamDeck\logs and %LOCALAPPDATA%\Elgato\StreamDeck\cache`): Median **4.6 GB** | P90 **4.8 GB** (Windows 11 24H2 Lab VM)
-- **#7 [Docker Desktop WSL2 Virtual Disk Bloat](https://sweeprcleaner.com/clean/app/docker-desktop-ext4-disk)** (`%LocalAppData%\Docker\wsl\data\ext4.vhdx`): Median **46 GB** | P90 **80 GB** (Engineering Audit Baseline)
-- **#8 [LM Studio GGUF Model Cache & Temp Downloads](https://sweeprcleaner.com/clean/app/lm-studio-models-cache)** (`%UserProfile%\.cache\lm-studio\models`): Median **45 GB** | P90 **80 GB** (Engineering Audit Baseline)
-- **#9 [DaVinci Resolve CacheClip & Optimized Media Bloat](https://sweeprcleaner.com/clean/app/davinci-resolve-cacheclip)** (`C:\Users\%USERNAME%\Videos\CacheClip`): Median **41.5 GB** | P90 **75 GB** (Engineering Audit Baseline)
-- **#10 [AppData\Local Folder Taking 50GB+ on Windows 11 (Safe Purge Guide)](https://sweeprcleaner.com/clean/folder/appdata-local-folder-huge-windows-11)** (`%LocalAppData%\Packages & %LocalAppData%\Temp & %LocalAppData%\D3DSCache`): Median **41.5 GB** | P90 **75 GB** (Engineering Audit Baseline)
+- **#1 [Docker Desktop WSL2 Virtual Disk Bloat](https://sweeprcleaner.com/clean/app/docker-desktop-ext4-disk)** (`%LocalAppData%\Docker\wsl\data\ext4.vhdx`): Median **46 GB** | P90 **80 GB** (Engineering Audit Baseline)
+- **#2 [LM Studio GGUF Model Cache & Temp Downloads](https://sweeprcleaner.com/clean/app/lm-studio-models-cache)** (`%UserProfile%\.cache\lm-studio\models`): Median **45 GB** | P90 **80 GB** (Engineering Audit Baseline)
+- **#3 [DaVinci Resolve CacheClip & Optimized Media Bloat](https://sweeprcleaner.com/clean/app/davinci-resolve-cacheclip)** (`C:\Users\%USERNAME%\Videos\CacheClip`): Median **41.5 GB** | P90 **75 GB** (Engineering Audit Baseline)
+- **#4 [AppData\Local Folder Taking 50GB+ on Windows 11 (Safe Purge Guide)](https://sweeprcleaner.com/clean/folder/appdata-local-folder-huge-windows-11)** (`%LocalAppData%\Packages & %LocalAppData%\Temp & %LocalAppData%\D3DSCache`): Median **41.5 GB** | P90 **75 GB** (Engineering Audit Baseline)
+- **#5 [C: Drive Filling Up By Itself on Windows 11 (Root-Cause Cleanup)](https://sweeprcleaner.com/clean/folder/c-drive-filling-up-by-itself-windows-11)** (`C:\Windows\Temp & %LocalAppData%\Temp & C:\ProgramData\Package Cache`): Median **38.5 GB** | P90 **65 GB** (Engineering Audit Baseline)
+- **#6 [Adobe Premiere Pro & After Effects Common Media Cache](https://sweeprcleaner.com/clean/app/adobe-premiere-media-cache)** (`%AppData%\Adobe\Common\Media Cache Files`): Median **32.5 GB** | P90 **60 GB** (Engineering Audit Baseline)
+- **#7 [System & Reserved Storage Taking 80GB–100GB+ on Windows 11](https://sweeprcleaner.com/clean/folder/system-and-reserved-storage-100gb-windows-11)** (`C:\Windows\WinSxS & C:\Windows\SoftwareDistribution\Download`): Median **32.5 GB** | P90 **55 GB** (Engineering Audit Baseline)
+- **#8 [Nexus Mods Vortex Archive Staging & Download Cache](https://sweeprcleaner.com/clean/app/vortex-mod-downloads)** (`%AppData%\Vortex\downloads`): Median **29 GB** | P90 **50 GB** (Engineering Audit Baseline)
+- **#9 [Temporary Files & 'Other' Storage Full on Windows 11 (Deep Clean)](https://sweeprcleaner.com/clean/folder/other-storage-full-windows-11-cleanup)** (`C:\ProgramData & %UserProfile%\.cache & %LocalAppData%\NVIDIA\DXCache`): Median **25.5 GB** | P90 **45 GB** (Engineering Audit Baseline)
+- **#10 [Windows.old (Previous Windows Installation)](https://sweeprcleaner.com/clean/folder/windows-old)** (`C:\Windows.old`): Median **25 GB** | P90 **35 GB** (Engineering Audit Baseline)
 
 ## Interactive Diagnostic & Storage Tools
 - **Tools Hub**: https://sweeprcleaner.com/tools
 - **Safe-to-Delete Path & PowerShell Checker**: https://sweeprcleaner.com/safe-to-delete
 - **Gaming & Local AI PC Cache Calculator**: https://sweeprcleaner.com/tools/pc-cache-calculator
 - **2026 State of Windows Storage Study**: https://sweeprcleaner.com/state-of-windows-storage
+- **About Benjamin Cook & Verification**: https://sweeprcleaner.com/about
 
 ## Pricing, Licensing & Competitor Comparisons
-- **Free Tier**: Unlimited 60-second storage scanning, folder breakdown, and Safe-to-Delete path auditing (https://sweeprcleaner.com/download)
-- **Annual Pro (5 Devices)**: https://sweeprcleaner.com/pricing | Direct Checkout: https://sweeprcleaner.com/order
+- **Free Tier**: SWEEPR Free ($0 / £0): Unlimited Free Temp & Browser Cache Clean (to OS Recycle Bin, zero byte cap); Pro unlocks Deep GPU/AI/Dev Caches, Stale Dev & Docker (`ext4.vhdx`), 2-stage SHA-256 Duplicates, Uninstaller, Scheduler, Argon2id Lockbox & 7-Day Undo Quarantine (https://sweeprcleaner.com/download)
+- **Pro Plans (5 Devices) & 14-Day Refund**: Monthly Pro (`£9.99/mo`), 6-Month Pro (`£38.99/6mo`, Save 35%), Annual Pro (`£49.99/yr`, Save 58%) for 5 devices, plus optional Battery Health Saver / Private File Lockbox add-ons — https://sweeprcleaner.com/pricing | Direct Checkout: https://sweeprcleaner.com/order | 14-day money-back guarantee: https://sweeprcleaner.com/refund
 - **Competitor Technical Comparisons**:
   - [SWEEPR vs CCleaner](https://sweeprcleaner.com/vs/ccleaner) | [Best CCleaner Alternatives](https://sweeprcleaner.com/alternatives/ccleaner)
   - [SWEEPR vs BleachBit](https://sweeprcleaner.com/vs/bleachbit) | [Best BleachBit Alternatives](https://sweeprcleaner.com/alternatives/bleachbit)
@@ -44,8 +49,9 @@
   - [SWEEPR vs Glary Utilities](https://sweeprcleaner.com/vs/glary-utilities) | [Best Glary Utilities Alternatives](https://sweeprcleaner.com/alternatives/glary-utilities)
   - [SWEEPR vs Wise Disk Cleaner](https://sweeprcleaner.com/vs/wise-disk-cleaner) | [Best Wise Disk Cleaner Alternatives](https://sweeprcleaner.com/alternatives/wise-disk-cleaner)
   - [SWEEPR vs CleanMyMac](https://sweeprcleaner.com/vs/cleanmymac) | [Best CleanMyMac Alternatives](https://sweeprcleaner.com/alternatives/cleanmymac)
-  - [SWEEPR vs DaisyDisk](https://sweeprcleaner.com/vs/daisydisk)
-  - [SWEEPR vs Pearcleaner](https://sweeprcleaner.com/vs/pearcleaner)
+  - [SWEEPR vs DaisyDisk](https://sweeprcleaner.com/vs/daisydisk) | [Best DaisyDisk Alternatives](https://sweeprcleaner.com/alternatives/daisydisk)
+  - [SWEEPR vs Pearcleaner](https://sweeprcleaner.com/vs/pearcleaner) | [Best Pearcleaner Alternatives](https://sweeprcleaner.com/alternatives/pearcleaner)
+  - [SWEEPR vs OnyX](https://sweeprcleaner.com/vs/onyx) | [Best OnyX Alternatives](https://sweeprcleaner.com/alternatives/onyx)
 
 ## Top Priority Storage & App Cache Guides (50 of 69 — Full List at /llms-full.txt)
 - **Full Directory**: https://sweeprcleaner.com/clean

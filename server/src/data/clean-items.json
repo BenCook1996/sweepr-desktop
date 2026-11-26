@@ -25,7 +25,7 @@
       }
     ],
     "metaTitle": "Can I Delete Discord Cache? YES (1.5–6 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\discord\\Cache? YES (1.5–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\discord\\Cache? YES (1.5–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\discord\\Cache\\Cache_Data (data_0, data_1, f_*)",
@@ -100,12 +100,6 @@
       "adminRequired": false,
       "edgeCaseNote": "Discord locks data_0, data_1, and index files while running in the background. Right-click Discord in system tray -> Quit Discord, or run 'taskkill /F /IM Discord.exe' before clearing files."
     },
-    "proofImage": "/img/proof/discord-cache-proof.webp",
-    "visualProof": {
-      "path": "/img/proof/discord-cache-proof.webp",
-      "alt": "Discord Cache_Data directory showing accumulated media blobs and data files",
-      "caption": "Verified Discord Electron media cache and Code Cache subdirectories on Windows 11."
-    },
     "platform": "windows",
     "isChromiumBased": true,
     "shellCommand": {
@@ -139,7 +133,7 @@
       }
     ],
     "metaTitle": "Can I Delete Spotify Cache? YES (2–10 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Spotify\\Storage? YES (2–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Spotify\\Storage? YES (2–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\Spotify\\Storage (*.file)",
@@ -189,12 +183,6 @@
       "adminRequired": false,
       "edgeCaseNote": "Spotify keeps streaming chunks locked while playing music or minimized in the system tray. Quit Spotify completely via Task Manager or 'taskkill /F /IM Spotify.exe' before deleting."
     },
-    "proofImage": "/img/proof/spotify-cache-proof.webp",
-    "visualProof": {
-      "path": "/img/proof/spotify-cache-proof.webp",
-      "alt": "Spotify Storage folder showing encrypted streaming music cache files",
-      "caption": "Verified Spotify persistent audio stream cache and canvas video loops on Windows 11."
-    },
     "platform": "windows",
     "isChromiumBased": true
   },
@@ -213,7 +201,7 @@
       "Navigate to C:\\Program Files (x86)\\Steam\\steamapps\\shadercache and delete old game app-id folders."
     ],
     "metaTitle": "Can I Delete Steam Shader? YES (3–15 GB) — Safe Guide",
-    "metaDescription": "Delete C:\\Program Files (x86)\\Steam\\steamapps\\shadercache (3–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete C:\\Program Files (x86)\\Steam\\steamapps\\shadercache (3–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "C:\\Program Files (x86)\\Steam\\steamapps\\shadercache\\<AppID>\\DXCache & mesa_shader_cache",
@@ -297,7 +285,7 @@
       }
     ],
     "metaTitle": "Can I Delete Chrome ServiceWorker? YES (1–5 GB) — Safe Guide",
-    "metaDescription": "Delete ...\\Google\\Chrome\\User Data\\Default\\Service Worker\\CacheStorage (1–5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete ...\\Google\\Chrome\\User Data\\Default\\Service Worker\\CacheStorage (1–5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\Google\\Chrome\\User Data\\Default\\Service Worker\\CacheStorage",
@@ -344,7 +332,20 @@
       }
     ],
     "platform": "windows",
-    "isChromiumBased": true
+    "isChromiumBased": true,
+    "proofImage": "/img/proof/chrome-service-worker-cache-proof.webp",
+    "visualProof": {
+      "path": "/img/proof/chrome-service-worker-cache-proof.webp",
+      "alt": "Google Chrome Service Worker CacheStorage folder inspection on Windows 11 Pro Build 26200",
+      "caption": "Verified Chrome Service Worker CacheStorage audit on Windows 11 Pro Build 26200."
+    },
+    "labMeasurement": {
+      "beforeGb": 0.94,
+      "afterGb": 0,
+      "reclaimedGb": 0.94,
+      "osBuild": "Windows 11 Pro Build 26200 (25H2)",
+      "notes": "Read-only audit of Default\\Service Worker\\CacheStorage (2026-11-26, Celeron N5095 / XINCUU-512GB SATA SSD): 0.94 GiB (1,011,021,582 B; 7,013 files; 508 folders) eligible when Chrome is closed (dry-run, no files deleted; full SWEEPR chrome rule measured 2.44 GiB across all Chrome cache folders)."
+    }
   },
   {
     "slug": "winsxs",
@@ -368,7 +369,7 @@
         "a": "No. WinSxS (Windows Side-by-Side Component Store) contains hard links to active system binaries. Instead of deleting the folder directly, use DISM /Online /Cleanup-Image /StartComponentCleanup or SWEEPR 1-click component cleanup to safely purge superseded update payloads."
       },
       {
-        "q": "Why is the WinSxS folder taking up 10–20 GB on Windows 11 24H2?",
+        "q": "Why is the WinSxS folder taking up 10–20 GB on Windows 11?",
         "a": "Every monthly cumulative update retains previous component versions inside C:\\Windows\\WinSxS so you can roll back patches. Pruning superseded components typically reclaims 6–18 GB without breaking Windows Update."
       }
     ],
@@ -381,7 +382,7 @@
         "Empirical 6.0 GB – 20.0 GB recovery benchmark + 1-click native Rust cleanup"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 6.0 GB – 20.0 GB recovery benchmark",
+        "Verified Windows 11 Pro Build 26200 (25H2) safety audit & 6.0 GB – 20.0 GB recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\Windows\\WinSxS",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -441,8 +442,8 @@
     "proofImage": "/img/proof/winsxs-proof.webp",
     "visualProof": {
       "path": "/img/proof/winsxs-proof.webp",
-      "alt": "Windows WinSxS component store DISM analyze component store output in PowerShell",
-      "caption": "Verified DISM Component Store analysis showing reclaimable superseded update packages on Windows 11."
+      "alt": "Windows Explorer WinSxS Properties and Windows 11 Pro Build 26200 read-only inspection showing 18.47 GB across 129,296 files and 106,481 folders",
+      "caption": "Verified read-only C:\\Windows\\WinSxS inspection on Windows 11 Pro Build 26200 (18.47 GB / 19,831,391,539 B, 129,296 files, 106,481 folders; .dll, .exe, .sys, .pak)."
     },
     "platform": "windows",
     "questionTitle": "Is it safe to delete the C:\\Windows\\WinSxS folder on Windows 11?",
@@ -552,7 +553,20 @@
       "adminRequired": false,
       "edgeCaseNote": "Seeing 'File In Use' when clearing %temp% is completely normal—choose Skip so active apps stay undisturbed while all orphaned installers and logs are deleted."
     },
-    "platform": "windows"
+    "platform": "windows",
+    "proofImage": "/img/proof/appdata-temp-proof.webp",
+    "visualProof": {
+      "path": "/img/proof/appdata-temp-proof.webp",
+      "alt": "Windows Explorer Properties and Windows 11 Pro Build 26200 read-only inspection of %LocalAppData%\\Temp showing 1.70 GB across 15,026 Explorer files (15,037 SWEEPR files) and 10,095 folders",
+      "caption": "Verified read-only %LocalAppData%\\Temp inspection on Windows 11 Pro Build 26200 (1.70 GB / 1,821,622,055 B, 15,026 Explorer / 15,037 SWEEPR files, 10,095 folders)."
+    },
+    "labMeasurement": {
+      "beforeGb": 1.7,
+      "afterGb": 0.77,
+      "reclaimedGb": 0.93,
+      "osBuild": "Windows 11 Pro Build 26200 (25H2)",
+      "notes": "Read-only audit of %LocalAppData%\\Temp (2026-11-26, Celeron N5095 / XINCUU-512GB SATA SSD): 1.70 GiB (1,821,622,055 B; 15,026 Explorer / 15,037 SWEEPR files; 10,095 folders) inspected; 0.93 GiB (999,383,098 B; 8,397 files >24h) eligible via SWEEPR temp rule; 0.77 GiB active/recent files retained (dry-run, no files deleted)."
+    }
   },
   {
     "slug": "windows-old",
@@ -600,11 +614,11 @@
       "replicatedPatterns": [
         "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
         "Step-by-step folder verification + FAQPage JSON-LD schema",
-        "Verified Windows 11 24H2 safety verdict & 15.0 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 15.0 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\Windows.old"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 15.0 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 15.0 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\Windows.old",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -664,12 +678,6 @@
       "adminRequired": true,
       "edgeCaseNote": "Standard File Explorer delete prompts 'You require permission from SYSTEM to make changes to this folder'. Use Windows Storage Sense (Settings -> System -> Storage -> Temporary files) or run 'cleanmgr' as Administrator."
     },
-    "proofImage": "/img/proof/windows-old-proof.webp",
-    "visualProof": {
-      "path": "/img/proof/windows-old-proof.webp",
-      "alt": "Windows.old directory properties dialog displaying multi-gigabyte previous installation size",
-      "caption": "Verified File Explorer properties showing previous Windows installation footprint ready for safe reclamation."
-    },
     "platform": "windows",
     "questionTitle": "Is it safe to delete Windows.old on Windows 11 (and why it says Access Denied)?",
     "directAnswer": "Yes—C:\\Windows.old is safe to delete if your Windows 11 installation has been stable and you do not plan to roll back to your previous Windows version. File Explorer blocks direct deletion with 'Access Denied' because TrustedInstaller owns those files; remove it cleanly via Storage Settings or Disk Cleanup as Administrator.",
@@ -722,7 +730,7 @@
       }
     ],
     "metaTitle": "Clear NVIDIA Shader Cache (DXCache) Safely — 2–14 GB",
-    "metaDescription": "Clear NVIDIA DXCache (2–14 GB) to fix game stutter cleanly. Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Clear NVIDIA DXCache (2–14 GB) to fix game stutter cleanly. Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\NVIDIA\\DXCache (*.bin, *.toc, *.nvph)",
@@ -772,21 +780,8 @@
       "adminRequired": false,
       "edgeCaseNote": "Active games or NVIDIA background services lock current shader binaries with 'File In Use'. Select 'Skip' for in-use files, or restart PC in Safe Mode to purge 100% of corrupt shader files after a driver update."
     },
-    "proofImage": "/img/proof/nvidia-dxcache-proof.webp",
-    "visualProof": {
-      "path": "/img/proof/nvidia-dxcache-proof.webp",
-      "alt": "NVIDIA DXCache folder contents showing compiled .nvph, .bin, and .toc shader files",
-      "caption": "Verified NVIDIA DirectX shader cache directory layout and unlocked binary files on Windows 11."
-    },
     "lastUpdated": "2026-11-19",
     "platform": "windows",
-    "labMeasurement": {
-      "beforeGb": 10.4,
-      "afterGb": 0.3,
-      "reclaimedGb": 10.1,
-      "osBuild": "Windows 11 24H2 Lab VM",
-      "notes": "%LocalAppData%\\NVIDIA\\DXCache cleared; active shaders recompiled cleanly on first game launch."
-    },
     "questionTitle": "Can I delete NVIDIA DXCache? Does clearing shader cache fix game stuttering?",
     "directAnswer": "Yes—%LocalAppData%\\NVIDIA\\DXCache is safe to clear and frees 2–14 GB without touching your NVIDIA Control Panel settings or game saves. Clearing a bloated or corrupted shader cache after GPU driver updates often fixes persistent frame-time spikes, at the cost of brief shader recompilation on each game's first launch.",
     "whenNotToDelete": "Expect 1–3 minutes of slightly higher CPU usage or brief shader compilation stutters the first time you reopen DirectX 12 games after clearing DXCache. Skip any files currently locked by dwm.exe or running apps—that is normal.",
@@ -812,7 +807,7 @@
       "Delete the hexadecimal cache folders inside."
     ],
     "metaTitle": "Can I Delete NVIDIA GLCache? YES (1–6 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\NVIDIA\\GLCache? YES (1–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\NVIDIA\\GLCache? YES (1–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\NVIDIA\\GLCache\\<hash>",
@@ -885,7 +880,7 @@
       "Skip any file currently in use by nvcontainer.exe."
     ],
     "metaTitle": "Can I Delete NVIDIA NV_Cache? YES (1.5–8 GB) — Safe Guide",
-    "metaDescription": "Delete C:\\ProgramData\\NVIDIA Corporation\\NV_Cache (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete C:\\ProgramData\\NVIDIA Corporation\\NV_Cache (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "C:\\ProgramData\\NVIDIA Corporation\\NV_Cache",
@@ -969,7 +964,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete AMD DxCache? YES (2–12 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\AMD\\DxCache? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\AMD\\DxCache? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\AMD\\DxCache (*.bin, *.toc)",
@@ -1018,12 +1013,6 @@
       "adminRequired": false,
       "edgeCaseNote": "AMD Radeon Software locks current session shaders. You can safely clear shaders via AMD Software: Adrenalin Edition -> Settings -> Graphics -> Advanced -> Reset Shader Cache, or exit Radeon software and delete files manually."
     },
-    "proofImage": "/img/proof/amd-shader-cache-proof.webp",
-    "visualProof": {
-      "path": "/img/proof/amd-shader-cache-proof.webp",
-      "alt": "AMD DxCache and VkCache directories in AppData Local displaying compiled shader binaries",
-      "caption": "Verified AMD Radeon Adrenalin compiled shader pipeline cache on Windows 11."
-    },
     "platform": "windows",
     "questionTitle": "Can I delete AMD DxCache? How to safely reset AMD Radeon shader cache",
     "directAnswer": "Yes. Clearing %LocalAppData%\\AMD\\DxCache (or clicking 'Perform Reset' on Shader Cache inside AMD Software: Adrenalin Edition) safely frees 2–12 GB and fixes corrupted shader pipelines after driver upgrades without affecting game installs or display profiles.",
@@ -1051,7 +1040,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Intel Arc & Iris Xe? YES (1–5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Intel\\ShaderCache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Intel\\ShaderCache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -1080,7 +1069,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Delete Epic Games webcache? YES (1–5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\EpicGamesLauncher\\Saved\\webcache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\EpicGamesLauncher\\Saved\\webcache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\EpicGamesLauncher\\Saved\\webcache_4430\\Cache\\Cache_Data",
@@ -1157,7 +1146,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete Steam depotcache? YES (2–25 GB) — Safe Guide",
-    "metaDescription": "Can I delete C:\\Program Files (x86)\\Steam\\depotcache? YES (2–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete C:\\Program Files (x86)\\Steam\\depotcache? YES (2–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "C:\\Program Files (x86)\\Steam\\depotcache (*.csd, *.csm)",
@@ -1244,20 +1233,7 @@
       "adminRequired": false,
       "edgeCaseNote": "If Steam is running or minimized to the system tray, .csd files in depotcache throw 'Action Cannot Be Completed Because the File is Open in Steam'. Exit Steam via Steam menu -> Exit or run 'taskkill /F /IM steam.exe' before deleting."
     },
-    "proofImage": "/img/proof/steam-depotcache-proof.webp",
-    "visualProof": {
-      "path": "/img/proof/steam-depotcache-proof.webp",
-      "alt": "Steam depotcache folder showing .csd chunk files and disk footprint on Windows 11",
-      "caption": "Verified disk inspection of Steam depotcache staging chunks and downloading directories on Windows 11 (24H2)."
-    },
     "platform": "windows",
-    "labMeasurement": {
-      "beforeGb": 19.1,
-      "afterGb": 0.6,
-      "reclaimedGb": 18.5,
-      "osBuild": "Windows 11 24H2 Lab VM",
-      "notes": "Orphaned .depot/.manifest staging files in Steam\\depotcache and steamapps\\downloading removed with zero games paused."
-    },
     "shellCommand": {
       "label": "PowerShell: Measure Steam depotcache & shadercache footprint (Read-Only)",
       "language": "powershell",
@@ -1279,7 +1255,7 @@
       "Select all cache subfolders and delete them."
     ],
     "metaTitle": "Can I Delete Battle.net Cache? YES (1.5–7 GB) — Safe Guide",
-    "metaDescription": "Can I delete C:\\ProgramData\\Battle.net? YES (1.5–7 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete C:\\ProgramData\\Battle.net? YES (1.5–7 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "C:\\ProgramData\\Blizzard Entertainment\\Battle.net\\Cache",
@@ -1357,11 +1333,11 @@
       "replicatedPatterns": [
         "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
         "Step-by-step folder verification + FAQPage JSON-LD schema",
-        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 1.5 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Electronic Arts\\EA Desktop\\cache"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 1.5 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Electronic Arts\\EA Desktop\\cache",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -1378,7 +1354,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete EA App Cache? YES (1.5–6 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Electronic Arts\\EA Desktop\\cache? YES (1.5–6 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Electronic Arts\\EA Desktop\\cache? YES (1.5–6 GB). Zero save files or active logins lost. Manual steps + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\Electronic Arts\\EA Desktop\\cache",
@@ -1443,7 +1419,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Ubisoft Connect? YES (1–5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Ubisoft Game Launcher\\spool (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Ubisoft Game Launcher\\spool (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -1466,11 +1442,11 @@
       "replicatedPatterns": [
         "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
         "Step-by-step folder verification + FAQPage JSON-LD schema",
-        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 1.5 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\VALORANT\\Saved\\Logs, Crashes, webcache, and %LocalAppData%\\Riot Games\\Riot Client\\Logs"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 1.5 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\VALORANT\\Saved\\Logs, Crashes, webcache, and %LocalAppData%\\Riot Games\\Riot Client\\Logs",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -1487,7 +1463,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete Riot Client Logs? YES (1.5–8 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\VALORANT\\Saved\\Logs? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\VALORANT\\Saved\\Logs? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\VALORANT\\Saved\\Logs (*.log, ShooterGame.log)",
@@ -1548,12 +1524,6 @@
       "adminRequired": false,
       "edgeCaseNote": "Riot Client and Vanguard (vgc.exe) hold active session locks on ShooterGame.log while running. Exit Riot Client from the system tray before deleting."
     },
-    "proofImage": "/img/proof/riot-client-logs-proof.webp",
-    "visualProof": {
-      "path": "/img/proof/riot-client-logs-proof.webp",
-      "alt": "VALORANT Saved Logs and Crashes directory showing multi-gigabyte diagnostic files",
-      "caption": "Verified Riot Client and VALORANT session telemetry logs and crash minidumps on Windows 11."
-    },
     "platform": "windows",
     "shellCommand": {
       "label": "PowerShell: Inspect VALORANT & Riot Client logs size (Read-Only)",
@@ -1581,7 +1551,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Roblox Temporary? YES (2–12 GB) — Safe Guide",
-    "metaDescription": "Can I delete %TEMP%\\Roblox? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %TEMP%\\Roblox? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -1600,7 +1570,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Minecraft Launcher? YES (1–8 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\.minecraft\\logs? YES (1–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\.minecraft\\logs? YES (1–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -1619,7 +1589,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete GOG Galaxy Webcache? YES (1–6 GB) — Safe Guide",
-    "metaDescription": "Can I delete %PROGRAMDATA%\\GOG.com\\Galaxy\\webcache? YES (1–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %PROGRAMDATA%\\GOG.com\\Galaxy\\webcache? YES (1–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -1655,13 +1625,13 @@
         "Empirical 3.0 GB – 22.0 GB recovery benchmark + 1-click native Rust cleanup"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 3.0 GB – 22.0 GB recovery benchmark",
+        "Windows 11/10 path safety verdict & 3.0 GB – 22.0 GB recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game\\Temp",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
     "metaTitle": "Can I Delete Genshin Temp? YES (3–22 GB) — Safe Guide",
-    "metaDescription": "Delete C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game\\Temp (3–22 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game\\Temp (3–22 GB). Zero save files or active logins lost. Manual steps + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "...\\Genshin Impact game\\Temp (*.zip, *.7z, *.pkg_version)",
@@ -1714,12 +1684,6 @@
       "adminRequired": true,
       "edgeCaseNote": "If installed in 'C:\\Program Files', deleting Temp files requires Administrator elevation. Ensure HoYoPlay launcher is closed so downloaded .zip containers are not locked."
     },
-    "proofImage": "/img/proof/genshin-impact-update-cache-proof.webp",
-    "visualProof": {
-      "path": "/img/proof/genshin-impact-update-cache-proof.webp",
-      "alt": "HoYoPlay Genshin Impact game Temp directory showing residual update zip archives",
-      "caption": "Verified HoYoPlay temporary update staging residue and language pack archives on Windows 11."
-    },
     "platform": "windows"
   },
   {
@@ -1741,11 +1705,11 @@
       "replicatedPatterns": [
         "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
         "Step-by-step folder verification + FAQPage JSON-LD schema",
-        "Verified Windows 11 24H2 safety verdict & 10.0 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 10.0 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%Low\\VRChat\\VRChat\\Cache-WindowsPlayer"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 10.0 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 10.0 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%Low\\VRChat\\VRChat\\Cache-WindowsPlayer",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -1762,7 +1726,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Delete VRChat Cache Folder? YES (10–30 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%Low\\VRChat\\VRChat\\Cache-WindowsPlayer? YES (10–30 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%Low\\VRChat\\VRChat\\Cache-WindowsPlayer? YES (10–30 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%Low\\VRChat\\VRChat\\Cache-WindowsPlayer\\<hash>",
@@ -1827,7 +1791,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete FiveM Server Asset? YES (5–35 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\FiveM\\FiveM.app\\data\\cache (5–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\FiveM\\FiveM.app\\data\\cache (5–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -1845,7 +1809,7 @@
       "Delete the contents of the 'Logs' folder (never delete 'Songs' or 'Skins')."
     ],
     "metaTitle": "Can I Delete osu! Staging? YES (1–5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\osu!\\Logs? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\osu!\\Logs? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\osu!\\Logs",
@@ -1905,7 +1869,7 @@
       "Skip the current active log file if Synapse is running."
     ],
     "metaTitle": "Can I Delete Razer Synapse 3? YES (1–6 GB) — Safe Guide",
-    "metaDescription": "Can I delete C:\\ProgramData\\Razer\\Synapse3\\Log? YES (1–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete C:\\ProgramData\\Razer\\Synapse3\\Log? YES (1–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "C:\\ProgramData\\Razer\\Synapse3\\Log",
@@ -1978,7 +1942,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Corsair iCUE Update? YES (1–5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Corsair\\iCUE5\\logs? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Corsair\\iCUE5\\logs? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2011,7 +1975,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete Premiere Media? YES (5–60 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Adobe\\Common\\Media Cache Files? YES (5–60 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Adobe\\Common\\Media Cache Files? YES (5–60 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\Adobe\\Common\\Media Cache Files",
@@ -2086,7 +2050,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Adobe After Effects? YES (10–80 GB) — Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Temp\\Adobe\\After Effects Disk Cache (10–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Temp\\Adobe\\After Effects Disk Cache (10–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2105,7 +2069,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Adobe Photoshop? YES (4–40 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Temp (Photoshop Temp*)? YES (4–40 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Temp (Photoshop Temp*)? YES (4–40 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2219,7 +2183,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete DaVinci CacheClip? YES (8–75 GB) — Safe Guide",
-    "metaDescription": "Can I delete C:\\Users\\%USERNAME%\\Videos\\CacheClip? YES (8–75 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete C:\\Users\\%USERNAME%\\Videos\\CacheClip? YES (8–75 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "C:\\Users\\%USERNAME%\\Videos\\CacheClip",
@@ -2296,7 +2260,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete CapCut Cache? YES (2.5–18 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\CapCut\\User Data\\Cache? YES (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\CapCut\\User Data\\Cache? YES (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\CapCut\\User Data\\Cache & Resources (proxy videos, effect caches)",
@@ -2369,7 +2333,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Blender Fluid? YES (1.5–15 GB) — Safe Guide",
-    "metaDescription": "Can I delete %TEMP%\\blender_*? YES (1.5–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %TEMP%\\blender_*? YES (1.5–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2388,7 +2352,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Figma Desktop Font? YES (1–6 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Figma\\Cache? YES (1–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Figma\\Cache? YES (1–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2407,7 +2371,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Canva Desktop Asset? YES (1–5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Canva\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Canva\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2437,7 +2401,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Delete OBS Studio Logs & Cache? YES (1–6.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\obs-studio\\logs & Cache? YES (1–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\obs-studio\\logs & Cache? YES (1–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\obs-studio\\plugin_config\\obs-browser\\Cache\\Cache_Data",
@@ -2502,7 +2466,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Audacity Unsaved? YES (1–12 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Audacity\\SessionData? YES (1–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Audacity\\SessionData? YES (1–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2521,7 +2485,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete AutoCAD & Autodesk? YES (2–15 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Autodesk\\Web Services? YES (2–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Autodesk\\Web Services? YES (2–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2540,7 +2504,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Unity Editor Asset? YES (4–30 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Unity\\Asset Store-5.x? YES (4–30 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Unity\\Asset Store-5.x? YES (4–30 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2559,7 +2523,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Unreal Engine Common? YES (8–50 GB) — Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\UnrealEngine\\Common\\DerivedDataCache (8–50 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\UnrealEngine\\Common\\DerivedDataCache (8–50 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2578,7 +2542,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Adobe Lightroom? YES (3–25 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Adobe\\CameraRaw\\Cache2? YES (3–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Adobe\\CameraRaw\\Cache2? YES (3–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2597,7 +2561,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete VLC Media Player? YES (0.3–2 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\vlc\\art? YES (0.3–2 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\vlc\\art? YES (0.3–2 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2699,7 +2663,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Slack Desktop Cache? YES (1.5–8 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Slack\\Cache? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Slack\\Cache? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2717,7 +2681,7 @@
       "Delete the contents of 'logs' and 'data\\WebviewCache'."
     ],
     "metaTitle": "Can I Delete Zoom WebView? YES (0.8–4.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Zoom\\data\\WebviewCache? YES (0.8–4.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Zoom\\data\\WebviewCache? YES (0.8–4.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\Zoom\\data\\WebviewCache",
@@ -2794,7 +2758,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Telegram Desktop? YES (2–25 GB) — Safe Guide",
-    "metaDescription": "Delete %APPDATA%\\Telegram Desktop\\tdata\\user_data\\cache (2–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %APPDATA%\\Telegram Desktop\\tdata\\user_data\\cache (2–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -2812,7 +2776,7 @@
       "Delete temporary cache files inside LocalCache and TempState."
     ],
     "metaTitle": "Can I Delete WhatsApp UWP? YES (1–10 GB) — Safe Guide",
-    "metaDescription": "Delete ...\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache (1–10 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete ...\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache (1–10 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\Packages\\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\\LocalCache",
@@ -2887,7 +2851,7 @@
       "Delete the 'Cache', 'Code Cache', 'GPUCache', and 'Service Worker\\CacheStorage' directories."
     ],
     "metaTitle": "Can I Delete Edge Browser? YES (1.5–8 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\Default\\Cache (1.5–8 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\Default\\Cache (1.5–8 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\Microsoft\\Edge\\User Data\\Default\\Cache\\Cache_Data",
@@ -2945,7 +2909,20 @@
       }
     ],
     "platform": "windows",
-    "isChromiumBased": true
+    "isChromiumBased": true,
+    "proofImage": "/img/proof/edge-browser-cache-proof.webp",
+    "visualProof": {
+      "path": "/img/proof/edge-browser-cache-proof.webp",
+      "alt": "Microsoft Edge Cache and Service Worker folder inspection on Windows 11 Pro Build 26200",
+      "caption": "Verified Microsoft Edge cache folder audit on Windows 11 Pro Build 26200."
+    },
+    "labMeasurement": {
+      "beforeGb": 0.32,
+      "afterGb": 0.13,
+      "reclaimedGb": 0.19,
+      "osBuild": "Windows 11 Pro Build 26200 (25H2)",
+      "notes": "Read-only audit of Edge\\User Data (2026-11-26, Celeron N5095 / XINCUU-512GB SATA SSD): 0.32 GiB (344,908,253 B; 3,575 files; 882 folders) inspected; 0.19 GiB (208,477,589 B; 2,215 cache files) eligible via SWEEPR edge rule; 0.13 GiB profiles, bookmarks, and logins protected (dry-run, no files deleted)."
+    }
   },
   {
     "slug": "brave-browser-cache",
@@ -2962,7 +2939,7 @@
       "Delete 'Cache', 'Code Cache', and 'Service Worker\\CacheStorage'."
     ],
     "metaTitle": "Can I Delete Brave Browser Cache? YES (1–7 GB) — Safe Guide",
-    "metaDescription": "Delete ...APPDATA%\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Cache (1–7 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete ...APPDATA%\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Cache (1–7 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Cache\\Cache_Data",
@@ -3038,7 +3015,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Mozilla Firefox? YES (1–6 GB) — Safe Guide",
-    "metaDescription": "Delete ...ALAPPDATA%\\Mozilla\\Firefox\\Profiles\\*.default-release\\cache2 (1–6 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete ...ALAPPDATA%\\Mozilla\\Firefox\\Profiles\\*.default-release\\cache2 (1–6 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3075,18 +3052,18 @@
       "replicatedPatterns": [
         "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
         "Step-by-step folder verification + FAQPage JSON-LD schema",
-        "Verified Windows 11 24H2 safety verdict & 1.8 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 1.8 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Opera Software\\Opera GX Stable\\Cache\\Cache_Data and %AppData%\\Opera Software\\Opera GX Stable\\Service Worker\\CacheStorage"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 1.8 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 1.8 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Opera Software\\Opera GX Stable\\Cache\\Cache_Data and %AppData%\\Opera Software\\Opera GX Stable\\Service Worker\\CacheStorage",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete Opera GX Cache? YES (1.8–12 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Opera Software\\Opera GX Stable\\Cache? YES (1.8–12 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Opera Software\\Opera GX Stable\\Cache? YES (1.8–12 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\Opera Software\\Opera GX Stable\\Cache\\Cache_Data (data_*, f_*)",
@@ -3170,7 +3147,7 @@
       "Delete 'Cache', 'Code Cache', and 'Service Worker\\CacheStorage'."
     ],
     "metaTitle": "Can I Delete Vivaldi Cache? YES (1–5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Vivaldi\\User Data\\Default\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Vivaldi\\User Data\\Default\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\Vivaldi\\User Data\\Default\\Cache\\Cache_Data (data_*, f_*)",
@@ -3265,7 +3242,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Notion Desktop App? YES (1–5.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Notion\\Cache? YES (1–5.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Notion\\Cache? YES (1–5.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3284,7 +3261,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Obsidian Electron? YES (0.4–2.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\obsidian\\Cache? YES (0.4–2.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\obsidian\\Cache? YES (0.4–2.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3303,7 +3280,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Microsoft Outlook? YES (1–8 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Microsoft\\Windows\\INetCache\\Content.Outlook (1–8 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Microsoft\\Windows\\INetCache\\Content.Outlook (1–8 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3322,7 +3299,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Microsoft OneDrive? YES (1–6 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Microsoft\\OneDrive\\logs? YES (1–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Microsoft\\OneDrive\\logs? YES (1–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3340,7 +3317,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Dropbox Hidden? YES (2–15 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\Dropbox\\.dropbox.cache? YES (2–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\Dropbox\\.dropbox.cache? YES (2–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3359,7 +3336,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Apple Devices? YES (6–25 GB) — Safe Guide",
-    "metaDescription": "Delete %APPDATA%\\Apple Computer\\iTunes\\iPhone Software Updates (6–25 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %APPDATA%\\Apple Computer\\iTunes\\iPhone Software Updates (6–25 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3378,7 +3355,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Signal Desktop? YES (0.8–4 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Signal\\Cache? YES (0.8–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Signal\\Cache? YES (0.8–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3397,7 +3374,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Mozilla Thunderbird? YES (1–5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Thunderbird\\Profiles\\*.default-release\\cache2 (1–5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Thunderbird\\Profiles\\*.default-release\\cache2 (1–5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3415,7 +3392,7 @@
       "Delete 'CachedData', 'CachedExtensionVSIXs', 'Cache', and 'logs'."
     ],
     "metaTitle": "Can I Delete VS Code? YES (1.5–10 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Code\\CachedData? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Code\\CachedData? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\Code\\CachedData",
@@ -3473,7 +3450,20 @@
       }
     ],
     "platform": "windows",
-    "isChromiumBased": true
+    "isChromiumBased": true,
+    "proofImage": "/img/proof/vscode-cacheddata-proof.webp",
+    "visualProof": {
+      "path": "/img/proof/vscode-cacheddata-proof.webp",
+      "alt": "Visual Studio Code CachedData and CachedExtensionVSIXs folder inspection on Windows 11 Pro Build 26200",
+      "caption": "Verified VS Code CachedData inspection on Windows 11 Pro Build 26200."
+    },
+    "labMeasurement": {
+      "beforeGb": 0.03,
+      "afterGb": 0,
+      "reclaimedGb": 0.03,
+      "osBuild": "Windows 11 Pro Build 26200 (25H2)",
+      "notes": "Read-only audit of Code\\CachedData (2026-11-26, Celeron N5095 / XINCUU-512GB SATA SSD): 27.9 MiB / 0.03 GiB (29,268,704 B; 48 files; 12 folders) inspected and eligible when VS Code is closed (dry-run, no files deleted)."
+    }
   },
   {
     "slug": "npm-cache",
@@ -3501,7 +3491,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete npm-cache? YES (2–18 GB) — Safe Cleanup Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\npm-cache? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\npm-cache? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\npm-cache\\_cacache",
@@ -3557,6 +3547,19 @@
       "label": "PowerShell: Inspect npm-cache footprint & run built-in verify (Read-Only)",
       "language": "powershell",
       "code": "Get-ChildItem \"$env:LOCALAPPDATA\\npm-cache\" -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum | Select-Object Count, @{N='SizeGB';E={[math]::Round($_.Sum/1GB,2)}}"
+    },
+    "proofImage": "/img/proof/npm-cache-proof.webp",
+    "visualProof": {
+      "path": "/img/proof/npm-cache-proof.webp",
+      "alt": "Node.js npm _cacache directory inspection on Windows 11 Pro Build 26200",
+      "caption": "Verified npm _cacache folder inspection on Windows 11 Pro Build 26200."
+    },
+    "labMeasurement": {
+      "beforeGb": 2.03,
+      "afterGb": 0,
+      "reclaimedGb": 2.03,
+      "osBuild": "Windows 11 Pro Build 26200 (25H2)",
+      "notes": "Read-only audit of %LocalAppData%\\npm-cache (2026-11-26, Celeron N5095 / XINCUU-512GB SATA SSD): 2.03 GiB (2,181,653,098 B; 35,922 files; 8,241 folders) inspected and eligible for safe cleanup via npm cache clean --force (dry-run, no files deleted)."
     }
   },
   {
@@ -3574,7 +3577,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete pnpm? YES (3–25 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\pnpm-cache? YES (3–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\pnpm-cache? YES (3–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3592,7 +3595,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Yarn Global Package? YES (2–15 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Yarn\\Cache? YES (2–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Yarn\\Cache? YES (2–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3611,8 +3614,14 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Rust Cargo? YES (2.5–20 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.cargo\\registry\\cache? YES (2.5–20 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
-    "platform": "windows"
+    "metaDescription": "Can I delete %USERPROFILE%\\.cargo\\registry\\cache? YES (2.5–20 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
+    "platform": "windows",
+    "proofImage": "/img/proof/cargo-registry-cache-proof.webp",
+    "visualProof": {
+      "path": "/img/proof/cargo-registry-cache-proof.webp",
+      "alt": "Rust Cargo registry cache and src directory inspection on Windows 11 Pro Build 26200",
+      "caption": "Verified .cargo\\registry cache inspection on Windows 11 Pro Build 26200."
+    }
   },
   {
     "slug": "pip-http-wheels-cache",
@@ -3651,13 +3660,13 @@
         "Empirical 1.5 GB – 18.0 GB recovery benchmark + 1-click native Rust cleanup"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 1.5 GB – 18.0 GB recovery benchmark",
+        "Windows 11/10 path safety verdict & 1.5 GB – 18.0 GB recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\pip\\Cache",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
     "metaTitle": "Can I Delete Python pip? YES (1.5–18 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\pip\\Cache? YES (1.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\pip\\Cache? YES (1.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\pip\\Cache\\wheels",
@@ -3730,7 +3739,7 @@
       "Run \"dotnet nuget locals all --list\" and check %LocalAppData%\\Temp\\NuGetScratch for leftover extraction directories after closing Visual Studio."
     ],
     "metaTitle": "Can I Delete .NET NuGet HTTP? YES (2–16 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\NuGet\\v3-cache? YES (2–16 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\NuGet\\v3-cache? YES (2–16 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\NuGet\\v3-cache",
@@ -3821,13 +3830,13 @@
         "Empirical 4.0 GB – 35.0 GB recovery benchmark + 1-click native Rust cleanup"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 4.0 GB – 35.0 GB recovery benchmark",
+        "Verified Windows 11 Pro Build 26200 (25H2) safety audit & 4.0 GB – 35.0 GB recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %UserProfile%\\.gradle\\caches and %UserProfile%\\.gradle\\daemon",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
     "metaTitle": "Can I Delete .gradle\\caches? YES (4–35 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.gradle\\caches? YES (4–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.gradle\\caches? YES (4–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%UserProfile%\\.gradle\\caches\\modules-2 & transforms-*",
@@ -3884,6 +3893,12 @@
       "label": "PowerShell: Inspect .gradle caches, wrapper dists & daemon size (Read-Only)",
       "language": "powershell",
       "code": "Get-ChildItem \"$env:USERPROFILE\\.gradle\\caches\",\"$env:USERPROFILE\\.gradle\\wrapper\\dists\",\"$env:USERPROFILE\\.gradle\\daemon\" -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum | Select-Object Count, @{N='SizeGB';E={[math]::Round($_.Sum/1GB,2)}}"
+    },
+    "proofImage": "/img/proof/gradle-wrapper-caches-proof.webp",
+    "visualProof": {
+      "path": "/img/proof/gradle-wrapper-caches-proof.webp",
+      "alt": "Gradle .gradle\\caches and daemon folder inspection on Windows 11 Pro Build 26200",
+      "caption": "Verified Gradle wrapper and build cache inspection on Windows 11 Pro Build 26200."
     }
   },
   {
@@ -3902,7 +3917,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete JetBrains IDE Caches? YES (3–25 GB) — Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\JetBrains\\*\\caches? YES (3–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\JetBrains\\*\\caches? YES (3–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3921,7 +3936,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Android SDK System? YES (3–20 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Android\\Sdk\\.temp? YES (3–20 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Android\\Sdk\\.temp? YES (3–20 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3939,7 +3954,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Docker Desktop? YES (5–50 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Docker\\log? YES (5–50 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Docker\\log? YES (5–50 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3957,7 +3972,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete PHP Composer Package? YES (1–8 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Composer\\files? YES (1–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Composer\\files? YES (1–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3975,7 +3990,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Go Compiler Build? YES (2–15 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\go-build? YES (2–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\go-build? YES (2–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -3993,7 +4008,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Apache Maven? YES (1.5–12 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.m2\\repository? YES (1.5–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.m2\\repository? YES (1.5–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -4012,7 +4027,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Postman Desktop? YES (0.8–4 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Postman\\Cache? YES (0.8–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Postman\\Cache? YES (0.8–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -4031,7 +4046,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Cursor & AI Code? YES (1.5–9 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Cursor\\CachedData? YES (1.5–9 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Cursor\\CachedData? YES (1.5–9 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -4050,7 +4065,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete 7-Zip & WinRAR? YES (1.5–18 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Temp\\7z*? YES (1.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Temp\\7z*? YES (1.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -4069,7 +4084,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Plex Media Server? YES (4–40 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Plex Media Server\\Cache\\PhotoTranscoder (4–40 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Plex Media Server\\Cache\\PhotoTranscoder (4–40 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -4087,7 +4102,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Grammarly for? YES (0.5–3 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Grammarly\\DesktopIntegrations\\Logs (0.5–3 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Grammarly\\DesktopIntegrations\\Logs (0.5–3 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -4106,7 +4121,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Evernote Electron? YES (1–5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Evernote\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Evernote\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -4140,7 +4155,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete LGHUB Depots? YES (1.5–8 GB) — Safe Guide",
-    "metaDescription": "Can I delete C:\\ProgramData\\LGHUB\\depots? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete C:\\ProgramData\\LGHUB\\depots? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "C:\\ProgramData\\LGHUB\\depots (*.depot, depot_*)",
@@ -4192,13 +4207,6 @@
     },
     "platform": "windows",
     "isChromiumBased": true,
-    "labMeasurement": {
-      "beforeGb": 11.2,
-      "afterGb": 0.4,
-      "reclaimedGb": 10.8,
-      "osBuild": "Windows 11 24H2 Lab VM",
-      "notes": "C:\\ProgramData\\LGHUB\\depots and UI cache cleared; settings.db DPI curves and macro profiles preserved."
-    },
     "shellCommand": {
       "label": "PowerShell: Inspect LGHUB depots & cache footprint (Read-Only)",
       "language": "powershell",
@@ -4235,7 +4243,7 @@
       }
     ],
     "metaTitle": "Delete Elgato StreamDeck Cache? YES (1–4 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Elgato\\StreamDeck cache? YES (1–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Elgato\\StreamDeck cache? YES (1–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\Elgato\\StreamDeck\\cache\\QtWebEngine\\Default\\Cache_Data",
@@ -4300,13 +4308,6 @@
     },
     "platform": "windows",
     "isChromiumBased": true,
-    "labMeasurement": {
-      "beforeGb": 4.8,
-      "afterGb": 0.2,
-      "reclaimedGb": 4.6,
-      "osBuild": "Windows 11 24H2 Lab VM",
-      "notes": "%APPDATA%\\Elgato\\StreamDeck\\logs and QtWebEngine cache purged; all ProfilesV2 button layouts and icon packs preserved."
-    },
     "shellCommand": {
       "label": "PowerShell: Measure Elgato Stream Deck cache & logs footprint (Read-Only)",
       "language": "powershell",
@@ -4329,7 +4330,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Adobe Acrobat? YES (1–5.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete C:\\ProgramData\\Adobe\\ARM? YES (1–5.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete C:\\ProgramData\\Adobe\\ARM? YES (1–5.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -4348,7 +4349,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Google Drive for? YES (1–8 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Google\\DriveFS\\Logs? YES (1–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Google\\DriveFS\\Logs? YES (1–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -4366,7 +4367,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Skype for Windows? YES (0.8–4 GB) — Safe Guide",
-    "metaDescription": "Delete %APPDATA%\\Microsoft\\Skype for Desktop\\Cache (0.8–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %APPDATA%\\Microsoft\\Skype for Desktop\\Cache (0.8–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -4385,7 +4386,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete TIDAL HiFi Lossless? YES (2–12 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\TIDAL\\Cache? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\TIDAL\\Cache? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -4403,7 +4404,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete qBittorrent GeoIP? YES (0.3–2 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\qBittorrent\\logs? YES (0.3–2 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\qBittorrent\\logs? YES (0.3–2 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -4421,7 +4422,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Anki Flashcard? YES (0.5–4 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Anki2\\*\\backups? YES (0.5–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Anki2\\*\\backups? YES (0.5–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -4470,11 +4471,11 @@
       "replicatedPatterns": [
         "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
         "Step-by-step folder verification + FAQPage JSON-LD schema",
-        "Verified Windows 11 24H2 safety verdict & 2.5 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 2.5 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\Windows\\SoftwareDistribution\\Download"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 2.5 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 2.5 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\Windows\\SoftwareDistribution\\Download",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -4637,11 +4638,11 @@
       "replicatedPatterns": [
         "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
         "Step-by-step folder verification + FAQPage JSON-LD schema",
-        "Verified Windows 11 24H2 safety verdict & 0.2 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 0.2 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\Windows\\Prefetch"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 0.2 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 0.2 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\Windows\\Prefetch",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -4706,7 +4707,7 @@
         "Empirical 6.0 GB – 32.0 GB recovery benchmark + 1-click native Rust cleanup"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 6.0 GB – 32.0 GB recovery benchmark",
+        "Windows 11/10 path safety verdict & 6.0 GB – 32.0 GB recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\hiberfil.sys",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -4747,12 +4748,6 @@
       "processLock": "ntoskrnl.exe (System PID 4)",
       "adminRequired": true,
       "edgeCaseNote": "The Windows kernel locks C:\\hiberfil.sys from boot. File cannot be deleted directly in Explorer. You must run 'powercfg /h off' (to disable) or 'powercfg /h /type reduced' (to shrink by 50% while keeping Fast Startup) in an elevated Administrator terminal."
-    },
-    "proofImage": "/img/proof/hiberfil-sys-proof.webp",
-    "visualProof": {
-      "path": "/img/proof/hiberfil-sys-proof.webp",
-      "alt": "C:\\hiberfil.sys hidden system file size in Command Prompt with powercfg verification",
-      "caption": "Verified powercfg /h /type reduced command execution shrinking hiberfil.sys by 50% on Windows 11."
     },
     "platform": "windows",
     "questionTitle": "Can I delete hiberfil.sys on Windows 11? Safe powercfg method & trade-offs",
@@ -5098,7 +5093,13 @@
         "a": "Close the associated background process completely (or end it from Task Manager) before deleting %LOCALAPPDATA%\\D3DSCache, or run SWEEPR Cleaner to release file handles safely with 7-day automatic undo rollback."
       }
     ],
-    "platform": "windows"
+    "platform": "windows",
+    "proofImage": "/img/proof/directx-d3dscache-proof.webp",
+    "visualProof": {
+      "path": "/img/proof/directx-d3dscache-proof.webp",
+      "alt": "DirectX D3DSCache shader cache directory inspection on Windows 11 Pro Build 26200",
+      "caption": "Verified %LocalAppData%\\D3DSCache inspection on Windows 11 Pro Build 26200."
+    }
   },
   {
     "slug": "windows-cbs-logs",
@@ -5187,11 +5188,11 @@
       "replicatedPatterns": [
         "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
         "Step-by-step folder verification + FAQPage JSON-LD schema",
-        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 1.5 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\Windows\\LiveKernelReports and C:\\Windows\\LiveKernelReports\\WATCHDOG"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 1.5 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\Windows\\LiveKernelReports and C:\\Windows\\LiveKernelReports\\WATCHDOG",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -5779,7 +5780,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Ollama Local LLM? YES (8–65 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.ollama\\models\\blobs? YES (8–65 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.ollama\\models\\blobs? YES (8–65 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -5812,7 +5813,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Delete LM Studio Models Cache? YES (10–80 GB) — Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.cache\\lm-studio\\models? YES (10–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.cache\\lm-studio\\models? YES (10–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%UserProfile%\\.cache\\lm-studio\\.internal & models\\*\\*.part",
@@ -5904,17 +5905,17 @@
       "replicatedPatterns": [
         "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
         "Step-by-step folder verification + FAQPage JSON-LD schema",
-        "Verified Windows 11 24H2 safety verdict & 5.0 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 5.0 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %UserProfile%\\.cache\\huggingface\\hub"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 5.0 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 5.0 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %UserProfile%\\.cache\\huggingface\\hub",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
     "metaTitle": "Can I Delete HuggingFace Hub? YES (5–50 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.cache\\huggingface\\hub? YES (5–50 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.cache\\huggingface\\hub? YES (5–50 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "noindex": true,
     "platform": "windows"
   },
@@ -5948,7 +5949,7 @@
     ],
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete ComfyUI Temp? YES (2–18 GB) — Safe Guide",
-    "metaDescription": "Can I delete C:\\ComfyUI\\temp & %LOCALAPPDATA%\\Temp\\comfyui? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete C:\\ComfyUI\\temp & %LOCALAPPDATA%\\Temp\\comfyui? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "C:\\ComfyUI\\temp (*.png, *.webp, *.latent)",
@@ -5995,13 +5996,6 @@
       "edgeCaseNote": "Running Python server holds locks on CUDA tensor scratch files. Stop ComfyUI terminal before clearing."
     },
     "platform": "windows",
-    "labMeasurement": {
-      "beforeGb": 22.4,
-      "afterGb": 0.8,
-      "reclaimedGb": 21.6,
-      "osBuild": "Windows 11 24H2 Lab VM",
-      "notes": "C:\\ComfyUI\\temp and %LocalAppData%\\Temp\\comfyui purged; checkpoint models and saved workflow JSON files remained untouched."
-    },
     "shellCommand": {
       "label": "PowerShell: Measure ComfyUI temp & PyTorch pip cache footprint (Read-Only)",
       "language": "powershell",
@@ -6024,7 +6018,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete PyTorch Torch Hub? YES (2.5–16 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Temp\\torchinductor_%USERNAME% (2.5–16 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Temp\\torchinductor_%USERNAME% (2.5–16 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6042,7 +6036,7 @@
       "Delete the 'Cache', 'CachedData', 'CachedExtensionVSIXs', and 'GPUCache' folders."
     ],
     "metaTitle": "Can I Delete Cursor AI Code? YES (1.5–9 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Cursor\\Cache? YES (1.5–9 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Cursor\\Cache? YES (1.5–9 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\Cursor\\Cache\\Cache_Data & CachedData",
@@ -6117,7 +6111,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Unity Global? YES (4–25 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Unity\\cache? YES (4–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Unity\\cache? YES (4–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6136,7 +6130,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Call of Duty HQ? YES (3–14 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Activision\\Call of Duty\\shadercache (3–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Activision\\Call of Duty\\shadercache (3–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6154,7 +6148,7 @@
       "Clear the 'Logs', 'Crashes', and old 'Demos' replay files."
     ],
     "metaTitle": "Can I Delete Fortnite DirectX 12? YES (2–11 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\FortniteGame\\Saved\\Cloud? YES (2–11 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\FortniteGame\\Saved\\Cloud? YES (2–11 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\FortniteGame\\Saved\\Cloud",
@@ -6231,7 +6225,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete VRChat Downloaded? YES (10–30 GB) — Safe Guide",
-    "metaDescription": "Delete %APPDATA%\\..\\LocalLow\\VRChat\\VRChat\\Cache-WindowsPlayer (10–30 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %APPDATA%\\..\\LocalLow\\VRChat\\VRChat\\Cache-WindowsPlayer (10–30 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6250,7 +6244,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete FiveM GTA V Server? YES (6–35 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\FiveM\\FiveM.app\\data\\server-cache-priv (6–35 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\FiveM\\FiveM.app\\data\\server-cache-priv (6–35 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6273,11 +6267,11 @@
       "replicatedPatterns": [
         "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
         "Step-by-step folder verification + FAQPage JSON-LD schema",
-        "Verified Windows 11 24H2 safety verdict & 3.5 GB empirical recovery benchmark",
+        "Verified Windows 11 Pro Build 26200 (25H2) safety audit & 3.5 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\ProgramData\\Package Cache"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 3.5 GB empirical recovery benchmark",
+        "Verified Windows 11 Pro Build 26200 (25H2) safety audit & 3.5 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\ProgramData\\Package Cache",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -6343,7 +6337,13 @@
     "questionTitle": "Is C:\\ProgramData\\Package Cache safe to delete on Windows 11?",
     "directAnswer": "No—do NOT blindly delete or run rd /s on the entire C:\\ProgramData\\Package Cache folder, because active apps need those cached .msi and .exe installers to repair or uninstall. Only orphaned {GUID} subfolders from already-removed Visual C++, .NET, Office, or SDK versions are safe to delete (3.5–22 GB).",
     "whenNotToDelete": "Never delete active {GUID} folders still referenced in the Windows Installer registry—especially Visual C++ Redistributables, .NET runtimes, or Microsoft Office—or Modify/Repair/Uninstall will fail asking for missing source media. Close msiexec.exe before cleaning.",
-    "whyItGrows": "The Windows WiX Burn bootstrapper extracts a local copy of every .msi, .msp, .cab, and setup .exe into GUID-named subfolders inside C:\\ProgramData\\Package Cache so apps can repair offline without prompting for installation media. Failed installs and superseded Visual Studio, Office, or VC++ updates frequently leave orphaned GUID caches behind."
+    "whyItGrows": "The Windows WiX Burn bootstrapper extracts a local copy of every .msi, .msp, .cab, and setup .exe into GUID-named subfolders inside C:\\ProgramData\\Package Cache so apps can repair offline without prompting for installation media. Failed installs and superseded Visual Studio, Office, or VC++ updates frequently leave orphaned GUID caches behind.",
+    "proofImage": "/img/proof/programdata-package-cache-proof.webp",
+    "visualProof": {
+      "path": "/img/proof/programdata-package-cache-proof.webp",
+      "alt": "C:\\ProgramData\\Package Cache MSI/Burn depot inspection on Windows 11 Pro Build 26200",
+      "caption": "Verified ProgramData\\Package Cache inspection on Windows 11 Pro Build 26200."
+    }
   },
   {
     "slug": "windows-system32-driverstore-temp",
@@ -6401,11 +6401,11 @@
       "replicatedPatterns": [
         "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
         "Step-by-step folder verification + FAQPage JSON-LD schema",
-        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 1.5 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Microsoft\\EdgeWebView\\User Data\\Default\\Cache"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 1.5 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 1.5 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Microsoft\\EdgeWebView\\User Data\\Default\\Cache",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
@@ -6544,7 +6544,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Git Large File? YES (2.5–35 GB) — Safe Guide",
-    "metaDescription": "Can I delete .git\\lfs\\objects? YES (2.5–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete .git\\lfs\\objects? YES (2.5–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6563,7 +6563,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Rustup Toolchain? YES (1–8 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.rustup\\downloads? YES (1–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.rustup\\downloads? YES (1–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6582,7 +6582,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete AMD Radeon? YES (0.8–5.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\AMD\\OglCache? YES (0.8–5.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\AMD\\OglCache? YES (0.8–5.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6689,7 +6689,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Bun JavaScript? YES (1.5–10 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.bun\\install\\cache? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.bun\\install\\cache? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6708,7 +6708,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Conda & Anaconda? YES (5–35 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.conda\\pkgs? YES (5–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.conda\\pkgs? YES (5–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6727,7 +6727,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Rust Cargo Package? YES (2–18 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.cargo\\registry\\cache? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.cargo\\registry\\cache? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6746,7 +6746,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Unity Engine Local? YES (3–20 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Unity\\cache\\shaders? YES (3–20 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Unity\\cache\\shaders? YES (3–20 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6764,7 +6764,7 @@
       "Delete the 'editor_data' and 'tmp' subfolders to clear stale cache files."
     ],
     "metaTitle": "Can I Delete Godot Engine? YES (1.5–12 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Godot\\editor_data? YES (1.5–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Godot\\editor_data? YES (1.5–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\Godot\\editor_data",
@@ -6824,7 +6824,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Adobe Substance 3D? YES (4–25 GB) — Safe Guide",
-    "metaDescription": "Delete %APPDATA%\\Adobe\\Adobe Substance 3D Painter\\cache (4–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %APPDATA%\\Adobe\\Adobe Substance 3D Painter\\cache (4–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6842,7 +6842,7 @@
       "Delete downloaded archive files to recover drive space."
     ],
     "metaTitle": "Can I Delete CurseForge Mod? YES (3–22 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\CurseForge\\Cache? YES (3–22 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\CurseForge\\Cache? YES (3–22 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%UserProfile%\\CurseForge\\Cache & Installers",
@@ -6915,7 +6915,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Mod Organizer 2? YES (10–60 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\ModOrganizer\\downloads? YES (10–60 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\ModOrganizer\\downloads? YES (10–60 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -6933,7 +6933,7 @@
       "Remove completed archives that have already been installed."
     ],
     "metaTitle": "Can I Delete Nexus Mods Vortex? YES (8–50 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Vortex\\downloads? YES (8–50 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Vortex\\downloads? YES (8–50 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\Vortex\\downloads\\<game>",
@@ -7007,7 +7007,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete EA AntiCheat Service? YES (1–6 GB) — Safe Guide",
-    "metaDescription": "Can I delete C:\\ProgramData\\EA Desktop\\EA AntiCheat? YES (1–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete C:\\ProgramData\\EA Desktop\\EA AntiCheat? YES (1–6 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7026,7 +7026,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Riot Vanguard? YES (0.5–4.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete C:\\Program Files\\Riot Vanguard\\Logs? YES (0.5–4.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete C:\\Program Files\\Riot Vanguard\\Logs? YES (0.5–4.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7045,7 +7045,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Easy Anti-Cheat? YES (0.5–3.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\EasyAntiCheat? YES (0.5–3.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\EasyAntiCheat? YES (0.5–3.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7064,7 +7064,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Windows Xbox App? YES (2–14 GB) — Safe Guide",
-    "metaDescription": "Delete ...DATA%\\Packages\\Microsoft.GamingApp_8wekyb3d8bbwe\\LocalCache (2–14 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete ...DATA%\\Packages\\Microsoft.GamingApp_8wekyb3d8bbwe\\LocalCache (2–14 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7195,7 +7195,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Garena PC Gaming? YES (1.5–10 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Garena\\Cache? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Garena\\Cache? YES (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7214,7 +7214,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Affinity Photo? YES (2.5–18 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Serif\\Affinity\\Photo\\2.0\\Temp (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Serif\\Affinity\\Photo\\2.0\\Temp (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7233,7 +7233,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Inkscape Vector? YES (0.5–3.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\inkscape\\cache? YES (0.5–3.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\inkscape\\cache? YES (0.5–3.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7252,7 +7252,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Maxon Cinema 4D? YES (4–28 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Maxon\\Cinema 4D\\cache? YES (4–28 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Maxon\\Cinema 4D\\cache? YES (4–28 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7271,7 +7271,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Clip Studio Paint? YES (2–15 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\CELSYS\\CLIPStudioPaintVer1_5_0? YES (2–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\CELSYS\\CLIPStudioPaintVer1_5_0? YES (2–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7290,7 +7290,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete HashiCorp? YES (1.5–12 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\terraform.d\\plugins? YES (1.5–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\terraform.d\\plugins? YES (1.5–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7309,7 +7309,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Podman Desktop WSL? YES (5–35 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.local\\share\\containers? YES (5–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.local\\share\\containers? YES (5–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7328,7 +7328,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Flutter SDK Engine? YES (3–20 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Pub\\Cache? YES (3–20 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Pub\\Cache? YES (3–20 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7347,7 +7347,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Stable Diffusion? YES (8–45 GB) — Safe Guide",
-    "metaDescription": "Delete %USERPROFILE%\\stable-diffusion-webui\\models\\Stable-diffusion (8–45 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %USERPROFILE%\\stable-diffusion-webui\\models\\Stable-diffusion (8–45 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7366,7 +7366,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Text Generation? YES (10–70 GB) — Safe Guide",
-    "metaDescription": "Delete %USERPROFILE%\\text-generation-webui\\models (10–70 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %USERPROFILE%\\text-generation-webui\\models (10–70 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7385,7 +7385,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Jan AI Local LLM? YES (6–40 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\jan\\models? YES (6–40 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\jan\\models? YES (6–40 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7404,7 +7404,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete AnythingLLM Vector? YES (3–25 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\anythingllm-desktop\\storage? YES (3–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\anythingllm-desktop\\storage? YES (3–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7423,7 +7423,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete GPT4All Local Model? YES (4–30 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\nomic.ai\\GPT4All? YES (4–30 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\nomic.ai\\GPT4All? YES (4–30 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7442,7 +7442,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete KoboldAI? YES (5–50 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\KoboldAI\\models? YES (5–50 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\KoboldAI\\models? YES (5–50 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7480,17 +7480,17 @@
       "replicatedPatterns": [
         "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
         "Step-by-step folder verification + FAQPage JSON-LD schema",
-        "Verified Windows 11 24H2 safety verdict & 12.0 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 12.0 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Docker\\wsl\\data\\ext4.vhdx"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 12.0 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 12.0 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %LocalAppData%\\Docker\\wsl\\data\\ext4.vhdx",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
     "metaTitle": "Shrink Docker WSL2 ext4.vhdx? YES (12–80 GB) — Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Docker\\wsl\\data\\ext4.vhdx? YES (12–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Docker\\wsl\\data\\ext4.vhdx? YES (12–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\Docker\\wsl\\data\\ext4.vhdx (Virtual Hard Disk)",
@@ -7557,7 +7557,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Microsoft vcpkg C++? YES (4–25 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\vcpkg\\archives? YES (4–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\vcpkg\\archives? YES (4–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7576,7 +7576,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Visual Studio? YES (2.5–18 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Temp\\SymbolCache? YES (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Temp\\SymbolCache? YES (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7595,7 +7595,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Unreal Engine 5? YES (3.5–22 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\UnrealEngine\\Common\\DerivedDataCache\\Niagara (3.5–22 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\UnrealEngine\\Common\\DerivedDataCache\\Niagara (3.5–22 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7614,7 +7614,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Blender 3D Cycles? YES (1.5–10 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Blender Foundation\\Blender\\cache (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Blender Foundation\\Blender\\cache (1.5–10 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7645,13 +7645,13 @@
         "Empirical 15.0 GB – 120.0 GB recovery benchmark + 1-click native Rust cleanup"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 15.0 GB – 120.0 GB recovery benchmark",
+        "Windows 11/10 path safety verdict & 15.0 GB – 120.0 GB recovery benchmark",
         "Copy-paste PowerShell size audit snippet for C:\\Users\\%USERNAME%\\Videos\\CacheClip and %LocalAppData%\\Blackmagic Design\\DaVinci Resolve\\Support\\optimized_media",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
     "metaTitle": "Can I Delete DaVinci Resolve? YES (15–120 GB) — Safe Guide",
-    "metaDescription": "Can I delete C:\\Users\\%USERNAME%\\Videos\\CacheClip? YES (15–120 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete C:\\Users\\%USERNAME%\\Videos\\CacheClip? YES (15–120 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "noindex": true,
     "platform": "windows"
   },
@@ -7671,7 +7671,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Ableton Live Audio? YES (2–15 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Ableton\\Live Database? YES (2–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Ableton\\Live Database? YES (2–15 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7690,7 +7690,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete REAPER DAW Audio? YES (3–25 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\REAPER\\reapeaks? YES (3–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\REAPER\\reapeaks? YES (3–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7709,7 +7709,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Steam Workshop? YES (5–40 GB) — Safe Guide",
-    "metaDescription": "Delete C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\temp (5–40 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete C:\\Program Files (x86)\\Steam\\steamapps\\workshop\\temp (5–40 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7728,7 +7728,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete HoYoPlay Launcher? YES (4–30 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\HoYoPlay\\cache? YES (4–30 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\HoYoPlay\\cache? YES (4–30 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7747,7 +7747,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Wargaming Game? YES (3–25 GB) — Safe Guide",
-    "metaDescription": "Delete %PROGRAMDATA%\\Wargaming.net\\GameCenter\\Updates (3–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %PROGRAMDATA%\\Wargaming.net\\GameCenter\\Updates (3–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -7766,7 +7766,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Meta Quest Oculus PC? YES (5–35 GB) — Guide",
-    "metaDescription": "Can I delete C:\\Program Files\\Oculus\\Downloads? YES (5–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete C:\\Program Files\\Oculus\\Downloads? YES (5–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -8398,7 +8398,7 @@
       "Relaunch Arc Browser for Windows (or use SWEEPR Cleaner to purge all Arc Browser for Windows cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete Arc Browser for? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete ...serCompany.Arc_ttt1ap7aakyb4\\LocalCache\\Cache\\Cache_Data (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete ...serCompany.Arc_ttt1ap7aakyb4\\LocalCache\\Cache\\Cache_Data (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\Packages\\TheBrowserCompany.Arc_ttt1ap7aakyb4\\LocalCache\\Cache\\Cache_Data",
@@ -8459,7 +8459,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete VS Code Insiders? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Code - Insiders\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Code - Insiders\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -8478,7 +8478,7 @@
       "Relaunch Overwolf Gaming Overlay (or use SWEEPR Cleaner to purge all Overwolf Gaming Overlay cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete Overwolf Gaming? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Overwolf\\BrowserCache\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Overwolf\\BrowserCache\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\Overwolf\\BrowserCache\\cache",
@@ -8557,18 +8557,18 @@
       "replicatedPatterns": [
         "Competitor hub structure (windows_folder_guide) from wisecleaner.com",
         "Step-by-step folder verification + FAQPage JSON-LD schema",
-        "Verified Windows 11 24H2 safety verdict & 2.0 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 2.0 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %AppData%\\Medal\\Cache\\Cache_Data, GPUCache, and %LocalAppData%\\Medal"
       ],
       "superiorityFixes": [
-        "Verified Windows 11 24H2 safety verdict & 2.0 GB empirical recovery benchmark",
+        "Windows 11/10 path safety verdict & 2.0 GB empirical recovery benchmark",
         "Copy-paste PowerShell size audit snippet for %AppData%\\Medal\\Cache\\Cache_Data, GPUCache, and %LocalAppData%\\Medal",
         "Subfolder-level keep vs. purge breakdown table + 1-click native Rust cleanup"
       ]
     },
     "lastUpdated": "2026-11-09",
     "metaTitle": "Can I Delete Medal TV Cache? YES (2–14 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Medal\\Cache? YES (2–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Medal\\Cache? YES (2–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\Medal\\Cache\\Cache_Data (data_*, f_*)",
@@ -8642,7 +8642,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete SteelSeries GG? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %APPDATA%\\steelseries-gg-client\\Cache\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %APPDATA%\\steelseries-gg-client\\Cache\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -8671,7 +8671,7 @@
       }
     ],
     "metaTitle": "Delete IntelliJ IDEA Cache? YES (1–8 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LocalAppData%\\JetBrains\\IntelliJIdea* caches? YES (1–8 GB). Zero projects, keymaps, or plugins lost. Manual steps + 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LocalAppData%\\JetBrains\\IntelliJIdea* caches? YES (1–8 GB). Zero projects, keymaps, or plugins lost. Manual steps + 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\JetBrains\\IntelliJIdea<old-version>",
@@ -8746,7 +8746,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete JetBrains PyCharm? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\PyCharm2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\PyCharm2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -8766,7 +8766,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete JetBrains? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\WebStorm2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\WebStorm2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -8786,7 +8786,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete JetBrains Rider? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\Rider2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\Rider2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -8805,7 +8805,7 @@
       "Relaunch GitHub Desktop (or use SWEEPR Cleaner to purge all GitHub Desktop cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete GitHub Desktop? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\GitHub Desktop\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\GitHub Desktop\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\GitHub Desktop\\Cache",
@@ -8867,7 +8867,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Insomnia API? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Insomnia\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Insomnia\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -8887,7 +8887,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete DBeaver? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %APPDATA%\\DBeaverData\\workspace6\\.metadata\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %APPDATA%\\DBeaverData\\workspace6\\.metadata\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -8906,7 +8906,7 @@
       "Relaunch League of Legends Client (or use SWEEPR Cleaner to purge all League of Legends Client cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete League of Legends? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Delete C:\\Riot Games\\League of Legends\\Logs\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete C:\\Riot Games\\League of Legends\\Logs\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "C:\\Riot Games\\League of Legends\\Logs\\cache",
@@ -8968,7 +8968,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete NVIDIA GeForce? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\NVIDIA Corporation\\GeForceNOW\\cache\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\NVIDIA Corporation\\GeForceNOW\\cache\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -8988,7 +8988,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete TikTok LIVE? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %APPDATA%\\tiktok-live-studio\\Cache\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %APPDATA%\\tiktok-live-studio\\Cache\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9007,7 +9007,7 @@
       "Relaunch Zen Browser (or use SWEEPR Cleaner to purge all Zen Browser cache directories automatically in one click)."
     ],
     "metaTitle": "Delete Zen Browser Cache? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\zen\\Profiles\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\zen\\Profiles\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\zen\\Profiles\\<Profile>\\cache2\\entries",
@@ -9087,7 +9087,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Waterfox Browser? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %APPDATA%\\Waterfox\\Profiles\\Cache\\Cache_Data (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %APPDATA%\\Waterfox\\Profiles\\Cache\\Cache_Data (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9107,7 +9107,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Floorp Browser? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %APPDATA%\\Floorp\\Profiles\\Cache\\Cache_Data (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %APPDATA%\\Floorp\\Profiles\\Cache\\Cache_Data (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9203,7 +9203,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Linear Desktop? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Linear\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Linear\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9223,7 +9223,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete ClickUp Desktop? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\ClickUp\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\ClickUp\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9243,7 +9243,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Asana Desktop App? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Asana\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Asana\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9263,7 +9263,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Bitwarden Desktop? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Bitwarden\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Bitwarden\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9283,7 +9283,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete 1Password Desktop? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\1Password\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\1Password\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9303,7 +9303,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Streamlabs? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\slobs-client\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\slobs-client\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9323,7 +9323,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Adobe Illustrator? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Delete %APPDATA%\\Adobe\\Adobe Illustrator 29 Settings\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %APPDATA%\\Adobe\\Adobe Illustrator 29 Settings\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9343,7 +9343,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Adobe Audition? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Adobe\\Audition\\25.0\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Adobe\\Audition\\25.0\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9362,7 +9362,7 @@
       "Relaunch FL Studio DAW (or use SWEEPR Cleaner to purge all FL Studio DAW cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete FL Studio DAW? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %Documents%\\Image-Line\\FL Studio\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %Documents%\\Image-Line\\FL Studio\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%Documents%\\Image-Line\\FL Studio\\Cache",
@@ -9424,7 +9424,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete SideFX Houdini 3D? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Delete %USERPROFILE%\\Documents\\houdini20.5\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %USERPROFILE%\\Documents\\houdini20.5\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9444,7 +9444,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Autodesk Maya? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %USERPROFILE%\\Documents\\maya\\2025\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %USERPROFILE%\\Documents\\maya\\2025\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9464,7 +9464,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Autodesk 3ds Max? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Autodesk\\3dsMax\\2025 - 64bit\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Autodesk\\3dsMax\\2025 - 64bit\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9484,7 +9484,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete RPCS3 PS3? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\rpcs3\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\rpcs3\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9564,7 +9564,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete RetroArch? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\RetroArch\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\RetroArch\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9583,7 +9583,7 @@
       "Relaunch Prism Launcher Minecraft (or use SWEEPR Cleaner to purge all Prism Launcher Minecraft cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete Prism Launcher? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\PrismLauncher\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\PrismLauncher\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\PrismLauncher\\cache",
@@ -9644,7 +9644,7 @@
       "Run SWEEPR Cleaner to automatically detect and remove orphaned JetBrains IDE caches without touching your keymaps or plugins."
     ],
     "metaTitle": "Can I Delete JetBrains CLion? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\CLion2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\CLion2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\JetBrains\\CLion2025.1\\caches\\caches",
@@ -9706,7 +9706,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete JetBrains? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\DataGrip2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\DataGrip2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9725,7 +9725,7 @@
       "Run SWEEPR Cleaner to automatically detect and remove orphaned JetBrains IDE caches without touching your keymaps or plugins."
     ],
     "metaTitle": "Can I Delete JetBrains GoLand? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\GoLand2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\GoLand2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\JetBrains\\GoLand2025.1\\caches\\caches",
@@ -9787,7 +9787,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete JetBrains? YES (1.5–9.5 GB) — Cleanup",
-    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\PhpStorm2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\JetBrains\\PhpStorm2025.1\\caches\\caches (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9807,7 +9807,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete MEGAsync Cloud? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Mega Limited\\MEGAsync\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Mega Limited\\MEGAsync\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9827,7 +9827,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete GitKraken Git? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\GitKraken\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\GitKraken\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9847,7 +9847,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete VSCodium Editor? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\VSCodium\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\VSCodium\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9866,7 +9866,7 @@
       "Relaunch Bruno API Client (or use SWEEPR Cleaner to purge all Bruno API Client cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete Bruno API Client? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\bruno\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\bruno\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\bruno\\Cache",
@@ -9928,7 +9928,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Beekeeper Studio? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\beekeeper-studio\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\beekeeper-studio\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9948,7 +9948,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Heroic Games? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\heroic\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\heroic\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9968,7 +9968,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Modrinth App? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\ModrinthApp\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\ModrinthApp\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -9988,7 +9988,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Deezer Desktop? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Deezer\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Deezer\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10017,7 +10017,7 @@
       }
     ],
     "metaTitle": "Delete LogiOptionsPlus Cache? YES (1.2–6.5 GB) — Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\LogiOptionsPlus\\cache? YES (1.2–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\LogiOptionsPlus\\cache? YES (1.2–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "C:\\ProgramData\\LogiOptionsPlus\\depots (*.depot)",
@@ -10096,7 +10096,7 @@
       "Relaunch Bambu Studio Slicer (or use SWEEPR Cleaner to purge all Bambu Studio Slicer cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete Bambu Studio? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\BambuStudio\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\BambuStudio\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\BambuStudio\\cache",
@@ -10158,7 +10158,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete ChatGPT Desktop? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\ChatGPT\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\ChatGPT\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10178,7 +10178,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete PrusaSlicer 3D? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\PrusaSlicer\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\PrusaSlicer\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10198,7 +10198,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete OrcaSlicer 3D? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\OrcaSlicer\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\OrcaSlicer\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10218,7 +10218,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete UltiMaker Cura? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\cura\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\cura\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10237,7 +10237,7 @@
       "Relaunch Krita (or adjust Settings > Configure Krita > Performance > Swap File Location if your C: drive is small)."
     ],
     "metaTitle": "Can I Delete Krita Digital Art? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\krita\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\krita\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\krita\\cache & %LocalAppData%\\Temp\\krita*",
@@ -10316,7 +10316,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete GIMP Photo Editor? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\GIMP\\2.10\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\GIMP\\2.10\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10335,7 +10335,7 @@
       "Relaunch AnyDesk Remote Desktop (or use SWEEPR Cleaner to purge all AnyDesk Remote Desktop cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete AnyDesk Remote? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\AnyDesk\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\AnyDesk\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\AnyDesk\\Cache",
@@ -10397,7 +10397,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Sublime Text? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Sublime Text\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Sublime Text\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10417,7 +10417,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Claude Desktop? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Claude\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Claude\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10436,7 +10436,7 @@
       "Relaunch HandBrake Video Transcoder (or use SWEEPR Cleaner to purge all HandBrake Video Transcoder cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete HandBrake Video? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\HandBrake\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\HandBrake\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\HandBrake\\Cache",
@@ -10497,7 +10497,7 @@
       "Relaunch Calibre E-Book Manager (or use SWEEPR Cleaner to purge all Calibre E-Book Manager cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete Calibre E-Book? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\calibre\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\calibre\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\calibre\\Cache",
@@ -10559,7 +10559,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete FreeCAD 3D? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\FreeCAD\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\FreeCAD\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10579,7 +10579,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Shotcut Video? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Meltytech\\Shotcut\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Meltytech\\Shotcut\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10599,7 +10599,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Kdenlive Video? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\\\kdenlive\\\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\\\kdenlive\\\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10696,7 +10696,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Trae AI IDE? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Trae\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Trae\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10716,7 +10716,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Warp AI Terminal? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Warp\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Warp\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10736,7 +10736,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Fork Git Client? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Fork\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Fork\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10756,7 +10756,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Sublime Merge? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Sublime Merge\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Sublime Merge\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10776,7 +10776,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete VEGAS Pro Video? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\VEGAS Pro\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\VEGAS Pro\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10796,7 +10796,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Steinberg Cubase? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Steinberg\\Cubase\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Steinberg\\Cubase\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10816,7 +10816,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete PreSonus Studio? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\PreSonus\\Studio One\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\PreSonus\\Studio One\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10836,7 +10836,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Bitwig Studio DAW? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Bitwig Studio\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Bitwig Studio\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10856,7 +10856,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete DuckDuckGo? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete ...DesktopBrowser_amm1zp6nhjcc0\\LocalCache\\Cache\\Cache_Data (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete ...DesktopBrowser_amm1zp6nhjcc0\\LocalCache\\Cache\\Cache_Data (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10876,7 +10876,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Lens Kubernetes? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Lens\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Lens\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10896,7 +10896,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Termius SSH? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Termius\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Termius\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10916,7 +10916,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete TablePlus DB? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\TablePlus\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\TablePlus\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10936,7 +10936,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Miro Workspace? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\RealtimeBoard\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\RealtimeBoard\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10956,7 +10956,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Playnite Launcher? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Playnite\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Playnite\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10976,7 +10976,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Amazon Music? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Amazon Music\\Data\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Amazon Music\\Data\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -10996,7 +10996,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete TeamViewer Remote? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\TeamViewer\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\TeamViewer\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11016,7 +11016,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Darktable RAW? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\darktable\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\darktable\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11035,7 +11035,7 @@
       "Relaunch MongoDB Compass (or use SWEEPR Cleaner to purge all MongoDB Compass cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete MongoDB Compass? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\MongoDB Compass\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\MongoDB Compass\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\MongoDB Compass\\Cache",
@@ -11097,7 +11097,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete RedisInsight GUI? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\RedisInsight\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\RedisInsight\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11117,7 +11117,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Logseq Knowledge? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Logseq\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Logseq\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11137,7 +11137,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Proton Mail? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Proton Mail\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Proton Mail\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11157,7 +11157,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Todoist Desktop? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Todoist\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Todoist\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11177,7 +11177,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete TickTick Desktop? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\TickTick\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\TickTick\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11197,7 +11197,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Mattermost? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Mattermost\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Mattermost\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11217,7 +11217,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Element Messenger? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Element\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Element\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11237,7 +11237,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Tabby Terminal? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\tabby\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\tabby\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11257,7 +11257,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Hoppscotch? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Hoppscotch\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Hoppscotch\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11277,7 +11277,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Proton Drive? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\ProtonDrive\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\ProtonDrive\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11297,7 +11297,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Craft Docs? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Craft\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Craft\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11317,7 +11317,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete OpenLens? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\OpenLens\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\OpenLens\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11337,7 +11337,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Hyper Terminal? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Hyper\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Hyper\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11357,7 +11357,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Session Private? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Session\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Session\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11377,7 +11377,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Keybase Desktop? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Keybase\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Keybase\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11397,7 +11397,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Mullvad VPN? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Mullvad VPN\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Mullvad VPN\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11417,7 +11417,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Yaak REST and? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\yaak\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\yaak\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11437,7 +11437,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Zulip Team Chat? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Zulip\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Zulip\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11457,7 +11457,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Standard Notes? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Standard Notes\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Standard Notes\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11476,7 +11476,7 @@
       "Select the cached stream folders and delete them, then relaunch Stremio."
     ],
     "metaTitle": "Can I Delete Stremio Cache? YES (2–10 GB) — Safe Guide",
-    "metaDescription": "Can I delete %AppData%\\stremio\\stremio-server\\stremio-cache? YES (2–10 GB). Zero add-ons or watch history lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %AppData%\\stremio\\stremio-server\\stremio-cache? YES (2–10 GB). Zero add-ons or watch history lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\stremio\\stremio-server\\stremio-cache",
@@ -11544,7 +11544,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Kodi Home Theater? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Kodi\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Kodi\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11564,7 +11564,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Jellyfin Media? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\JellyfinMediaPlayer\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\JellyfinMediaPlayer\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11584,7 +11584,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete TechSmith? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\TechSmith\\Camtasia Studio\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\TechSmith\\Camtasia Studio\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11604,7 +11604,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Mailspring Email? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Mailspring\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Mailspring\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11624,7 +11624,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete itch.io Desktop? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\itch\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\itch\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11644,7 +11644,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Alacritty GPU? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\alacritty\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\alacritty\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11664,7 +11664,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete MusicBee Media? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\MusicBee\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\MusicBee\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11684,7 +11684,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete foobar2000 Audio? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\foobar2000\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\foobar2000\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11704,7 +11704,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Paint.NET Image? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\paint.net\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\paint.net\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11724,7 +11724,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Lightworks Video? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Lightworks\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Lightworks\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11743,7 +11743,7 @@
       "Relaunch TechSmith Snagit Screen Capture (or use SWEEPR Cleaner to purge all TechSmith Snagit Screen Capture cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete Snagit? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\TechSmith\\Snagit\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\TechSmith\\Snagit\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\TechSmith\\Snagit\\MediaCache & Temp",
@@ -11820,7 +11820,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete ScreenToGif? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\ScreenToGif\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\ScreenToGif\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11840,7 +11840,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Wire Private? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Wire\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Wire\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11860,7 +11860,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete WezTerm GPU? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.config\\wezterm\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.config\\wezterm\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11879,7 +11879,7 @@
       "Relaunch Ghostty Fast Terminal (or use SWEEPR Cleaner to purge all Ghostty Fast Terminal cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete Ghostty Fast? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\ghostty\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\ghostty\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\ghostty\\Cache",
@@ -11941,7 +11941,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Lapce Code Editor? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\lapce\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\lapce\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11961,7 +11961,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Geany Lightweight? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\geany\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\geany\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -11980,7 +11980,7 @@
       "Relaunch Pioneer Rekordbox DJ Software (or use SWEEPR Cleaner to purge all Pioneer Rekordbox DJ Software cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete Rekordbox DJ? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Pioneer\\rekordbox\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Pioneer\\rekordbox\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\Pioneer\\rekordbox\\Cache",
@@ -12042,7 +12042,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Serato DJ Pro? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Serato\\SeratoDJPro\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Serato\\SeratoDJPro\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12062,7 +12062,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete MuseScore? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\MuseScore\\MuseScore4\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\MuseScore\\MuseScore4\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12082,7 +12082,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Bandicam Screen? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Bandicam\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Bandicam\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12102,7 +12102,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Viber Messenger? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\ViberPC\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\ViberPC\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12121,7 +12121,7 @@
       "Relaunch LINE Messenger Desktop (or use SWEEPR Cleaner to purge all LINE Messenger Desktop cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete LINE Messenger? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\LINE\\Data\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\LINE\\Data\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%LocalAppData%\\LINE\\Data\\Cache",
@@ -12183,7 +12183,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Internet Download? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\IDM\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\IDM\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12203,7 +12203,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete MobaXterm SSH and? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\MobaXterm\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\MobaXterm\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12223,7 +12223,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete JDownloader 2? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\JDownloader 2.0\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\JDownloader 2.0\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12243,7 +12243,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Wondershare? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Wondershare\\Wondershare Filmora\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Wondershare\\Wondershare Filmora\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12262,7 +12262,7 @@
       "Relaunch Topaz Video AI Upscaler (or use SWEEPR Cleaner to purge all Topaz Video AI Upscaler cache directories automatically in one click)."
     ],
     "metaTitle": "Can I Delete Topaz Video AI? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %APPDATA%\\Topaz Labs LLC\\Topaz Video AI\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %APPDATA%\\Topaz Labs LLC\\Topaz Video AI\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "subLocations": [
       {
         "subPath": "%AppData%\\Topaz Labs LLC\\Topaz Video AI\\Cache",
@@ -12324,7 +12324,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Parsec Remote? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %APPDATA%\\Parsec\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\Parsec\\cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12344,7 +12344,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Sourcetree Git? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Atlassian\\SourceTree\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Atlassian\\SourceTree\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12364,7 +12364,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Native? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Native Instruments\\Traktor Pro\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Native Instruments\\Traktor Pro\\Cache (1.5–9.5 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12384,7 +12384,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Roon Audiophile? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Roon\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Roon\\Cache? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12404,7 +12404,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete LibreWolf Privacy? YES (1.5–9.5 GB) — Guide",
-    "metaDescription": "Can I delete %APPDATA%\\librewolf\\Cache\\Cache_Data? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %APPDATA%\\librewolf\\Cache\\Cache_Data? YES (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12424,7 +12424,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Autodesk Fusion? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %LOCALAPPDATA%\\Autodesk\\webdeploy\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %LOCALAPPDATA%\\Autodesk\\webdeploy\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12444,7 +12444,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Trimble SketchUp? YES (1.5–9.5 GB) — Safe Guide",
-    "metaDescription": "Delete %APPDATA%\\SketchUp\\SketchUp 2024\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete %APPDATA%\\SketchUp\\SketchUp 2024\\cache (1.5–9.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12482,7 +12482,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Gradle Build? YES (4–30 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.gradle\\caches? YES (4–30 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.gradle\\caches? YES (4–30 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12580,6 +12580,12 @@
       "label": "PowerShell: Show the largest top-level hidden space hogs on C: (Read-Only)",
       "language": "powershell",
       "code": "# Read-only check of top hidden space hogs on Windows 11\n$paths = @(\"$env:LOCALAPPDATA\\Temp\", \"C:\\Windows\\Temp\", \"C:\\Windows\\SoftwareDistribution\\Download\", \"C:\\Windows\\LiveKernelReports\", \"$env:LOCALAPPDATA\\CrashDumps\", \"$env:LOCALAPPDATA\\NVIDIA\\DXCache\")\nforeach ($p in $paths) {\n  if (Test-Path $p) {\n    $gb = [math]::Round(((Get-ChildItem $p -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum / 1GB), 2)\n    [PSCustomObject]@{ Path = $p; SizeGB = $gb }\n  }\n}"
+    },
+    "proofImage": "/img/proof/c-drive-filling-up-by-itself-windows-11-proof.webp",
+    "visualProof": {
+      "path": "/img/proof/c-drive-filling-up-by-itself-windows-11-proof.webp",
+      "alt": "Windows 11 C: drive root-cause directory audit across Temp and Package Cache on Build 26200",
+      "caption": "Verified C: drive cache footprint audit on Windows 11 Pro Build 26200."
     }
   },
   {
@@ -12662,6 +12668,12 @@
       "label": "PowerShell (Admin): Inspect Shadow Copy, Reserved Storage & WinSxS size",
       "language": "powershell",
       "code": "vssadmin list shadowstorage\nDISM /Online /Get-ReservedStorageState\nDISM /Online /Cleanup-Image /AnalyzeComponentStore"
+    },
+    "proofImage": "/img/proof/system-and-reserved-storage-100gb-windows-11-proof.webp",
+    "visualProof": {
+      "path": "/img/proof/system-and-reserved-storage-100gb-windows-11-proof.webp",
+      "alt": "Windows 11 System and Reserved Storage WinSxS and SoftwareDistribution inspection on Build 26200",
+      "caption": "Verified Windows 11 System & Reserved Storage audit on Build 26200."
     }
   },
   {
@@ -12746,6 +12758,12 @@
       "label": "PowerShell: Rank the top 15 largest folders inside %LocalAppData% (Read-Only)",
       "language": "powershell",
       "code": "Get-ChildItem \"$env:LOCALAPPDATA\" -Directory -ErrorAction SilentlyContinue | ForEach-Object {\n  $sum = (Get-ChildItem $_.FullName -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum\n  [PSCustomObject]@{ Folder = $_.Name; SizeGB = [math]::Round($sum / 1GB, 2) }\n} | Sort-Object SizeGB -Descending | Select-Object -First 15"
+    },
+    "proofImage": "/img/proof/appdata-local-folder-huge-windows-11-proof.webp",
+    "visualProof": {
+      "path": "/img/proof/appdata-local-folder-huge-windows-11-proof.webp",
+      "alt": "Windows 11 PowerShell AppData\\Local folder breakdown showing top subdirectories on Windows 11 Pro Build 26200",
+      "caption": "Verified AppData\\Local directory size inspection on Windows 11 Pro Build 26200."
     }
   },
   {
@@ -12821,13 +12839,6 @@
     ],
     "metaTitle": "Fix Windows 11 24H2 8.6 GB Bug? YES — Safe Cleanup Guide",
     "platform": "windows",
-    "labMeasurement": {
-      "beforeGb": 14.2,
-      "afterGb": 5.4,
-      "reclaimedGb": 8.8,
-      "osBuild": "Windows 11 24H2 Lab VM",
-      "notes": "WinSxS\\Temp\\PendingDeletes and $Windows.~BT cleaned via DISM /StartComponentCleanup without affecting rollback stability."
-    },
     "questionTitle": "Windows Update Cleanup stuck or won't delete (24H2 8.63 GB bug): How to fix it",
     "directAnswer": "When Disk Cleanup hangs on 'Windows Update Cleanup' or leaves 8.63 GB undeletable after Windows 11 24H2, TrustedInstaller or a checkpoint update manifest is locking superseded packages. Bypass the GUI by running DISM /StartComponentCleanup in an elevated terminal, or temporarily stop the Windows Update service (wuauserv) before retrying.",
     "whenNotToDelete": "Never manually delete files inside C:\\Windows\\WinSxS with File Explorer—doing so breaks future Windows Updates and SFC repairs. Also avoid /ResetBase if you still need to uninstall a recent cumulative update.",
@@ -12855,7 +12866,7 @@
     "manualSteps": [
       "Inspect %UserProfile%\\.cache, %LocalAppData%\\NVIDIA\\DXCache, and C:\\ProgramData\\Package Cache for orphaned multi-gigabyte folders.",
       "Purge stale shader caches and completed installer staging payloads using SWEEPR Cleaner's deterministic path scanner.",
-      "Paste suspicious paths from WizTree or PowerShell into sweeprcleaner.com/safe-to-delete first, or run SWEEPR Cleaner's 6.52 MB scanner to reclaim hidden AppData, ProgramData, and GPU shader caches with 7-day undo protection."
+      "Paste suspicious paths from WizTree or PowerShell into sweeprcleaner.com/safe-to-delete first, or run SWEEPR Cleaner's 6.76 MB scanner to reclaim hidden AppData, ProgramData, and GPU shader caches with 7-day undo protection."
     ],
     "subLocations": [
       {
@@ -12938,7 +12949,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete vLLM & Triton? YES (3.5–24 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.cache\\vllm? YES (3.5–24 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.cache\\vllm? YES (3.5–24 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12957,7 +12968,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete TabbyML? YES (3.5–28 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.tabby\\models? YES (3.5–28 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.tabby\\models? YES (3.5–28 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12976,7 +12987,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Continue.dev AI? YES (2–18 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.continue\\index? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.continue\\index? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -12995,7 +13006,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Fooocus Stable? YES (2.5–19 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Temp\\fooocus? YES (2.5–19 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Temp\\fooocus? YES (2.5–19 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -13014,7 +13025,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete InvokeAI Model? YES (5–32 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\invokeai\\models\\.cache? YES (5–32 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\invokeai\\models\\.cache? YES (5–32 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -13033,7 +13044,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete KoboldCpp Context? YES (1.2–11 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\Temp\\koboldcpp? YES (1.2–11 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\Temp\\koboldcpp? YES (1.2–11 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -13052,7 +13063,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Open WebUI RAG? YES (2–16 GB) — Safe Guide",
-    "metaDescription": "Can I delete %USERPROFILE%\\.open-webui\\cache? YES (2–16 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %USERPROFILE%\\.open-webui\\cache? YES (2–16 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -13071,7 +13082,7 @@
     ],
     "noindex": true,
     "metaTitle": "Can I Delete Faster-Whisper? YES (1.5–14 GB) — Safe Guide",
-    "metaDescription": "Delete ...E%\\.cache\\huggingface\\hub\\models--Systran--faster-whisper (1.5–14 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "metaDescription": "Delete ...E%\\.cache\\huggingface\\hub\\models--Systran--faster-whisper (1.5–14 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {
@@ -13196,7 +13207,7 @@
     },
     "noindex": true,
     "metaTitle": "Can I Delete Deno TypeScript? YES (1.5–16 GB) — Safe Guide",
-    "metaDescription": "Can I delete %LOCALAPPDATA%\\deno\\deps? YES (1.5–16 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "metaDescription": "Can I delete %LOCALAPPDATA%\\deno\\deps? YES (1.5–16 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
     "platform": "windows"
   },
   {

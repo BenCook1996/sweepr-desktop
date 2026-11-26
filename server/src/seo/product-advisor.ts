@@ -263,15 +263,21 @@ export function inspectCodebaseCapabilitiesReadOnly(): CodebaseCapabilitySnapsho
     return out;
   };
 
-  const winStart = rulesSrc.indexOf('#[cfg(target_os = "windows")]');
-  const macStart = rulesSrc.indexOf('#[cfg(target_os = "macos")]');
-  const linStart = rulesSrc.indexOf('#[cfg(all(unix, not(target_os = "macos")))]');
+  const winFnStart = rulesSrc.indexOf("pub fn windows_specs()");
+  const macFnStart = rulesSrc.indexOf("pub fn macos_specs()");
+  const linFnStart = rulesSrc.indexOf("pub fn linux_specs()");
+
+  const winStart = winFnStart >= 0 ? winFnStart : rulesSrc.indexOf('#[cfg(target_os = "windows")]');
+  const macStart = macFnStart >= 0 ? macFnStart : rulesSrc.indexOf('#[cfg(target_os = "macos")]');
+  const linStart = linFnStart >= 0 ? linFnStart : rulesSrc.indexOf('#[cfg(all(unix, not(target_os = "macos")))]');
+  const linEnd = linFnStart >= 0 ? rulesSrc.indexOf('#[cfg(target_os = "windows")]', linStart) : -1;
 
   const winSection =
     winStart >= 0 ? rulesSrc.slice(winStart, macStart > winStart ? macStart : undefined) : rulesSrc;
   const macSection =
     macStart >= 0 ? rulesSrc.slice(macStart, linStart > macStart ? linStart : undefined) : "";
-  const linSection = linStart >= 0 ? rulesSrc.slice(linStart) : "";
+  const linSection =
+    linStart >= 0 ? rulesSrc.slice(linStart, linEnd > linStart ? linEnd : undefined) : "";
 
   const windowsRules = parseRulesSection(winSection, "windows");
   const macosRules = parseRulesSection(macSection, "macos");

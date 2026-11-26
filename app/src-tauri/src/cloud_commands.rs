@@ -243,7 +243,16 @@ pub async fn vault_decrypt(
 pub async fn vault_list(state: State<'_, AppState>, dir: String, password: Option<String>) -> AppResult<Vec<VaultEntry>> {
     let data_dir = state.data_dir.clone();
     blocking(move || {
-        let target = resolve_vault_dir(Some(dir.trim()), &data_dir);
+        let trimmed = dir.trim();
+        if !trimmed.is_empty() {
+            let p = PathBuf::from(trimmed);
+            if !p.is_absolute() || is_disallowed_vault_path(&p, &data_dir) || (p.exists() && !p.is_dir()) {
+                return Err(AppError::Other(
+                    "Please choose a valid, non-protected folder for the vault.".into(),
+                ));
+            }
+        }
+        let target = resolve_vault_dir(Some(trimmed), &data_dir);
         vault::list_vault(&target, password.as_deref().filter(|p| !p.is_empty()))
     })
     .await

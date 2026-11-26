@@ -11,10 +11,12 @@
     api,
     ACTIVATE_EVENT,
     OPEN_UNDO_EVENT,
+    setTelemetryEnabled,
     type LicenseStatus,
     type AppInfo,
     type AppUpdateInfo,
     type PaywallContext,
+    type UiPreferences,
     type UnplugAlert,
   } from "./lib/api";
   import { lang, setLang, LANGUAGES, t, type Lang } from "./lib/i18n";
@@ -28,6 +30,7 @@
   let accountSection = $state<"schedule" | "account">("account");
   let license = $state<LicenseStatus | null>(null);
   let info = $state<AppInfo | null>(null);
+  let uiPrefs = $state<UiPreferences | null>(null);
   let showActivateModal = $state(false);
   let paywallContext = $state<PaywallContext | null>(null);
   let appReady = $state(false);
@@ -36,6 +39,7 @@
   let updateDismissed = $state(false);
   let unplugAlert = $state<UnplugAlert | null>(null);
   let showStartupInstaller = $state(false);
+  let pendingScanDir = $state<string | null>(null);
   const isMac =
     typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent);
   const modKeyLabel = isMac ? "⌘" : "Ctrl+";
@@ -140,8 +144,7 @@
     if (startupInitialized) return;
     startupInitialized = true;
     refreshLicense();
-    runAutoUpdateCheck();
-    const updateTimer = setInterval(runAutoUpdateCheck, 4 * 60 * 60 * 1000);
+    let updateTimer: ReturnType<typeof setInterval> | null = null;
     const onWindowFocus = () => {
       refreshLicense();
     };
@@ -151,6 +154,8 @@
       .then((i) => {
         info = i;
         if (i.preferences) {
+          uiPrefs = i.preferences;
+          setTelemetryEnabled(Boolean(i.preferences.telemetry_enabled));
           const diskTheme: "light" | "dark" = i.preferences.theme === "dark" ? "dark" : "light";
           theme = diskTheme;
           if (typeof localStorage !== "undefined") {
@@ -166,6 +171,11 @@
           if (i.preferences.language && LANGUAGES.some((l) => l.code === i.preferences!.language)) {
             setLang(i.preferences.language as Lang, false);
           }
+
+          if (i.preferences.telemetry_enabled) {
+            runAutoUpdateCheck();
+            updateTimer = setInterval(runAutoUpdateCheck, 4 * 60 * 60 * 1000);
+          }
         }
         if (i.installer_mode && !installerCompleted) {
           showStartupInstaller = true;
@@ -175,8 +185,18 @@
       .catch(() => {
         appReady = true;
       });
+    api
+      .takeInitialScanDir()
+      .then((dir) => {
+        if (dir && dir.trim()) {
+          pendingScanDir = dir.trim();
+          toolsMode = "space";
+          tab = "space";
+        }
+      })
+      .catch(() => {});
     return () => {
-      clearInterval(updateTimer);
+      if (updateTimer) clearInterval(updateTimer);
       window.removeEventListener("focus", onWindowFocus);
     };
   });
@@ -424,7 +444,7 @@
   const cmdSafetyIntel = $derived.by(() => {
     const q = cmdQuery.trim();
     if (q.length < 2) return null;
-    return resolveFilePathSafetyIntelligence(q);
+    return resolveFilePathSafetyIntelligence(q).matched;
   });
 
   function openSafetyCheckFromCmd(query: string) {
@@ -892,6 +912,11 @@
             <Cleaner
               {license}
               {info}
+              preferences={uiPrefs}
+              onPreferencesChange={(p) => {
+                uiPrefs = p;
+                setTelemetryEnabled(Boolean(p.telemetry_enabled));
+              }}
               onLicenseChange={refreshLicense}
               onOpenTool={(tool) => {
                 if (tool === "memory") {
@@ -921,7 +946,12 @@
           {:else if tab === "speed"}
             <Performance {license} {info} bind:viewMode={speedMode} />
           {:else if tab === "space"}
-            <Duplicates {license} {info} />
+            <Duplicates
+              {license}
+              {info}
+              initialScanDir={pendingScanDir}
+              onInitialScanConsumed={() => (pendingScanDir = null)}
+            />
           {:else if tab === "apps"}
             <Apps {license} />
           {:else if tab === "privacy"}
@@ -932,6 +962,11 @@
             <Account
               {license}
               {info}
+              preferences={uiPrefs}
+              onPreferencesChange={(p) => {
+                uiPrefs = p;
+                setTelemetryEnabled(Boolean(p.telemetry_enabled));
+              }}
               {theme}
               onToggleTheme={toggleTheme}
               onRefresh={() => refreshLicense(true)}

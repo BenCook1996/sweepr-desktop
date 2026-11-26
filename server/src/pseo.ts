@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { getActiveTelemetryTruthForSlug } from "./seo/telemetry-truth.js";
 import { escapeHtml as esc, isSafeObjectKey } from "./security.js";
 import {
+  ORGANIZATION_LOGO_URL,
   ORGANIZATION_SAME_AS,
   renderEditorialHead,
   renderSiteFooter,
@@ -285,19 +286,19 @@ export const CUSTOM_GSC_TITLE_SLUGS: readonly string[] = Object.keys(CUSTOM_GSC_
 
 const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
   "steam-depotcache":
-    "Can I delete C:\\Program Files (x86)\\Steam\\depotcache? YES (2–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete C:\\Program Files (x86)\\Steam\\depotcache? YES (2–25 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
   "riot-client-logs":
-    "Can I delete %LOCALAPPDATA%\\VALORANT\\Saved\\Logs? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete %LOCALAPPDATA%\\VALORANT\\Saved\\Logs? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
   "logitech-ghub-installer-cache":
-    "Can I delete C:\\ProgramData\\LGHUB\\depots? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete C:\\ProgramData\\LGHUB\\depots? YES (1.5–8 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
   "stremio-desktop-cache":
-    "Can I delete %AppData%\\stremio\\stremio-server\\stremio-cache? YES (2–10 GB). Zero add-ons or watch history lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "Can I delete %AppData%\\stremio\\stremio-server\\stremio-cache? YES (2–10 GB). Zero add-ons or watch history lost. Manual + 1-click 6.76 MB Sweepr scan.",
   "amd-shader-cache":
-    "Can I delete %LOCALAPPDATA%\\AMD\\DxCache? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete %LOCALAPPDATA%\\AMD\\DxCache? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
   "comfyui-temp-output-cache":
-    "Can I delete C:\\ComfyUI\\temp & %LOCALAPPDATA%\\Temp\\comfyui? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+    "Can I delete C:\\ComfyUI\\temp & %LOCALAPPDATA%\\Temp\\comfyui? YES (2–18 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
   "genshin-impact-update-cache":
-    "Delete C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game\\Temp (3–22 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+    "Delete C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game\\Temp (3–22 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
   "winsxs":
     "Never delete C:\\Windows\\WinSxS manually. Run DISM /StartComponentCleanup to reclaim gigabytes of superseded update files while keeping system files intact.",
   "programdata-package-cache":
@@ -305,29 +306,29 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
   "windows-livekernelreports":
     "C:\\Windows\\LiveKernelReports\\WATCHDOG holds GPU and kernel crash dumps (.dmp). Safe to delete after debugging—keep the folder and check TDR stability.",
   "logitech-options-plus-cache":
-    "Can I delete %LOCALAPPDATA%\\LogiOptionsPlus\\cache? YES (1.2–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete %LOCALAPPDATA%\\LogiOptionsPlus\\cache? YES (1.2–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
   "elgato-streamdeck-cache":
-    "Can I delete %APPDATA%\\Elgato\\StreamDeck cache? YES (1–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete %APPDATA%\\Elgato\\StreamDeck cache? YES (1–4 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
   "vivaldi-browser-cache":
-    "Can I delete %LOCALAPPDATA%\\Vivaldi\\User Data\\Default\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+    "Can I delete %LOCALAPPDATA%\\Vivaldi\\User Data\\Default\\Cache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.76 MB Sweepr scan.",
   "jetbrains-intellij-cache":
-    "Can I delete %LocalAppData%\\JetBrains\\IntelliJIdea* caches? YES (1–8 GB). Zero projects, keymaps, or plugins lost. Manual steps + 6.5 MB Sweepr scan.",
+    "Can I delete %LocalAppData%\\JetBrains\\IntelliJIdea* caches? YES (1–8 GB). Zero projects, keymaps, or plugins lost. Manual steps + 6.76 MB Sweepr scan.",
   "opera-gx-cache":
-    "Can I delete %LOCALAPPDATA%\\Opera Software\\Opera GX Stable\\Cache? YES (1.8–12 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "Delete %LOCALAPPDATA%\\Opera Software\\Opera GX Stable\\Cache (1.8–12 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
   "medal-tv-cache":
-    "Can I delete %APPDATA%\\Medal\\Cache? YES (2–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete %APPDATA%\\Medal\\Cache? YES (2–14 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
   "capcut-desktop-cache":
-    "Can I delete %LOCALAPPDATA%\\CapCut\\User Data\\Cache? YES (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete %LOCALAPPDATA%\\CapCut\\User Data\\Cache? YES (2.5–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
   "obs-studio-logs-crashes":
-    "Can I delete %APPDATA%\\obs-studio\\logs & Cache? YES (1–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete %APPDATA%\\obs-studio\\logs & Cache? YES (1–6.5 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
   "creative-cloud-installer-cache":
-    "Can I delete %LOCALAPPDATA%\\Adobe\\Creative Cloud? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete %LOCALAPPDATA%\\Adobe\\Creative Cloud? YES (2–12 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
   "nvidia-dxcache":
-    "Clear NVIDIA DXCache (2–14 GB) to fix game stutter cleanly. Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "Clear NVIDIA DXCache (2–14 GB) to fix game stutter cleanly. Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
   "npm-cache":
-    "Can I delete %LOCALAPPDATA%\\npm-cache? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete %LOCALAPPDATA%\\npm-cache? YES (2–18 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
   "gradle-wrapper-caches":
-    "Can I delete %USERPROFILE%\\.gradle\\caches? YES (4–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete %USERPROFILE%\\.gradle\\caches? YES (4–35 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
   "localappdata-crashdumps":
     "Delete %LOCALAPPDATA%\\CrashDumps (.dmp files) safely on Windows 11 to reclaim 1–15 GB without affecting apps or OS stability. Manual + 1-click Sweepr scan.",
   "hiberfil-sys":
@@ -347,13 +348,13 @@ const CUSTOM_GSC_DESCRIPTIONS: Record<string, string> = {
   "localappdata-webview2-ebwebview-cache":
     "Clear %LOCALAPPDATA%\\Microsoft\\EdgeWebView\\User Data cache safely (1.5–9 GB) while keeping Windows widgets and desktop apps working. Manual + Sweepr scan.",
   "ea-app-cache":
-    "Can I delete %LOCALAPPDATA%\\Electronic Arts\\EA Desktop\\cache? YES (1.5–6 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+    "Can I delete %LOCALAPPDATA%\\Electronic Arts\\EA Desktop\\cache? YES (1.5–6 GB). Zero save files or active logins lost. Manual steps + 1-click 6.76 MB Sweepr scan.",
   "epic-games-webcache":
-    "Can I delete %LOCALAPPDATA%\\EpicGamesLauncher\\Saved\\webcache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.5 MB Sweepr scan.",
+    "Can I delete %LOCALAPPDATA%\\EpicGamesLauncher\\Saved\\webcache? YES (1–5 GB). Zero save files or active logins lost. Manual steps + 1-click 6.76 MB Sweepr scan.",
   "vrchat-cache":
-    "Can I delete %LOCALAPPDATA%Low\\VRChat\\VRChat\\Cache-WindowsPlayer? YES (10–30 GB). Zero save files or active logins lost. Manual + 1-click 6.5 MB Sweepr scan.",
+    "Can I delete %LOCALAPPDATA%Low\\VRChat\\VRChat\\Cache-WindowsPlayer? YES (10–30 GB). Zero save files or active logins lost. Manual + 1-click 6.76 MB Sweepr scan.",
   "lm-studio-models-cache":
-    "Can I delete %USERPROFILE%\\.cache\\lm-studio\\models? YES (10–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.5 MB Sweepr scan.",
+    "Can I delete %USERPROFILE%\\.cache\\lm-studio\\models? YES (10–80 GB). Zero save files or active logins lost. Manual steps + 1-click free 6.76 MB Sweepr scan.",
   "microsoft-teams-cache":
     "Clear New & Classic Microsoft Teams EBWebView cache on Windows 11 to reclaim 1.5–9 GB and fix sync bugs. Chats stay safe. Manual + 1-click Sweepr scan.",
   "software-distribution-download":
@@ -617,7 +618,7 @@ export function getAbsorbedRedirectVariants(item: CleanItem): Array<{
     } else if (s.endsWith("-gpu-shader-cache")) {
       addVariant(
         s,
-        "GPU Shader Cache",
+        "Graphics Shader Cache",
         `${basePath}\\GPUCache, GrShaderCache & DawnCache`,
         "Hardware-accelerated Skia, ANGLE, DirectX, and WebGPU Dawn compiled shader pipelines"
       );
@@ -653,7 +654,7 @@ export function getAbsorbedRedirectVariants(item: CleanItem): Array<{
     );
     addVariant(
       `${prefix}-gpu-shader-cache`,
-      "GPU Shader Cache",
+      "Graphics Shader Cache",
       `${basePath}\\GPUCache & DawnCache`,
       "Compiled DirectX / Vulkan / WebGPU UI shader pipelines"
     );
@@ -894,17 +895,17 @@ export function buildPseoDescription(item: CleanItem): string {
     item.category === "folder"
       ? "Keeps OS files and user data intact."
       : "Zero save files or active logins lost.";
-  let desc = `Can I delete ${primaryPath}? YES (${spaceLabel}). ${safetyPhrase} Manual steps + 1-click free 6.5 MB Sweepr scan.`;
+  let desc = `Can I delete ${primaryPath}? YES (${spaceLabel}). ${safetyPhrase} Manual steps + 1-click free 6.76 MB Sweepr scan.`;
   if (desc.length > 158) {
-    desc = `Delete ${primaryPath} (${spaceLabel}). ${safetyPhrase} Manual steps + 1-click free 6.5 MB Sweepr scan.`;
+    desc = `Delete ${primaryPath} (${spaceLabel}). ${safetyPhrase} Manual steps + 1-click free 6.76 MB Sweepr scan.`;
   }
   if (desc.length > 158) {
-    desc = `Delete ${primaryPath} (${spaceLabel}). ${safetyPhrase} Manual + 1-click 6.5 MB Sweepr scan.`;
+    desc = `Delete ${primaryPath} (${spaceLabel}). ${safetyPhrase} Manual + 1-click 6.76 MB Sweepr scan.`;
   }
   if (desc.length > 158) {
-    const maxP = 158 - `Delete  (${spaceLabel}). ${safetyPhrase} Manual + 1-click 6.5 MB Sweepr scan.`.length;
+    const maxP = 158 - `Delete  (${spaceLabel}). ${safetyPhrase} Manual + 1-click 6.76 MB Sweepr scan.`.length;
     primaryPath = primaryPath.slice(0, Math.max(18, maxP));
-    desc = `Delete ${primaryPath} (${spaceLabel}). ${safetyPhrase} Manual + 1-click 6.5 MB Sweepr scan.`;
+    desc = `Delete ${primaryPath} (${spaceLabel}). ${safetyPhrase} Manual + 1-click 6.76 MB Sweepr scan.`;
   }
   return desc;
 }
@@ -963,10 +964,10 @@ export function renderGamingAndAiCacheBloatCalculatorWidget(): string {
         <div class="ed-kpi-label" style="color:var(--accent);margin-bottom:4px;">Windows Gaming &amp; AI Cache Bloat Calculator</div>
         <h2 class="ed-h2" style="margin:0;">Select the apps you run on your PC</h2>
       </div>
-      <span class="mono" style="font-size:0.75rem;color:var(--muted);">Windows 10 &amp; 11 typical ranges</span>
+      <span class="mono" style="font-size:0.75rem;color:var(--muted);">Example footprints (Windows 10 &amp; 11)</span>
     </div>
     <p class="ed-lead" style="font-size:0.94rem;margin-bottom:18px;">
-      Check any game launcher, GPU driver, local AI model, or creative suite installed on your drive to inspect the exact cache folders and estimate reclaimable gigabytes.
+      Check any game launcher, GPU driver, local AI model, or creative suite installed on your drive to inspect the exact cache folders and view a typical estimate (example footprint only; actual disk usage varies by PC).
     </p>
 
     <div class="ed-grid-2" id="bloatCalcGrid" style="gap:10px;margin-bottom:20px;">
@@ -974,56 +975,56 @@ export function renderGamingAndAiCacheBloatCalculatorWidget(): string {
         <input type="checkbox" class="bloat-calc-cb" data-id="steam" data-name="Steam depotcache &amp; NVIDIA DXCache" data-guide="/clean/app/steam-depotcache" data-gb="12.5" data-paths="%LocalAppData%\\NVIDIA\\DXCache|C:\\Program Files (x86)\\Steam\\depotcache|%LocalAppData%\\Steam\\htmlcache" checked />
         <span>
           <strong style="display:block;font-size:0.92rem;">Steam &amp; NVIDIA DXCache</strong>
-          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~12.5 GB typical</span>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~12.5 GB typical estimate</span>
         </span>
       </label>
       <label class="ed-check-card">
         <input type="checkbox" class="bloat-calc-cb" data-id="genshin" data-name="Genshin Impact / HoYoPlay" data-guide="/clean/app/genshin-impact-update-cache" data-gb="8.4" data-paths="%AppData%\\Cognosphere\\HYP\\1_1\\fedata\\Cache|C:\\Program Files\\HoYoPlay\\games\\Genshin Impact game\\Temp" />
         <span>
           <strong style="display:block;font-size:0.92rem;">Genshin / HoYoPlay</strong>
-          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~8.4 GB typical</span>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~8.4 GB typical estimate</span>
         </span>
       </label>
       <label class="ed-check-card">
         <input type="checkbox" class="bloat-calc-cb" data-id="valorant" data-name="VALORANT &amp; Riot Client" data-guide="/clean/app/riot-client-logs" data-gb="4.8" data-paths="%LocalAppData%\\VALORANT\\Saved\\Logs|%LocalAppData%\\VALORANT\\Saved\\Crashes|%LocalAppData%\\Riot Games\\Riot Client\\Logs" />
         <span>
           <strong style="display:block;font-size:0.92rem;">VALORANT &amp; Riot Client</strong>
-          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~4.8 GB typical</span>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~4.8 GB typical estimate</span>
         </span>
       </label>
       <label class="ed-check-card">
         <input type="checkbox" class="bloat-calc-cb" data-id="comfyui" data-name="ComfyUI Temp &amp; Output" data-guide="/clean/app/comfyui-temp-output-cache" data-gb="21.6" data-paths="C:\\ComfyUI\\temp|%LocalAppData%\\Temp\\comfyui|%LocalAppData%\\pip\\Cache" checked />
         <span>
           <strong style="display:block;font-size:0.92rem;">ComfyUI &amp; Python pip</strong>
-          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~21.6 GB typical</span>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~21.6 GB typical estimate</span>
         </span>
       </label>
       <label class="ed-check-card">
         <input type="checkbox" class="bloat-calc-cb" data-id="lmstudio" data-name="LM Studio Models Cache" data-guide="/clean/app/lm-studio-models-cache" data-gb="26.5" data-paths="%UserProfile%\\.cache\\lm-studio\\models" checked />
         <span>
           <strong style="display:block;font-size:0.92rem;">LM Studio Local Models</strong>
-          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~26.5 GB typical</span>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~26.5 GB typical estimate</span>
         </span>
       </label>
       <label class="ed-check-card">
         <input type="checkbox" class="bloat-calc-cb" data-id="docker" data-name="Docker Desktop WSL2 ext4.vhdx" data-guide="/clean/app/docker-desktop-ext4-disk" data-gb="28.0" data-paths="%LocalAppData%\\Docker\\wsl\\data\\ext4.vhdx" />
         <span>
           <strong style="display:block;font-size:0.92rem;">Docker &amp; WSL2 Virtual Disk</strong>
-          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~28.0 GB typical</span>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~28.0 GB typical estimate</span>
         </span>
       </label>
       <label class="ed-check-card">
         <input type="checkbox" class="bloat-calc-cb" data-id="jetbrains" data-name="JetBrains IntelliJ &amp; Cursor" data-guide="/clean/app/jetbrains-intellij-cache" data-gb="9.2" data-paths="%LocalAppData%\\JetBrains|%AppData%\\Cursor\\User\\workspaceStorage|%AppData%\\Code\\CachedData" checked />
         <span>
           <strong style="display:block;font-size:0.92rem;">IntelliJ IDEA, Cursor &amp; VS Code</strong>
-          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~9.2 GB typical</span>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~9.2 GB typical estimate</span>
         </span>
       </label>
       <label class="ed-check-card">
         <input type="checkbox" class="bloat-calc-cb" data-id="adobe" data-name="Adobe Premiere Media Cache" data-guide="/clean/app/adobe-premiere-media-cache" data-gb="22.0" data-paths="%AppData%\\Adobe\\Common\\Media Cache Files|%AppData%\\Adobe\\Common\\Peak Files" />
         <span>
           <strong style="display:block;font-size:0.92rem;">Adobe Media Cache</strong>
-          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~22.0 GB typical</span>
+          <span class="mono" style="font-size:0.78rem;color:var(--accent);">~22.0 GB typical estimate</span>
         </span>
       </label>
     </div>
@@ -1031,13 +1032,14 @@ export function renderGamingAndAiCacheBloatCalculatorWidget(): string {
     <div class="ed-card-muted">
       <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:16px;">
         <div>
-          <div class="ed-kpi-label">ESTIMATED HIDDEN CACHE</div>
-          <div id="bloatCalcTotalGb" class="ed-kpi-val" style="font-size:2.4rem;color:var(--accent);">69.8 GB</div>
-          <div id="bloatCalcCountLabel" style="font-size:0.84rem;color:var(--muted);margin-top:4px;">Across 4 selected workloads</div>
+          <div class="ed-kpi-label">EXAMPLE FOOTPRINT (TYPICAL ESTIMATE)</div>
+          <div id="bloatCalcTotalGb" class="ed-kpi-val" style="font-size:2.4rem;color:var(--accent);">~69.8 GB</div>
+          <div id="bloatCalcCountLabel" style="font-size:0.84rem;color:var(--muted);margin-top:4px;">Example estimate across 4 pre-selected workloads (varies by PC)</div>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:10px;">
           <a href="/safe-to-delete" class="ed-btn-secondary">Check Custom Paths</a>
-          <a href="/download" rel="nofollow" class="ed-btn-primary">Download Free 60s Scan</a>
+          <a href="/pricing" class="ed-btn-secondary">Compare Free vs. Pro</a>
+          <a href="/download" class="ed-btn-primary">Download Free Scanner</a>
         </div>
       </div>
 
@@ -1080,8 +1082,8 @@ export function renderGamingAndAiCacheBloatCalculatorWidget(): string {
               }
             }
           }
-          if (totalEl) totalEl.textContent = total.toFixed(1) + ' GB';
-          if (countEl) countEl.textContent = 'Across ' + count + ' selected workload' + (count === 1 ? '' : 's') + ' — saved logins and game saves stay untouched';
+          if (totalEl) totalEl.textContent = '~' + total.toFixed(1) + ' GB';
+          if (countEl) countEl.textContent = 'Typical estimate across ' + count + ' selected workload' + (count === 1 ? '' : 's') + ' (actual PC usage varies) — saved logins and game saves stay untouched';
           if (listEl) listEl.innerHTML = rows.length ? rows.join('') : '<div style="padding:14px;font-size:0.88rem;color:var(--muted);">Select at least one workload above to inspect its folder paths.</div>';
         }
         for (var k = 0; k < cbs.length; k++) {
@@ -1104,10 +1106,29 @@ export function renderGamingAndAiCacheBloatCalculatorPage(): string {
     "@graph": [
       {
         "@type": "TechArticle",
+        "@id": `${canonicalUrl}#article`,
         headline: "Windows Cache Bloat Calculator",
         description: pageDesc,
         url: canonicalUrl,
-        author: { "@type": "Organization", name: "SWEEPR Storage Research Lab" },
+        author: { "@id": "https://sweeprcleaner.com/#founder" },
+        publisher: { "@id": "https://sweeprcleaner.com/#organization" },
+      },
+      {
+        "@type": "Person",
+        "@id": "https://sweeprcleaner.com/#founder",
+        name: "Benjamin Cook",
+        url: "https://sweeprcleaner.com/about",
+        sameAs: ["https://github.com/BenCook1996"],
+        worksFor: { "@id": "https://sweeprcleaner.com/#organization" },
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://sweeprcleaner.com/#organization",
+        name: "SWEEPR Cleaner",
+        url: "https://sweeprcleaner.com",
+        logo: ORGANIZATION_LOGO_URL,
+        sameAs: ORGANIZATION_SAME_AS,
+        founder: { "@id": "https://sweeprcleaner.com/#founder" },
       },
       {
         "@type": "BreadcrumbList",
@@ -1159,10 +1180,15 @@ ${renderEditorialHead({
         <a href="/clean/app/docker-desktop-ext4-disk">Docker WSL2 virtual disk</a>, and
         <a href="/clean/folder/winsxs">Windows WinSxS Component Store</a>.
       </p>
+      <p>
+        Want to clean automatically? <strong>SWEEPR Free</strong> gives you unlimited scans + Unlimited Temp &amp; Browser Cache Clean (to OS Recycle Bin); compare <a href="/pricing">SWEEPR Pro pricing</a> (Deep GPU/AI/Dev Caches, SHA-256 Duplicates, Uninstaller, Scheduler &amp; 7-Day Undo Quarantine, covered by our <a href="/refund">14-day money-back guarantee</a>).
+      </p>
       <div class="ed-actions">
         <a href="/safe-to-delete" class="ed-btn-secondary">Open Path Safety Checker</a>
         <a href="/state-of-windows-storage" class="ed-btn-secondary">Read 2026 Storage Study</a>
         <a href="/vs/ccleaner" class="ed-btn-secondary">SWEEPR vs CCleaner</a>
+        <a href="/pricing" class="ed-btn-secondary">Pricing &amp; Free Tier</a>
+        <a href="/refund" class="ed-btn-secondary">14-Day Refund Policy</a>
       </div>
     </section>
   </main>
@@ -1336,7 +1362,7 @@ ${renderEditorialHead({
       ${clusterGroups
         .map(
           (g) => `
-      <div class="directory-cluster-block" data-cluster-block="${g.meta.filterKey}" style="margin-bottom:32px;">
+      <div id="silo-${g.meta.id}" class="directory-cluster-block" data-cluster-block="${g.meta.filterKey}" style="margin-bottom:32px;">
         <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
           <h2 class="ed-h2" style="margin:0;">${esc(g.meta.label)}</h2>
           <span class="mono" style="font-size:0.78rem;color:var(--muted);">${g.items.length} guides</span>
@@ -1406,10 +1432,14 @@ ${renderEditorialHead({
         <a href="/alternatives/glary-utilities" style="color:var(--accent);text-decoration:underline;">Best Glary Utilities Alternatives</a>
         <a href="/vs/wise-disk-cleaner" style="color:var(--accent);text-decoration:underline;">SWEEPR vs Wise Disk Cleaner</a>
         <a href="/alternatives/wise-disk-cleaner" style="color:var(--accent);text-decoration:underline;">Best Wise Disk Cleaner Alternatives</a>
-        <a href="/vs/cleanmymac" style="color:var(--accent);text-decoration:underline;">SWEEPR vs CleanMyMac X</a>
+        <a href="/vs/cleanmymac" style="color:var(--accent);text-decoration:underline;">SWEEPR vs CleanMyMac</a>
         <a href="/alternatives/cleanmymac" style="color:var(--accent);text-decoration:underline;">Best CleanMyMac Alternatives</a>
         <a href="/vs/daisydisk" style="color:var(--accent);text-decoration:underline;">SWEEPR vs DaisyDisk</a>
+        <a href="/alternatives/daisydisk" style="color:var(--accent);text-decoration:underline;">Best DaisyDisk Alternatives</a>
         <a href="/vs/pearcleaner" style="color:var(--accent);text-decoration:underline;">SWEEPR vs Pearcleaner</a>
+        <a href="/alternatives/pearcleaner" style="color:var(--accent);text-decoration:underline;">Best Pearcleaner Alternatives</a>
+        <a href="/vs/onyx" style="color:var(--accent);text-decoration:underline;">SWEEPR vs OnyX</a>
+        <a href="/alternatives/onyx" style="color:var(--accent);text-decoration:underline;">Best OnyX Alternatives</a>
       </div>
     </section>
 
@@ -1418,11 +1448,12 @@ ${renderEditorialHead({
       <div style="max-width:60ch;">
         <h2 class="ed-h2" style="margin-bottom:6px;">Want one lightweight app to scan all of these at once?</h2>
         <p style="font-size:0.92rem;color:var(--muted);line-height:1.55;">
-          SWEEPR Cleaner scans hidden app caches, shader folders, and duplicate photos in under 60 seconds with zero background slowdowns and a 7-day undo safety net across up to 5 devices.
+          SWEEPR Cleaner scans hidden app caches, shader folders, and duplicate photos on demand (with an optional lightweight system tray and scheduled cleaning in Zero-Telemetry / Offline Mode), and backs Pro cleanups with 7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget; excludes shredded files, browser DBs, and registry edits) across up to 5 devices. SWEEPR Free provides Unlimited Temp &amp; Browser Cache Clean (to OS Recycle Bin) &mdash; see <a href="/pricing" style="color:var(--accent);text-decoration:underline;font-weight:700;">Pro pricing</a> and our <a href="/refund" style="color:var(--accent);text-decoration:underline;font-weight:700;">14-day refund policy</a>.
         </p>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:10px;">
-        <a href="/download" class="ed-btn-primary" rel="nofollow">Download Free Scan</a>
+        <a href="/download" class="ed-btn-primary">Download Free Scan</a>
+        <a href="/pricing" class="ed-btn-secondary">Compare Pricing</a>
         <a href="/order?plan=annual" onclick="try{sessionStorage.setItem('sweepr_selected_plan','annual')}catch(e){}" class="ed-btn-secondary" rel="nofollow">Get 5-Device Pro</a>
       </div>
     </section>
@@ -1583,12 +1614,12 @@ export function renderPseoPage(item: CleanItem): string {
 
   const envLabel =
     platform === "mac"
-      ? "Verified on macOS Sequoia / Tahoe"
+      ? "macOS Path Guide"
       : platform === "ios"
-        ? "Verified on iOS 18 / 19"
+        ? "iPhone / iOS Storage Guide"
         : platform === "android"
-          ? "Verified on Android 14 / 15"
-          : "Tested on Windows 11 24H2";
+          ? "Android Storage Guide"
+          : "Windows 11 / Windows 10 Path Guide";
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -1601,12 +1632,7 @@ export function renderPseoPage(item: CleanItem): string {
         proficiencyLevel: "Beginner",
         datePublished: "2026-11-01",
         dateModified: "2026-11-22",
-        author: {
-          "@type": "Person",
-          name: "Benjamin Cook",
-          jobTitle: "Founder & Systems Engineer",
-          url: "https://github.com/BenCook1996",
-        },
+        author: { "@id": "https://sweeprcleaner.com/#founder" },
         publisher: {
           "@id": "https://sweeprcleaner.com/#organization",
         },
@@ -1621,12 +1647,22 @@ export function renderPseoPage(item: CleanItem): string {
         ],
       },
       {
+        "@type": "Person",
+        "@id": "https://sweeprcleaner.com/#founder",
+        name: "Benjamin Cook",
+        jobTitle: "Founder & Systems Engineer",
+        url: "https://sweeprcleaner.com/about",
+        sameAs: ["https://github.com/BenCook1996"],
+        worksFor: { "@id": "https://sweeprcleaner.com/#organization" },
+      },
+      {
         "@type": "Organization",
         "@id": "https://sweeprcleaner.com/#organization",
         name: "SWEEPR Cleaner",
         url: "https://sweeprcleaner.com",
-        logo: "https://sweeprcleaner.com/logo-mint-glass.svg",
+        logo: ORGANIZATION_LOGO_URL,
         sameAs: ORGANIZATION_SAME_AS,
+        founder: { "@id": "https://sweeprcleaner.com/#founder" },
       },
     ],
   };
@@ -1634,8 +1670,8 @@ export function renderPseoPage(item: CleanItem): string {
   const visualProofHtml = item.proofImage
     ? `<section id="verified-visual-proof" class="ed-section ed-card">
         <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-          <h2 class="ed-h2" style="margin:0;">Windows 11 Disk Inspection Snapshot</h2>
-          <span class="mono" style="font-size:0.75rem;color:var(--muted);">SWEEPR Storage Lab</span>
+          <h2 class="ed-h2" style="margin:0;">${isWindows ? "Windows 11 Disk Inspection Snapshot" : "Disk Inspection Snapshot"}</h2>
+          <span class="mono" style="font-size:0.75rem;color:var(--muted);">Benjamin Cook &middot; Test Bench</span>
         </div>
         <figure style="margin:0;">
           <img
@@ -1658,16 +1694,16 @@ export function renderPseoPage(item: CleanItem): string {
   const labBenchmarkHtml = item.labMeasurement
     ? `<section id="lab-benchmark-box" class="ed-section ed-card">
         <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-          <h2 class="ed-h2" style="margin:0;">Measured Lab Cleanup Result</h2>
+          <h2 class="ed-h2" style="margin:0;">Measured Local Dry-Run Audit</h2>
           <span class="mono" style="font-size:0.75rem;color:var(--accent);">${esc(item.labMeasurement.osBuild)}</span>
         </div>
         <div class="ed-table-wrap">
           <table class="ed-table">
             <thead>
               <tr>
-                <th>Before Cleanup</th>
-                <th>After Cleanup</th>
-                <th>Space Reclaimed</th>
+                <th>Measured Footprint</th>
+                <th>Active / Retained</th>
+                <th>Eligible Reclaimable</th>
                 <th>Notes</th>
               </tr>
             </thead>
@@ -1804,7 +1840,7 @@ ${renderEditorialHead({
             ? `<span id="telemetry-truth-badge" class="ed-status ed-status-safe">${esc(telemetryTruth.badge_text)}</span>`
             : ""
         }
-        <span>${isWindows ? "Tested on Windows 11 24H2 · Verified Microsoft Authenticode Publisher: Benjamin Cook" : `${esc(envLabel)} · Verified Publisher: Benjamin Cook`} · Updated <time datetime="2026-11-22">22 Nov 2026</time> (<a href="https://github.com/BenCook1996" rel="author">GitHub</a>)</span>
+        <span>${isWindows ? "Verified Authenticode IV Publisher: Benjamin Cook" : `${esc(envLabel)} · Verified Publisher: Benjamin Cook`} · Updated <time datetime="2026-11-22">22 Nov 2026</time> (<a href="https://github.com/BenCook1996" rel="author">GitHub</a>)</span>
       </div>
     </header>
 
@@ -1842,6 +1878,9 @@ ${renderEditorialHead({
           Unlock 5-Device Pro
         </a>
       </div>
+      <p style="font-size:0.84rem;color:var(--muted);margin-top:10px;margin-bottom:0;">
+        <strong>SWEEPR Free:</strong> Unlimited Temp &amp; Browser Cache Clean (to OS Recycle Bin). <a href="/pricing" style="color:var(--accent);text-decoration:underline;font-weight:700;">Compare Free vs. Pro pricing</a> &middot; <a href="/refund" style="color:var(--accent);text-decoration:underline;">14-day money-back guarantee</a>.
+      </p>
     </section>
 
     ${inlinePathWidgetHtml}
@@ -2014,9 +2053,9 @@ ${renderEditorialHead({
 
     <!-- Single Restrained CTA -->
     <section class="ed-section ed-card-muted">
-      <h2 class="ed-h2">Prefer a 1-click scan with a 7-day undo net?</h2>
+      <h2 class="ed-h2">Prefer a 1-click scan with 7-day Undo Quarantine?</h2>
       <p style="font-size:0.92rem;color:var(--muted);line-height:1.6;">
-        SWEEPR Cleaner checks ${esc(item.name)} alongside your other hidden system and app folders, keeps active settings and personal files protected, and covers up to 5 Windows, Mac, iPhone, and Android devices.
+        SWEEPR Cleaner checks ${esc(item.name)} alongside your other hidden system and app folders, backs Pro cleanups with 7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget; excludes shredded files, browser DBs, and registry edits), and covers up to 5 devices across Windows, Mac, Android, and iOS (Safari web companion / TestFlight beta). SWEEPR Free includes Unlimited Temp &amp; Browser Cache Clean (to OS Recycle Bin) — review <a href="/pricing" style="color:var(--accent);text-decoration:underline;font-weight:700;">Pro pricing</a> (<a href="/refund" style="color:var(--accent);text-decoration:underline;">14-day refund guarantee</a>), or see how it compares in <a href="/vs/ccleaner" style="color:var(--accent);text-decoration:underline;">SWEEPR vs CCleaner</a> and our <a href="/state-of-windows-storage" style="color:var(--accent);text-decoration:underline;">2026 Storage Study</a>.
       </p>
       <div class="ed-actions">
         <a href="/download?platform=${encodeURIComponent(platform)}" class="ed-btn-primary" rel="nofollow">Download Free Scan</a>
@@ -2024,7 +2063,7 @@ ${renderEditorialHead({
         ${
           isWindows
             ? `<a href="/tools/pc-cache-calculator" class="ed-btn-secondary">PC Cache Calculator</a>`
-            : `<a href="/clean" class="ed-btn-secondary">Browse All Guides</a>`
+            : `<a href="/safe-to-delete" class="ed-btn-secondary">Path Safety Checker</a><a href="/clean" class="ed-btn-secondary">Browse All Guides</a>`
         }
       </div>
     </section>

@@ -2,7 +2,7 @@ import { classifyPseoCluster, getCleanItems, isPseoSlugNoindexed, type CleanItem
 import { isLiveIndexNowAllowed, listBloatWatchPosts, type BloatWatchPost } from "./bloat-watch.js";
 import type { SeoStore } from "./store.js";
 import { isSafeObjectKey } from "../security.js";
-import { renderEditorialHead, renderSiteFooter, renderSiteHeader } from "../ui-shell.js";
+import { ORGANIZATION_LOGO_URL, ORGANIZATION_SAME_AS, renderEditorialHead, renderSiteFooter, renderSiteHeader } from "../ui-shell.js";
 
 export const TELEMETRY_TRUTH_MIN_SAMPLES = 30; // k-anonymity floor (n >= 30)
 const INDEXNOW_KEY = "7c4e9a1b3d5f8e2c6a0b4d8f2e6c1a9b";
@@ -375,11 +375,11 @@ export interface StateOfWindowsStorageReport {
 
 const SILO_META: Record<PseoClusterId, { label: string; baselineMedianGb: number }> = {
   gaming: { label: "PC Gaming Launchers, Shader Depots & Peripherals", baselineMedianGb: 8.4 },
-  gpu: { label: "DirectX 12, Vulkan, NVIDIA & AMD GPU Shader Caches", baselineMedianGb: 4.8 },
+  gpu: { label: "DirectX 12, Vulkan, NVIDIA & AMD Shader Caches", baselineMedianGb: 4.8 },
   creative: { label: "Video Editing, 3D Rendering & Streaming Scratch Disks", baselineMedianGb: 14.5 },
   devtools: { label: "Developer Package Managers, IDEs, Docker & Local AI/LLMs", baselineMedianGb: 16.2 },
   browsers_chat: { label: "Chromium Browsers, Discord, Teams & WebView2 Caches", baselineMedianGb: 5.1 },
-  win_update: { label: "Windows 11 24H2 Update, WinSxS & Package Cache", baselineMedianGb: 9.6 },
+  win_update: { label: "Windows 11 Update, WinSxS & Package Cache", baselineMedianGb: 9.6 },
   win_crash_logs: { label: "Kernel Watchdog Dumps (LiveKernelReports) & WER Archives", baselineMedianGb: 3.4 },
   win_system: { label: "Windows Temp, Explorer Thumbnails & System Scratch", baselineMedianGb: 3.8 },
 };
@@ -411,17 +411,6 @@ export function computeStateOfWindowsStorageReport(store: SeoStore): StateOfWind
     }
   }
 
-  let labPosts: BloatWatchPost[] = [];
-  try {
-    labPosts = listBloatWatchPosts(store, "published");
-  } catch {
-    labPosts = [];
-  }
-  const labBySlug = new Map<string, BloatWatchPost>();
-  for (const p of labPosts) {
-    if (p.clean_item_slug) labBySlug.set(p.clean_item_slug, p);
-  }
-
   const items = getCleanItems().filter(
     (i): i is CleanItem & { category: "app" | "folder" } =>
       !isPseoSlugNoindexed(i.slug) &&
@@ -429,6 +418,39 @@ export function computeStateOfWindowsStorageReport(store: SeoStore): StateOfWind
       !i.mergedIntoSlug &&
       (i.category === "app" || i.category === "folder")
   );
+
+  let labPosts: BloatWatchPost[] = [];
+  try {
+    labPosts = listBloatWatchPosts(store, "published");
+  } catch {
+    labPosts = [];
+  }
+  const labBySlug = new Map<string, { reclaimed_gb: number; before_gb: number }>();
+  for (const item of items) {
+    if (
+      item.labMeasurement &&
+      /26200/.test(String(item.labMeasurement.osBuild ?? "")) &&
+      Number.isFinite(item.labMeasurement.reclaimedGb) &&
+      item.labMeasurement.reclaimedGb > 0
+    ) {
+      labBySlug.set(item.slug, {
+        reclaimed_gb: item.labMeasurement.reclaimedGb,
+        before_gb: item.labMeasurement.beforeGb,
+      });
+    }
+  }
+  for (const p of labPosts) {
+    if (
+      p.clean_item_slug &&
+      /26200/.test(String(p.measurements?.tested_os_build ?? "")) &&
+      p.measurements?.reclaimed_gb != null
+    ) {
+      labBySlug.set(p.clean_item_slug, {
+        reclaimed_gb: Number(p.measurements.reclaimed_gb),
+        before_gb: Number(p.measurements.before_gb ?? p.measurements.reclaimed_gb),
+      });
+    }
+  }
   const byCluster = new Map<PseoClusterId, Array<CleanItem & { category: "app" | "folder" }>>();
   for (const clusterId of Object.keys(SILO_META) as PseoClusterId[]) {
     byCluster.set(clusterId, []);
@@ -459,8 +481,8 @@ export function computeStateOfWindowsStorageReport(store: SeoStore): StateOfWind
       const truth = truthBySlug.get(item.slug);
       const lab = labBySlug.get(item.slug);
       const parsed = parseAvgSpaceGb(item.avgSpace);
-      const measuredMedian = truth?.median_gb ?? (lab?.measurements?.reclaimed_gb ? Number(lab.measurements.reclaimed_gb) : null);
-      const measuredP90 = truth?.p90_gb ?? (lab?.measurements?.before_gb ? Number(lab.measurements.before_gb) : null);
+      const measuredMedian = truth?.median_gb ?? (lab ? lab.reclaimed_gb : null);
+      const measuredP90 = truth?.p90_gb ?? (lab ? lab.before_gb : null);
       const sampleCount = truth?.sample_count ?? 0;
       clusterSamples += sampleCount;
 
@@ -527,9 +549,9 @@ export function computeStateOfWindowsStorageReport(store: SeoStore): StateOfWind
   }
 
   allRankedCandidates.sort((a, b) => {
+    if (b.reclaimable_gb !== a.reclaimable_gb) return b.reclaimable_gb - a.reclaimable_gb;
     const priority = { live_telemetry: 3, lab_benchmark: 2, engineering_baseline: 1 };
-    if (priority[b.source] !== priority[a.source]) return priority[b.source] - priority[a.source];
-    return b.reclaimable_gb - a.reclaimable_gb;
+    return priority[b.source] - priority[a.source];
   });
 
   const top15 = allRankedCandidates.slice(0, 15).map((item, idx) => ({
@@ -546,7 +568,7 @@ export function computeStateOfWindowsStorageReport(store: SeoStore): StateOfWind
   const dynamicP90PerPcGb = Math.round(dynamicMedianPerPcGb * 2.51 * 10) / 10;
 
   const citationLines = [
-    "### State of Windows 11 Storage Benchmark (2026 — SWEEPR Storage Engineering Lab)",
+    "### State of Windows 11 Storage Benchmark (2026 — SWEEPR Cleaner / Benjamin Cook)",
     "| Rank | Folder / Application Cache | Canonical Path | Median Reclaimable | 90th Percentile | Source |",
     "| :--- | :--- | :--- | :--- | :--- | :--- |",
     ...top15.slice(0, 10).map(
@@ -555,7 +577,7 @@ export function computeStateOfWindowsStorageReport(store: SeoStore): StateOfWind
           r.source === "live_telemetry"
             ? `Anonymized Scans (n=${r.sample_count})`
             : r.source === "lab_benchmark"
-              ? "Windows 11 24H2 Lab VM"
+              ? "Windows 11 Build 26200 Lab"
               : "SWEEPR Audit Baseline"
         } |`
     ),
@@ -568,7 +590,7 @@ export function computeStateOfWindowsStorageReport(store: SeoStore): StateOfWind
     total_canonical_guides: items.length,
     total_telemetry_samples: totalTelemetrySamples,
     k_anonymous_verified_folders: truthBySlug.size,
-    published_lab_benchmarks: labPosts.length,
+    published_lab_benchmarks: labBySlug.size,
     median_reclaimable_per_pc_gb: dynamicMedianPerPcGb,
     p90_reclaimable_per_pc_gb: dynamicP90PerPcGb,
     silos,
@@ -598,43 +620,66 @@ export function renderStateOfWindowsStorageHtml(store: SeoStore): string {
     "@graph": [
       {
         "@type": "Report",
+        "@id": `${canonicalUrl}#report`,
         name: title,
         headline: "State of Windows 10 & 11 Storage Bloat (2026 Empirical Benchmark Report)",
         description: desc,
         url: canonicalUrl,
         datePublished: "2026-11-01",
         dateModified: report.generated_at.slice(0, 10),
-        author: {
-          "@type": "Organization",
-          name: "SWEEPR Storage Research Lab",
-          url: "https://sweeprcleaner.com",
-        },
-        publisher: {
-          "@type": "Organization",
-          name: "SWEEPR Cleaner",
-          logo: {
-            "@type": "ImageObject",
-            url: "https://sweeprcleaner.com/og-image.png",
-          },
-        },
+        author: { "@id": "https://sweeprcleaner.com/#founder" },
+        publisher: { "@id": "https://sweeprcleaner.com/#organization" },
+        about: { "@id": "https://sweeprcleaner.com/#software" },
       },
       {
         "@type": "Dataset",
+        "@id": `${canonicalUrl}#dataset`,
         name: "Windows 11 Application & System Cache Footprint Dataset (2026)",
         description:
           "Empirical storage footprint measurements (median and 90th percentile GB) across Windows 10 and Windows 11 cache directories, shader caches, game depots, and developer toolchains.",
         url: canonicalUrl,
         license: "https://creativecommons.org/licenses/by/4.0/",
-        creator: {
-          "@type": "Organization",
-          name: "SWEEPR Storage Research Lab",
-          url: "https://sweeprcleaner.com",
-        },
+        creator: { "@id": "https://sweeprcleaner.com/#founder" },
+        publisher: { "@id": "https://sweeprcleaner.com/#organization" },
         variableMeasured: [
           "Median Reclaimable Disk Space (GB)",
           "90th Percentile Cache Footprint (GB)",
           "Deletion Safety Verdict",
         ],
+      },
+      {
+        "@type": "Person",
+        "@id": "https://sweeprcleaner.com/#founder",
+        name: "Benjamin Cook",
+        url: "https://sweeprcleaner.com/about",
+        sameAs: ["https://github.com/BenCook1996"],
+        worksFor: { "@id": "https://sweeprcleaner.com/#organization" },
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://sweeprcleaner.com/#organization",
+        name: "SWEEPR Cleaner",
+        legalName: "Benjamin Cook t/a SWEEPR Cleaner",
+        url: "https://sweeprcleaner.com/",
+        logo: {
+          "@type": "ImageObject",
+          url: ORGANIZATION_LOGO_URL,
+          width: 512,
+          height: 512,
+        },
+        founder: { "@id": "https://sweeprcleaner.com/#founder" },
+        sameAs: ORGANIZATION_SAME_AS,
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://sweeprcleaner.com/#software",
+        name: "SWEEPR Cleaner",
+        operatingSystem: "Windows 11, Windows 10, macOS, Android",
+        applicationCategory: "UtilitiesApplication",
+        image: "https://sweeprcleaner.com/og-image.png",
+        url: "https://sweeprcleaner.com/",
+        author: { "@id": "https://sweeprcleaner.com/#founder" },
+        publisher: { "@id": "https://sweeprcleaner.com/#organization" },
       },
       {
         "@type": "BreadcrumbList",
@@ -668,7 +713,7 @@ ${renderEditorialHead({ title, description: desc, canonical: canonicalUrl, ogTyp
 
     <h1 class="ed-h1">State of Windows 10 &amp; 11 Storage <em>(2026 Benchmark)</em></h1>
     <p class="ed-lead">
-      Where does primary NVMe C: drive space actually disappear on modern Windows 11 24H2 PCs? This live benchmark aggregates <strong>${report.total_canonical_guides} curated Windows cache directories</strong>, <strong>${report.published_lab_benchmarks} controlled Windows 11 24H2 VM lab runs</strong>, and k-anonymous desktop scan telemetry (n &ge; 30 floor).
+      Where does primary C: drive space actually disappear on modern Windows 11 PCs? This live benchmark aggregates <strong>${report.total_canonical_guides} curated Windows cache directories</strong>, <strong>${report.published_lab_benchmarks} controlled Windows 11 Pro (Build 26200) measurements</strong>, and opt-in k-anonymous desktop scan telemetry (n &ge; 30 floor).
     </p>
 
     <section class="ed-section ed-grid-4">
@@ -685,12 +730,112 @@ ${renderEditorialHead({ title, description: desc, canonical: canonicalUrl, ogTyp
       <div class="ed-kpi-card">
         <div class="ed-kpi-label">CURATED WINDOWS PATHS</div>
         <div class="ed-kpi-val">${report.total_canonical_guides}</div>
-        <p style="font-size:0.78rem;color:var(--muted);margin-top:6px;">Path-verified on Windows 11 24H2</p>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:6px;">Path-verified on Windows 11 Build 26200</p>
       </div>
       <div class="ed-kpi-card">
-        <div class="ed-kpi-label">TELEMETRY &amp; VM SAMPLES</div>
-        <div class="ed-kpi-val" style="color:var(--accent);">${(report.total_telemetry_samples + report.published_lab_benchmarks * 30).toLocaleString("en-US")}</div>
-        <p style="font-size:0.78rem;color:var(--muted);margin-top:6px;">${report.k_anonymous_verified_folders} k-anonymous (n &ge; 30) live clusters</p>
+        <div class="ed-kpi-label">VERIFIED TELEMETRY &amp; SCAN</div>
+        <div class="ed-kpi-val" style="color:var(--accent);">${report.total_telemetry_samples > 0 ? report.total_telemetry_samples.toLocaleString("en-US") : "98,247 files"}</div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:6px;">${report.total_telemetry_samples > 0 ? `${report.k_anonymous_verified_folders} k-anonymous (n &ge; 30) live clusters` : "Local Celeron N5095 + XINCUU SATA SSD scan (opt-in telemetry off by default)"}</p>
+      </div>
+    </section>
+
+    <section id="local-hardware-benchmark" class="ed-section ed-card">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px;">
+        <h2 class="ed-h2" style="margin:0;">Measured Local Hardware Scan Benchmark (2026-11-26)</h2>
+        <span class="mono" style="font-size:0.78rem;color:var(--muted);">scanner::scan_all_with_exclusions (--release)</span>
+      </div>
+      <p style="font-size:0.9rem;color:var(--muted);margin-bottom:12px;">
+        Measured via a reproducible read-only Rust dry-run scan on an entry-level <strong>Intel(R) Celeron(R) N5095 @ 2.00GHz</strong> (4C/4T) with <strong>15.78 GB RAM</strong> and a <strong>XINCUU-512GB SATA SSD</strong> running <strong>Windows 11 Pro (25H2, Build 26200)</strong> on <strong>2026-11-26</strong> across <strong>27 Windows rules</strong> (<strong>14 non-empty categories</strong>):
+      </p>
+      <div class="ed-grid-4" style="margin-bottom:16px;">
+        <div class="ed-card-muted" style="padding:12px;"><div class="ed-kpi-label">FILES SCANNED</div><div class="mono" style="font-weight:800;font-size:1.1rem;">98,247 files</div></div>
+        <div class="ed-card-muted" style="padding:12px;"><div class="ed-kpi-label">SCAN DURATION</div><div class="mono" style="font-weight:800;font-size:1.1rem;">544,007 ms (544.01 s)</div></div>
+        <div class="ed-card-muted" style="padding:12px;"><div class="ed-kpi-label">THROUGHPUT</div><div class="mono" style="font-weight:800;font-size:1.1rem;">180.6 files/sec</div></div>
+        <div class="ed-card-muted" style="padding:12px;"><div class="ed-kpi-label">ELIGIBLE RECLAIMABLE</div><div class="mono" style="font-weight:800;font-size:1.1rem;color:var(--accent);">14.97 GB (13.94 GiB)</div></div>
+      </div>
+      <div class="ed-table-wrap">
+        <table class="ed-table">
+          <thead>
+            <tr>
+              <th>Rule ID</th>
+              <th>Category</th>
+              <th>Tier</th>
+              <th>Files</th>
+              <th>Measured Size</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">build_caches</td><td>Gradle, Maven &amp; Cargo build caches</td><td>Pro</td><td class="mono">50,421</td><td class="mono">4.59 GB (4.28 GiB)</td></tr>
+            <tr><td class="mono">downloads</td><td>Old &amp; Unused Downloads (&ge;30 days)</td><td>Pro</td><td class="mono">11,874</td><td class="mono">4.07 GB (3.79 GiB)</td></tr>
+            <tr><td class="mono">chrome</td><td>Google Chrome cache &amp; GPU/Service Worker storage</td><td>Free</td><td class="mono">19,193</td><td class="mono">2.62 GB (2.44 GiB)</td></tr>
+            <tr><td class="mono">dev_caches</td><td>Developer package &amp; IDE caches</td><td>Pro</td><td class="mono">3,990</td><td class="mono">1.72 GB (1.60 GiB)</td></tr>
+            <tr><td class="mono">temp</td><td>Temporary files</td><td>Free</td><td class="mono">8,397</td><td class="mono">999.4 MB (953.1 MiB)</td></tr>
+            <tr><td class="mono">delivery_opt</td><td>Windows Update, Package Cache &amp; Windows.old</td><td>Pro</td><td class="mono">234</td><td class="mono">508.5 MB (484.9 MiB)</td></tr>
+            <tr><td class="mono">edge</td><td>Microsoft Edge cache &amp; GPU/Service Worker storage</td><td>Free</td><td class="mono">2,215</td><td class="mono">208.5 MB (198.8 MiB)</td></tr>
+            <tr><td class="mono">game_launchers</td><td>Gaming Launchers &amp; Shader/Update Caches</td><td>Pro</td><td class="mono">333</td><td class="mono">88.2 MB (84.1 MiB)</td></tr>
+            <tr><td class="mono">webview2_cache</td><td>Microsoft Edge WebView2 (EBWebView) cache</td><td>Pro</td><td class="mono">800</td><td class="mono">78.2 MB (74.5 MiB)</td></tr>
+            <tr><td class="mono">app_caches</td><td>Discord &amp; VS Code caches</td><td>Pro</td><td class="mono">99</td><td class="mono">53.5 MB (51.0 MiB)</td></tr>
+            <tr><td class="mono">duplicates</td><td>Duplicate Files</td><td>Pro</td><td class="mono">84</td><td class="mono">17.4 MB (16.6 MiB)</td></tr>
+            <tr><td class="mono">thumbnails</td><td>Windows thumbnail &amp; icon cache</td><td>Pro</td><td class="mono">32</td><td class="mono">8.6 MB (8.2 MiB)</td></tr>
+            <tr><td class="mono">recent_activity</td><td>Windows Activity &amp; JumpList traces</td><td>Pro</td><td class="mono">519</td><td class="mono">2.7 MB (2.6 MiB)</td></tr>
+            <tr><td class="mono">shader_cache</td><td>NVIDIA DXCache / GLCache &amp; AMD DxCache</td><td>Pro</td><td class="mono">56</td><td class="mono">2.3 MB (2.2 MiB)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="what-sweepr-never-touches" class="ed-section ed-card">
+      <h2 class="ed-h2" style="margin-bottom:8px;">What SWEEPR Never Touches (Hard-Coded in safety.rs)</h2>
+      <p style="font-size:0.9rem;color:var(--muted);margin-bottom:12px;">
+        Every scan and cleanup enforces deterministic exclusions in <code class="ed-code">app/src-tauri/src/safety.rs</code> (<code class="ed-code">:8-134</code>):
+      </p>
+      <div class="ed-table-wrap">
+        <table class="ed-table">
+          <thead>
+            <tr>
+              <th>Protected Class</th>
+              <th>Exact Scope Denied</th>
+              <th>Rust Guardrail (<code class="ed-code">safety.rs</code>)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Relative &amp; Shallow Roots</strong></td>
+              <td>Relative paths and roots with <code class="ed-code">&lt; 2</code> normal path segments (except exact <code class="ed-code">std::env::temp_dir()</code>).</td>
+              <td class="mono">is_safe_root (:8-19)</td>
+            </tr>
+            <tr>
+              <td><strong>Personal User Folders</strong></td>
+              <td><code class="ed-code">home_dir</code>, <code class="ed-code">Documents</code> (<code class="ed-code">document_dir</code>), <code class="ed-code">Desktop</code> (<code class="ed-code">desktop_dir</code>), <code class="ed-code">Pictures</code> (<code class="ed-code">picture_dir</code>), <code class="ed-code">Videos</code> (<code class="ed-code">video_dir</code>), and <code class="ed-code">Audio</code> / <code class="ed-code">Music</code> (<code class="ed-code">audio_dir</code>).</td>
+              <td class="mono">is_safe_root (:22-40)</td>
+            </tr>
+            <tr>
+              <td><strong>Downloads Age Guard</strong></td>
+              <td><code class="ed-code">download_dir</code> (<code class="ed-code">Downloads</code>) is denied by <code class="ed-code">is_safe_root</code> and only allowed in <code class="ed-code">is_safe_scan_root</code> when enforcing <code class="ed-code">min_age_hours &ge; 720</code> (30-day minimum age).</td>
+              <td class="mono">is_safe_scan_root (:28, 62-74)</td>
+            </tr>
+            <tr>
+              <td><strong>Profile &amp; App Config Roots</strong></td>
+              <td>Exact roots <code class="ed-code">data_dir</code> (<code class="ed-code">%AppData%</code>), <code class="ed-code">data_local_dir</code> (<code class="ed-code">%LocalAppData%</code>), and <code class="ed-code">config_dir</code> are denied; only targeted cache subfolders are permitted.</td>
+              <td class="mono">is_safe_root (:32-40, 56-57)</td>
+            </tr>
+            <tr>
+              <td><strong>Windows OS Roots</strong></td>
+              <td><code class="ed-code">SystemRoot</code> (<code class="ed-code">C:\Windows</code>), <code class="ed-code">ProgramFiles</code>, <code class="ed-code">ProgramFiles(x86)</code>, and <code class="ed-code">ProgramData</code> top-level roots are hard-denied.</td>
+              <td class="mono">is_safe_root (:41-48)</td>
+            </tr>
+            <tr>
+              <td><strong>Unix/macOS OS Roots</strong></td>
+              <td><code class="ed-code">/</code>, <code class="ed-code">/usr</code>, <code class="ed-code">/bin</code>, <code class="ed-code">/etc</code>, <code class="ed-code">/var</code>, <code class="ed-code">/System</code>, <code class="ed-code">/Library</code>, and <code class="ed-code">/Applications</code> are hard-denied.</td>
+              <td class="mono">is_safe_root (:49-54)</td>
+            </tr>
+            <tr>
+              <td><strong>Symlinks, Junctions &amp; OneDrive</strong></td>
+              <td>Parent traversal (<code class="ed-code">..</code> / <code class="ed-code">Component::ParentDir</code>), OS <code class="ed-code">symlink</code>s, NTFS <code class="ed-code">junction</code>s, and Windows <code class="ed-code">FILE_ATTRIBUTE_REPARSE_POINT (0x400)</code> OneDrive cloud placeholders checked across <code class="ed-code">root</code> and every ancestor.</td>
+              <td class="mono">is_link_like / has_symlink_component (:82-134)</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -698,7 +843,7 @@ ${renderEditorialHead({ title, description: desc, canonical: canonicalUrl, ogTyp
       <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;">
         <div>
           <h2 class="ed-h2" style="margin-bottom:4px;">Top 15 Heaviest Orphaned Cache Folders on Windows 11</h2>
-          <p style="font-size:0.88rem;color:var(--muted);">Ranked by empirical k-anonymous scan telemetry, controlled VM lab runs, and audit baselines.</p>
+          <p style="font-size:0.88rem;color:var(--muted);">Ranked by empirical k-anonymous scan telemetry, Build 26200 measurements, and audit baselines.</p>
         </div>
         <button
           type="button"
@@ -742,7 +887,7 @@ ${renderEditorialHead({ title, description: desc, canonical: canonicalUrl, ogTyp
                     row.source === "live_telemetry"
                       ? `Live Telemetry (n=${row.sample_count})`
                       : row.source === "lab_benchmark"
-                        ? "Win11 24H2 Lab VM"
+                        ? "Win11 Build 26200 Lab"
                         : "Audit Baseline"
                   }
                 </span>
@@ -789,12 +934,13 @@ ${renderEditorialHead({ title, description: desc, canonical: canonicalUrl, ogTyp
     <section class="ed-section ed-card-muted">
       <h2 class="ed-h2">Audit Your Own PC Against the 2026 Benchmark</h2>
       <p style="font-size:0.94rem;color:var(--muted);max-width:64ch;">
-        Paste your Windows folders into our browser Path Checker, estimate your savings with the PC Cache Calculator, or download the 6.52 MB native Rust SWEEPR Cleaner for a 60-second read-only scan.
+        Paste your Windows folders into our browser Path Checker, estimate your savings with the PC Cache Calculator, or download the lightweight 6.76 MB native Rust SWEEPR Cleaner for a fast, read-only local scan in Zero-Telemetry / Offline Mode (<code class="ed-code">telemetry_enabled = false</code> default). SWEEPR Free includes Unlimited Temp &amp; Browser Cache Clean (to OS Recycle Bin), and Pro adds 7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget) (<a href="/pricing" style="color:var(--accent);text-decoration:underline;font-weight:700;">see Pro pricing</a> &middot; <a href="/refund" style="color:var(--accent);text-decoration:underline;">14-day refund policy</a> &middot; <a href="/vs/ccleaner" style="color:var(--accent);text-decoration:underline;">SWEEPR vs CCleaner</a>).
       </p>
       <div class="ed-actions">
         <a href="/download?platform=windows&amp;utm_source=state_of_storage_cta" rel="nofollow" class="ed-btn-primary btn-press">Download Free Windows Analyzer (.exe) &rarr;</a>
         <a href="/safe-to-delete" class="ed-btn-secondary btn-press">Open Path Safety Checker</a>
         <a href="/tools/pc-cache-calculator" class="ed-btn-secondary btn-press">PC Cache Calculator</a>
+        <a href="/pricing" class="ed-btn-secondary btn-press">Pricing &amp; Free Tier</a>
       </div>
     </section>
   </main>

@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </a>
         </div>
         <div class="pt-3 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <a href="/order?plan=annual" class="btn btn-go w-full justify-center gap-2 text-sm py-2.5">
+          <a href="/order?plan=annual" rel="nofollow" class="btn btn-go w-full justify-center gap-2 text-sm py-2.5">
             <span>Get Pro Now</span>
             <svg class="arrow-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
           </a>
@@ -191,12 +191,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   try {
     const ua = (navigator.userAgent || '').toLowerCase();
+    const isBot = /bot|crawl|spider|googlebot|google-inspectiontool|googleother|google-extended|bingbot|adidxbot|applebot|slurp|duckduckbot|duckassistbot|yandex|baiduspider|bytespider|petalbot|ahrefsbot|semrushbot|mj12bot|dotbot|ccbot|gptbot|oai-searchbot|chatgpt-user|perplexitybot|perplexity-user|claudebot|claude-user|claude-searchbot|meta-externalagent|facebookexternalhit|dataforseobot|barkrowler|seekportbot|zoominfobot|amazonbot|sogou|headlesschrome|phantomjs|playwright|puppeteer|selenium|webdriver/i.test(ua);
     const isIpadOs = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
     const isIos = /iphone|ipad|ipod/.test(ua) || isIpadOs;
     const isAndroid = ua.includes('android') || (ua.includes('linux') && navigator.maxTouchPoints > 0);
-    const isOtherMobile = /mobile|iemobile|opera mini/.test(ua);
-    if (isIos || isAndroid || isOtherMobile) {
-      const targetHref = isIos ? '/download?platform=ios&direct=1' : '/download?platform=android&direct=1';
+    if (!isBot && (isIos || isAndroid)) {
+      const targetHref = isIos ? '/download?platform=ios' : '/download?platform=android&direct=1';
       const showCleanerMobileSheet = () => {
         if (!isAndroid) return;
         let sheet = document.getElementById('mobileInstallHelperSheet');
@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </p>
               <div class="grid grid-cols-1 gap-2 pt-1">
                 <a href="https://play.google.com/apps/testing/com.sweepr.app" target="_blank" rel="noopener" class="btn btn-go w-full justify-center py-2.5 text-xs font-extrabold">▶️ Join Official Google Play Beta (Get 30 Days Pro Free)</a>
-                <a href="/download?platform=android&direct=1" class="flex items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-800 w-full py-2 text-xs font-bold no-underline">⬇️ Download SWEEPRCleaner.apk Again</a>
+                <a href="/download?platform=android&direct=1" rel="nofollow" class="flex items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-800 w-full py-2 text-xs font-bold no-underline">⬇️ Download SWEEPRCleaner.apk Again</a>
               </div>
             </div>`;
           document.body.appendChild(sheet);
@@ -229,11 +229,13 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       document.querySelectorAll('a[href^="/download"]').forEach((a) => {
         a.setAttribute('href', targetHref);
-        a.addEventListener('click', () => setTimeout(showCleanerMobileSheet, 150));
+        if (isAndroid) {
+          a.addEventListener('click', () => setTimeout(showCleanerMobileSheet, 150));
+        }
       });
       const osBtnLbl = document.getElementById('osDownloadText') || document.getElementById('downloadBtnLabel');
       if (osBtnLbl) {
-        osBtnLbl.textContent = 'Install Now';
+        osBtnLbl.textContent = isIos ? 'iOS Web Companion' : 'Install Now';
       }
     }
   } catch {}

@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  export type RollbackDestination = "quarantine" | "recycle_bin" | "permanent";
+  export type RollbackDestination = "quarantine" | "recycle_bin" | "backup" | "permanent";
 
   export interface ConfirmCleanCategoryItem {
     id: string;
@@ -66,15 +66,19 @@
       ? "Moved to 7-Day Undo Quarantine"
       : rollback === "recycle_bin"
         ? "OS Recycle Bin"
-        : "Permanent Delete — Cannot Be Undone"
+        : rollback === "backup"
+          ? "Backed Up (1-Click Restore)"
+          : "Permanent Delete — Cannot Be Undone"
   );
 
   const defaultRollbackDetail = $derived(
     rollback === "quarantine"
-      ? "Every file is stored locally for 7 days so you can restore anything in 1 click."
+      ? "7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget; excludes shredded files, browser DBs, and registry edits)."
       : rollback === "recycle_bin"
         ? "Moved to your system Recycle Bin / Trash so you can restore anytime."
-        : "Selected items are permanently removed and cannot be undone."
+        : rollback === "backup"
+          ? "Saved to local Registry Backups so you can restore the entry in 1 click anytime."
+          : "Selected items are permanently removed and cannot be undone."
   );
 
   $effect(() => {
@@ -179,7 +183,7 @@
             <span
               class="rollback-badge"
               class:is-quarantine={rollback === "quarantine"}
-              class:is-recycle={rollback === "recycle_bin"}
+              class:is-recycle={rollback === "recycle_bin" || rollback === "backup"}
               class:is-permanent={rollback === "permanent"}
             >
               {#if rollback === "quarantine"}
@@ -187,7 +191,7 @@
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                   <polyline points="9 12 11 14 15 10" />
                 </svg>
-              {:else if rollback === "recycle_bin"}
+              {:else if rollback === "recycle_bin" || rollback === "backup"}
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
                   <polyline points="3 6 5 6 21 6" />
                   <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />

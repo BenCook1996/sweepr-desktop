@@ -199,14 +199,13 @@ test("download streams installer with Content-Length and Authenticode + manifest
       assert.equal(padBytes, String(exeStat.size), "pad.xml <File_Size_Bytes> must match SWEEPRCleaner.exe size");
     }
 
-    // Verify SHA-256 parity with winget installer manifest
-    const wingetPath = "../winget-manifests/s/SWEEPR/Cleaner/0.1.0/SWEEPR.Cleaner.installer.yaml";
-    if (existsSync(wingetPath)) {
-      const wingetYaml = readFileSync(wingetPath, "utf8");
-      const manifestSha = (wingetYaml.match(/InstallerSha256:\s*([A-Fa-f0-9]{64})/) || [])[1]?.toUpperCase();
-      const actualSha = createHash("sha256").update(buf).digest("hex").toUpperCase();
-      assert.equal(manifestSha, actualSha, "Winget InstallerSha256 must match signed SWEEPRCleaner.exe SHA-256");
-    }
+    // Verify SHA-256 parity with winget installer manifest (unconditional — must not silently skip)
+    const wingetPath = "../winget-manifests/manifests/s/Sweepr/SweeprCleaner/0.1.0/Sweepr.SweeprCleaner.installer.yaml";
+    assert.ok(existsSync(wingetPath), `Winget installer manifest must exist at ${wingetPath}`);
+    const wingetYaml = readFileSync(wingetPath, "utf8");
+    const manifestSha = (wingetYaml.match(/InstallerSha256:\s*([A-Fa-f0-9]{64})/) || [])[1]?.toUpperCase();
+    const actualSha = createHash("sha256").update(buf).digest("hex").toUpperCase();
+    assert.equal(manifestSha, actualSha, "Winget InstallerSha256 must match signed SWEEPRCleaner.exe SHA-256");
   } else {
     assert.equal(res.status, 200); // "coming soon" picker page
   }
@@ -1836,7 +1835,8 @@ test("Browser GET /download renders Post-Download Thank-You SmartScreen/Gatekeep
   assert.ok(html.includes("More info"));
   assert.ok(html.includes("Run anyway"));
   assert.ok(html.includes("Verified SSL.com Publisher: Benjamin Cook"));
-  assert.ok(html.includes("Free 60s Scan starts automatically"));
+  assert.ok(html.includes("Free Storage Scan starts automatically"));
+  assert.equal(html.includes("Free 60s Scan starts automatically"), false);
   assert.ok(html.includes("macOS Gatekeeper"));
 
   // Copyable SHA-256 checksum & optional backup link + 20% welcome coupon form

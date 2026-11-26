@@ -1173,7 +1173,7 @@ test("A3 Download-Without-Install Recovery: T+30m flag, Step 2 banner, T+2h tran
   assert.equal(statsJson.summary.activation_rate_pct, 100);
 });
 
-test("GSC Merchant Listings JSON-LD validation: pricing, index, and safe-to-delete include image, hasMerchantReturnPolicy, and shippingDetails", async () => {
+test("GSC Merchant Listings JSON-LD validation: pricing, index, and safe-to-delete digital offers are clean and free of ReturnByMail/OfferShippingDetails", async () => {
   const { app } = setup();
 
   // 1. Verify all pages emitting Product / SoftwareApplication / WebApplication with Offers have zero Merchant Listing issues
@@ -1181,7 +1181,10 @@ test("GSC Merchant Listings JSON-LD validation: pricing, index, and safe-to-dele
   for (const path of offerPages) {
     const res = await app.request(path);
     assert.equal(res.status, 200, `${path} should return 200 OK`);
-    const parsed = parseHtml(await res.text());
+    const rawHtml = await res.text();
+    assert.equal(rawHtml.includes("ReturnByMail"), false, `${path} must not contain ReturnByMail`);
+    assert.equal(rawHtml.includes("OfferShippingDetails"), false, `${path} must not contain OfferShippingDetails`);
+    const parsed = parseHtml(rawHtml);
     assert.equal(parsed.jsonLdErrors, 0, `${path} must have 0 JSON-LD syntax errors`);
     assert.deepEqual(
       parsed.merchantListingIssues,
@@ -1190,7 +1193,7 @@ test("GSC Merchant Listings JSON-LD validation: pricing, index, and safe-to-dele
     );
   }
 
-  // 2. Verify parseHtml detects missing image, hasMerchantReturnPolicy, and shippingDetails when an Offer is incomplete
+  // 2. Verify parseHtml detects missing image, hasMerchantReturnPolicy, and shippingDetails when a non-digital paid Offer is incomplete, while exempting $0 free Offers
   const brokenProductHtml = `<!doctype html><html><head>
     <script type="application/ld+json">
       {
@@ -1211,6 +1214,23 @@ test("GSC Merchant Listings JSON-LD validation: pricing, index, and safe-to-dele
   assert.ok(brokenParsed.merchantListingIssues.some((msg) => msg.includes('Missing field "hasMerchantReturnPolicy"')));
   assert.ok(brokenParsed.merchantListingIssues.some((msg) => msg.includes('Missing field "shippingDetails"')));
 
+  const freeProductHtml = `<!doctype html><html><head>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Free Utility",
+        "image": "https://sweeprcleaner.com/og-image.png",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "GBP"
+        }
+      }
+    </script>
+  </head><body></body></html>`;
+  assert.deepEqual(parseHtml(freeProductHtml).merchantListingIssues, []);
+
   // 3. Verify synthetic reviews ("Marcus Vance", "Marcus T.") are removed and engineering proof badges are rendered on / and /pricing
   const indexHtml = await (await app.request("/")).text();
   const pricingHtml = await (await app.request("/pricing")).text();
@@ -1222,11 +1242,28 @@ test("GSC Merchant Listings JSON-LD validation: pricing, index, and safe-to-dele
     "Lightweight &amp; Fast — Never Slows Your Device",
     "Verified Safe — Never Deletes Personal Files",
     "100% Private — Your Files Never Leave Your Device",
-    "7-Day Undo — Put Back Any File in 1 Click",
   ]) {
     assert.ok(indexHtml.includes(badge), `index.html includes verifiable badge: ${badge}`);
     assert.ok(pricingHtml.includes(badge), `pricing.html includes verifiable badge: ${badge}`);
   }
+  assert.ok(
+    indexHtml.includes("7-Day Undo Quarantine — 2–10 GB Budget (5 GB Default, O(1) Move)"),
+    "index.html includes qualified 7-Day Undo badge"
+  );
+  assert.ok(
+    pricingHtml.includes("7-Day Undo Quarantine — 2–10 GB Budget (5 GB Default, O(1) Move)"),
+    "pricing.html includes qualified 7-Day Undo badge"
+  );
+  assert.equal(
+    indexHtml.includes("7-Day Undo — Put Back Any File in 1 Click"),
+    false,
+    "index.html must not contain unqualified legacy 7-Day Undo badge"
+  );
+  assert.equal(
+    pricingHtml.includes("7-Day Undo — Put Back Any File in 1 Click"),
+    false,
+    "pricing.html must not contain unqualified legacy 7-Day Undo badge"
+  );
 });
 
 test("Giveaway of the Day 24-hour activation engine: /giveaway page, 6-month 1-PC license key GOTD-2026-SWEEPR, 1-PC device limit, and window closure", async () => {
@@ -1399,7 +1436,7 @@ test("Marketing Strategy Updates 1–5: Desktop Telemetry + A1 Truth Loop (n>=30
   assert.ok(logiHtml.includes("Media Blob Storage"), "Covers -media-blob sub-variant");
   assert.ok(logiHtml.includes("Service Worker CacheStorage"), "Covers -service-worker sub-variant");
   assert.ok(logiHtml.includes("Code &amp; Bytecode Cache"), "Covers -code-cache sub-variant");
-  assert.ok(logiHtml.includes("GPU Shader Cache"), "Covers -gpu-cache sub-variant");
+  assert.ok(logiHtml.includes("Graphics Shader Cache"), "Covers -gpu-cache sub-variant");
   assert.ok(logiHtml.includes("Crashpad Dump Logs"), "Covers -crashpad sub-variant");
   assert.equal(/\\depots\\/i.test(logiHtml.match(/id="consolidated-subcache-modules"[\s\S]*?<\/section>/i)?.[0] || ""), false);
 
@@ -1496,8 +1533,8 @@ test("Marketing Strategy Updates 1–5: Desktop Telemetry + A1 Truth Loop (n>=30
       );
     } else if (target.path !== "/clean/app/stremio-desktop-cache" && target.path !== "/clean/app/jetbrains-intellij-cache") {
       assert.ok(
-        descStr.includes("Zero save files or active logins lost") && descStr.includes("6.5 MB Sweepr scan"),
-        `${target.path} description includes save/login reassurance and 6.5 MB Sweepr scan CTA: ${descStr}`
+        descStr.includes("Zero save files or active logins lost") && descStr.includes("6.76 MB Sweepr scan"),
+        `${target.path} description includes save/login reassurance and 6.76 MB Sweepr scan CTA: ${descStr}`
       );
     }
   }
@@ -1855,6 +1892,8 @@ test("CMO Automations v2: A1 23 Rust Rules, A7 90d Retirement/Noindex, A8 ROAS 6
   assert.ok(storageHtml.includes("State of Windows Storage"));
   assert.ok(storageHtml.includes('"@type":"Dataset"'));
   assert.ok(storageHtml.includes("copyCitationMarkdownBtn"));
+  assert.equal(storageHtml.includes("SWEEPR Storage Research Lab"), false);
+  assert.equal(/0\s+anonymized\s+desktop\s+scan\s+samples/i.test(storageHtml), false);
 
   const storageApiRes = await get("/api/crm/seo/state-of-windows-storage");
   assert.equal(storageApiRes.status, 200);
@@ -1862,6 +1901,22 @@ test("CMO Automations v2: A1 23 Rust Rules, A7 90d Retirement/Noindex, A8 ROAS 6
   assert.equal(storageApiJson.ok, true);
   assert.ok(storageApiJson.silos.length >= 6);
   assert.ok(storageApiJson.top_15_heaviest_folders.length === 15);
+  assert.equal(storageApiJson.published_lab_benchmarks, 5, "Only the 5 verified Build 26200 labMeasurement records count as published_lab_benchmarks");
+  const comfyRow = storageApiJson.top_15_heaviest_folders.find((r: any) => r.slug === "comfyui-temp-output-cache");
+  if (comfyRow) {
+    assert.notEqual(comfyRow.source, "lab_benchmark", "Absent comfyui-temp-output-cache must not be labeled lab_benchmark");
+  }
+  assert.equal(
+    /comfyui-temp-output-cache[\s\S]{0,600}Win11 Build 26200 Lab/i.test(storageHtml),
+    false,
+    "/state-of-windows-storage must not label comfyui-temp-output-cache as Win11 Build 26200 Lab"
+  );
+  for (let i = 0; i < storageApiJson.top_15_heaviest_folders.length - 1; i++) {
+    assert.ok(
+      storageApiJson.top_15_heaviest_folders[i].reclaimable_gb >= storageApiJson.top_15_heaviest_folders[i + 1].reclaimable_gb,
+      `top_15_heaviest_folders must be sorted descending by reclaimable_gb at index ${i}`
+    );
+  }
 
   // 2. A7 (Action 3.6): 90-Day Zero-Impression Page Retirement (retire_noindex / retire_merge) + Sitemap Exclusion
   const execGapRes = await post("/api/crm/seo/gsc/intent-gap/execute", {
@@ -2552,14 +2607,20 @@ test("GSC Nov 2026 Core Update recovery: clean /download unblocked for noindex d
     assert.equal(r.headers.get("location"), "/pricing");
   }
 
-  // 4. Parameterized /download?... and /order?... CTA links on pSEO guides carry rel="nofollow"
+  // 4. Parameterized /download?... and /order* CTA links on pSEO guides carry rel="nofollow",
+  //    while clean href="/download" links remain followable (no rel="nofollow")
   const pseoRes = await app.request("/clean/app/steam-depotcache");
   assert.equal(pseoRes.status, 200);
   const pseoHtml = await pseoRes.text();
-  const ctaAnchors = [...pseoHtml.matchAll(/<a\b[^>]*\bhref="\/(?:download|order)(?:\?[^"]*)?"[^>]*>/g)].map((m) => m[0]);
-  assert.ok(ctaAnchors.length >= 4, "expected CTA anchors on pSEO page");
+  const ctaAnchors = [...pseoHtml.matchAll(/<a\b[^>]*\bhref="\/(?:download\?[^"]*|order(?:\?[^"]*)?)"[^>]*>/g)].map((m) => m[0]);
+  assert.ok(ctaAnchors.length >= 4, "expected parameterized /download?... or /order CTA anchors on pSEO page");
   for (const tag of ctaAnchors) {
     assert.match(tag, /\brel="nofollow"/i, `CTA anchor missing rel="nofollow": ${tag}`);
+  }
+  const cleanDownloadAnchors = [...pseoHtml.matchAll(/<a\b[^>]*\bhref="\/download"[^>]*>/g)].map((m) => m[0]);
+  assert.ok(cleanDownloadAnchors.length >= 1, "expected at least one clean href=\"/download\" anchor on pSEO page");
+  for (const tag of cleanDownloadAnchors) {
+    assert.doesNotMatch(tag, /\brel="nofollow"/i, `Clean /download anchor must omit rel="nofollow": ${tag}`);
   }
 
   // 5. Homepage (/) passes direct Click-Depth-1 crawl equity to /pricing, /vs/*, and Top 20 GSC guides
@@ -2588,16 +2649,728 @@ test("GSC Nov 2026 Core Update recovery: clean /download unblocked for noindex d
   }
 });
 
+test("Safety & GEO regressions: analyzeSafeToDeleteInput enforces safety.rs boundaries before heuristic matching and /tools omits stale 69 Guides label", async () => {
+  const { analyzeSafeToDeleteInput } = await import("../src/safe-to-delete.js");
+  const { app } = setup();
 
+  const blockedInputs = [
+    "C:\\Windows",
+    "C:\\Users\\Ben\\AppData\\Local",
+    "%LocalAppData%",
+    "C:\\Users\\Ben\\AppData\\Roaming",
+    "%AppData%",
+    "C:\\Users\\Ben\\Documents",
+    "C:\\Users\\Ben\\Desktop",
+    "C:\\Program Files",
+    "C:\\Windows\\System32",
+    "%SystemRoot%\\System32",
+  ];
+  const blockedAnalysis = analyzeSafeToDeleteInput(blockedInputs.join("\n"));
+  for (const r of blockedAnalysis.results) {
+    assert.equal(r.verdict, "DO NOT DELETE — OS CRITICAL", `Expected OS CRITICAL for ${r.input}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "red");
+    assert.equal(r.slug, null);
+  }
 
+  const traversalRes = analyzeSafeToDeleteInput("C:\\Users\\Ben\\AppData\\Local\\Temp\\..\\..\\Windows\\System32").results[0];
+  assert.equal(traversalRes.verdict, "DO NOT DELETE — PATH TRAVERSAL BLOCKED");
+  assert.equal(traversalRes.badge_color, "red");
+  assert.equal(traversalRes.slug, null);
 
+  for (const dlPath of ["C:\\Users\\Ben\\Downloads", "%USERPROFILE%\\Downloads"]) {
+    const dlRes = analyzeSafeToDeleteInput(dlPath).results[0];
+    assert.equal(dlRes.verdict, "CAUTION — DO NOT DELETE WITHOUT 30-DAY AGE FILTER");
+    assert.equal(dlRes.badge_color, "amber");
+    assert.equal(dlRes.slug, null);
+  }
 
+  const validSubfolders = analyzeSafeToDeleteInput(
+    [
+      "C:\\Users\\Ben\\AppData\\Local\\Temp",
+      "%LocalAppData%\\Temp",
+      "C:\\Windows\\WinSxS",
+      "C:\\Windows\\SoftwareDistribution\\Download",
+      "C:\\ProgramData\\Package Cache",
+    ].join("\n")
+  ).results;
+  assert.equal(validSubfolders[0].verdict, "SAFE TO DELETE");
+  assert.equal(validSubfolders[0].slug, "appdata-temp");
+  assert.equal(validSubfolders[1].verdict, "SAFE TO DELETE");
+  assert.equal(validSubfolders[1].slug, "appdata-temp");
+  assert.equal(validSubfolders[2].verdict, "CAUTION — CONDITIONAL");
+  assert.equal(validSubfolders[2].slug, "winsxs");
+  assert.equal(validSubfolders[3].verdict, "SAFE TO DELETE");
+  assert.equal(validSubfolders[4].verdict, "CAUTION — CONDITIONAL");
+  assert.equal(validSubfolders[4].slug, "programdata-package-cache");
 
+  const toolsHtml = await (await app.request("/tools")).text();
+  assert.equal(toolsHtml.includes("69 Guides"), false, "/tools must not render stale '69 Guides' label");
+});
 
+test("Safety adversarial regressions (M4-R3): quoted CSVs, verbatim \\\\?\\ prefixes, repeated slashes, %ProgramFiles%, %USERPROFILE%\\AppData*, OneDrive KFM, and non-cache suffix guards", async () => {
+  const { analyzeSafeToDeleteInput } = await import("../src/safe-to-delete.js");
+  const { app } = setup();
 
+  const osCriticalInputs = [
+    '"C:\\Users\\Ben\\AppData\\Local",5.2 GB',
+    '"C:\\Users\\Ben\\AppData\\Local", 5.2 GB',
+    '"C:\\Windows\\System32", 14.2 GB',
+    '"C:\\Users\\Ben\\Documents", 2.0 GB',
+    '"C:\\Users\\Ben\\OneDrive\\Desktop"',
+    "C:\\Users\\Ben\\OneDrive\\Desktop",
+    "C:\\Users\\Ben\\OneDrive - Contoso\\Documents",
+    "%USERPROFILE%\\OneDrive\\Pictures",
+    "\\\\?\\C:\\Windows",
+    "//?/C:/Windows",
+    "\\\\?\\UNC\\server\\share\\Windows\\System32",
+    "C:\\\\Windows",
+    "C:/Windows//System32",
+    "%ProgramFiles%\\WindowsApps",
+    "%ProgramFiles(x86)%",
+    "%USERPROFILE%\\AppData",
+    "%USERPROFILE%\\AppData\\Local",
+    "%USERPROFILE%\\AppData\\Roaming",
+    "%USERPROFILE%\\AppData\\LocalLow",
+  ];
 
+  const osCriticalRes = await app.request("/api/safe-to-delete/check", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ input: osCriticalInputs.join("\n") }),
+  });
+  assert.equal(osCriticalRes.status, 200);
+  const osCriticalJson = (await osCriticalRes.json()) as { results: Array<{ input: string; verdict: string; badge_color: string; slug: string | null }> };
+  assert.equal(osCriticalJson.results.length, osCriticalInputs.length);
+  for (const r of osCriticalJson.results) {
+    assert.equal(r.verdict, "DO NOT DELETE — OS CRITICAL", `Expected OS CRITICAL for ${r.input}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "red");
+    assert.equal(r.slug, null);
+  }
 
+  const quotedTraversal = analyzeSafeToDeleteInput('"C:\\Users\\Ben\\AppData\\Local\\Temp\\..", 1.0 GB').results[0];
+  assert.equal(quotedTraversal.verdict, "DO NOT DELETE — PATH TRAVERSAL BLOCKED");
+  assert.equal(quotedTraversal.badge_color, "red");
+  assert.equal(quotedTraversal.slug, null);
 
+  for (const dlInput of ['"C:\\Users\\Ben\\Downloads",4.0 GB', "C:\\Users\\Ben\\\\Downloads"]) {
+    const dlRes = analyzeSafeToDeleteInput(dlInput).results[0];
+    assert.equal(dlRes.verdict, "CAUTION — DO NOT DELETE WITHOUT 30-DAY AGE FILTER", `Expected Downloads caution for ${dlInput}, got ${dlRes.verdict}`);
+    assert.equal(dlRes.badge_color, "amber");
+    assert.equal(dlRes.slug, null);
+  }
 
+  for (const arbitraryInput of [
+    "C:\\Users\\Ben\\AppData\\Local\\Microsoft\\Windows",
+    "D:\\Backup\\Windows",
+    "windows",
+    "D:\\User\\Downloads",
+  ]) {
+    const arbRes = analyzeSafeToDeleteInput(arbitraryInput).results[0];
+    assert.notEqual(arbRes.verdict, "SAFE TO DELETE", `${arbitraryInput} must never classify as SAFE TO DELETE`);
+    assert.notEqual(arbRes.badge_color, "green");
+    assert.equal(arbRes.verdict, "UNRECOGNIZED PATH");
+    assert.equal(arbRes.badge_color, "gray");
+    assert.equal(arbRes.slug, null);
+  }
 
+  const legitimateCases: Array<[string, string, string]> = [
+    ["C:\\Users\\Ben\\AppData\\Local\\Temp", "SAFE TO DELETE", "appdata-temp"],
+    ["%LocalAppData%\\Temp", "SAFE TO DELETE", "appdata-temp"],
+    ["C:\\Windows\\WinSxS", "CAUTION — CONDITIONAL", "winsxs"],
+    ["C:\\Windows\\SoftwareDistribution\\Download", "SAFE TO DELETE", "software-distribution-download"],
+    ["C:\\ProgramData\\Package Cache", "CAUTION — CONDITIONAL", "programdata-package-cache"],
+    ["C:\\Windows.old", "CAUTION — CONDITIONAL", "windows-old"],
+    ["C:\\Users\\Ben\\AppData\\Local\\D3DSCache", "SAFE TO DELETE", "directx-d3dscache"],
+    ["C:\\Program Files (x86)\\Steam\\depotcache", "SAFE TO DELETE", "steam-depotcache"],
+    ["%LocalAppData%\\NVIDIA\\DXCache", "SAFE TO DELETE", "nvidia-dxcache"],
+    ["C:\\ProgramData\\Microsoft\\Search\\Data\\Applications\\Windows", "SAFE TO DELETE", "windows-search-edb-index"],
+    ["%USERPROFILE%\\.rustup\\toolchains", "SAFE TO DELETE", "rustup-toolchain-downloads"],
+    ["C:\\$Windows.~BT", "SAFE TO DELETE", "windows-bt-upgrade-folder"],
+  ];
 
+  const legitRes = await app.request("/api/safe-to-delete/check", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ input: legitimateCases.map(([p]) => p).join("\n") }),
+  });
+  assert.equal(legitRes.status, 200);
+  const legitJson = (await legitRes.json()) as { results: Array<{ input: string; verdict: string; slug: string | null }> };
+  assert.equal(legitJson.results.length, legitimateCases.length);
+  for (let i = 0; i < legitimateCases.length; i++) {
+    const [pathInput, expectedVerdict, expectedSlug] = legitimateCases[i];
+    assert.equal(legitJson.results[i].verdict, expectedVerdict, `Legit path ${pathInput} verdict mismatch`);
+    assert.equal(legitJson.results[i].slug, expectedSlug, `Legit path ${pathInput} slug mismatch`);
+  }
+});
+
+test("Safety adversarial regressions (M4-R4): rooted-only matching, CSV/IEC/bytes parsing, //server/share & \\\\.\\, 512/16KB truncation guards, traversal/CurDir, OneDrive KFM, and Unix/macOS parity", async () => {
+  const { analyzeSafeToDeleteInput } = await import("../src/safe-to-delete.js");
+  const { app } = setup();
+
+  // 1. Unrooted fragments, bare words, and drive-agnostic backup/repo paths must NEVER match SAFE TO DELETE
+  const falsePositiveRejections = [
+    "C:\\Windows\\Installer",
+    "C:\\MyApp\\Installer",
+    "Installer",
+    "Code Cache",
+    "MediaCache",
+    "src",
+    "temp",
+    "repo",
+    "cache",
+    "logs",
+    "crashes",
+    "webcache",
+    "steamapps\\downloading",
+    "C:\\MyApp\\steamapps\\downloading",
+    "D:\\Backup\\Code Cache",
+    "D:\\Backup\\MediaCache",
+    "D:\\Projects\\rustup\\toolchains",
+    "C:\\Users\\Ben\\source\\repos\\my-rustup-toolchain-helper",
+    "D:\\Backup\\spotify\\storage",
+    "D:\\Backup\\valorant\\saved\\logs",
+    "D:\\Backup\\discord\\cache",
+    "D:\\Backup\\capcut\\user data\\cache",
+    "D:\\Backup\\nvidia\\dxcache",
+    "D:\\Backup\\epicgameslauncher\\saved\\webcache_4430",
+    "C:\\Users\\Ben\\Folder, Name",
+    "C:\\Users\\Ben\\Acme, Inc.\\Temp, 2.5 GB",
+    "%ProgramFiles(x86)%\\Common Files",
+  ];
+  for (const input of falsePositiveRejections) {
+    const r = analyzeSafeToDeleteInput(input).results[0];
+    assert.equal(r.verdict, "UNRECOGNIZED PATH", `Expected UNRECOGNIZED PATH for ${input}, got ${r.verdict} (${r.slug})`);
+    assert.equal(r.badge_color, "gray");
+    assert.equal(r.slug, null);
+  }
+
+  // 2. Unquoted & mixed CSV/TSV/semicolon exports (GiB/MiB/KiB, raw byte integers, quoted sizes, intermediate columns)
+  const csvCriticalInputs = [
+    "C:\\Windows\\System32,14.2 GiB",
+    "C:\\Windows\\System32,512 MiB",
+    "C:\\Windows\\System32,1024 KiB",
+    "C:\\Windows\\System32,15247133900,12450,2026-11-26",
+    "C:\\Users\\Ben\\AppData\\Local;5400000000;1200;2026-11-26",
+    "C:\\Users\\Ben\\AppData\\Local\t5.2 GiB\t45.2%\t1200 files",
+    "C:\\Users\\Ben\\Documents,2.0 GiB",
+    'C:\\Windows\\System32,"14.2 GB"',
+    "C:\\Users\\Ben\\AppData\\Local,folder,5.2 GB",
+  ];
+  for (const input of csvCriticalInputs) {
+    const r = analyzeSafeToDeleteInput(input).results[0];
+    assert.equal(r.verdict, "DO NOT DELETE — OS CRITICAL", `Expected OS CRITICAL for CSV ${input}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "red");
+    assert.equal(r.slug, null);
+  }
+
+  const csvDownloads = analyzeSafeToDeleteInput("C:\\Users\\Ben\\Downloads,4.0 GiB").results[0];
+  assert.equal(csvDownloads.verdict, "CAUTION — DO NOT DELETE WITHOUT 30-DAY AGE FILTER");
+  assert.equal(csvDownloads.badge_color, "amber");
+
+  for (const csvSafe of [
+    "C:\\Users\\Ben\\AppData\\Local\\Temp,512 MiB",
+    "C:\\Users\\Ben\\AppData\\Local\\Temp,524288000,1024,2026-11-26",
+    'C:\\Users\\Ben\\AppData\\Local\\Temp, "512 MB"',
+    '"C:\\Users\\Ben\\AppData\\Local\\Temp"\t512 MiB\t100 files',
+  ]) {
+    const r = analyzeSafeToDeleteInput(csvSafe).results[0];
+    assert.equal(r.verdict, "SAFE TO DELETE", `Expected SAFE TO DELETE for ${csvSafe}, got ${r.verdict}`);
+    assert.equal(r.slug, "appdata-temp");
+    assert.equal(r.estimated_gb, 0.5, `Expected estimated_gb 0.5 for ${csvSafe}, got ${r.estimated_gb}`);
+  }
+
+  // 3. Comment filter vs //server/share, Win32 \\.\ device namespace, shallow UNC, & CurDir collapse
+  const commentFiltered = analyzeSafeToDeleteInput("// comment line\n/// doc comment\n# hash comment");
+  assert.equal(commentFiltered.total_inputs, 0);
+  assert.equal(commentFiltered.results.length, 0);
+
+  for (const deviceOrUncCritical of [
+    "//server/share/Windows/System32",
+    "//server/share/Temp",
+    "\\\\server\\share",
+    "\\\\.\\C:\\Windows",
+    "//./C:/Windows",
+    "\\\\.\\PhysicalDrive0",
+    "\\\\.\\GLOBALROOT\\Device\\HarddiskVolume1",
+    "C:\\Windows\\.",
+    "C:\\Users\\Ben\\AppData\\Local\\.",
+    "C:\\Windows\\.\\System32",
+  ]) {
+    const r = analyzeSafeToDeleteInput(deviceOrUncCritical).results[0];
+    assert.equal(r.verdict, "DO NOT DELETE — OS CRITICAL", `Expected OS CRITICAL for ${deviceOrUncCritical}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "red");
+    assert.equal(r.slug, null);
+  }
+
+  const curDirSafe = analyzeSafeToDeleteInput("C:\\Users\\Ben\\AppData\\Local\\Temp\\.").results[0];
+  assert.equal(curDirSafe.verdict, "SAFE TO DELETE");
+  assert.equal(curDirSafe.slug, "appdata-temp");
+
+  // 4. Traversal decoding (%2e%2e, ..%2f, %252e%252e, whitespace-padded ..) & 512/16KB truncation safety
+  for (const trav of [
+    "C:\\Users\\Ben\\AppData\\Local\\Temp\\ .. \\Windows",
+    "C:\\Users\\Ben\\AppData\\Local\\Temp/%2e%2e/Windows",
+    "C:\\Users\\Ben\\AppData\\Local\\Temp/%2e%2e/Documents",
+    "C:\\Users\\Ben\\AppData\\Local\\Temp\\..%2fWindows",
+    "C:\\Users\\Ben\\AppData\\Local\\Temp\\%252e%252e\\Windows",
+    "%2e%2e/Documents",
+    `C:\\Users\\Ben\\AppData\\Local\\NVIDIA\\DXCache\\${"a".repeat(470)}\\..\\Windows\\System32`,
+  ]) {
+    const r = analyzeSafeToDeleteInput(trav).results[0];
+    assert.equal(r.verdict, "DO NOT DELETE — PATH TRAVERSAL BLOCKED", `Expected traversal block for ${trav.slice(0, 60)}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "red");
+    assert.equal(r.slug, null);
+  }
+
+  const overlongSafePrefix = `C:\\Users\\Ben\\AppData\\Local\\NVIDIA\\DXCache\\${"a".repeat(500)}`;
+  const overlongRes = analyzeSafeToDeleteInput(overlongSafePrefix).results[0];
+  assert.equal(overlongRes.verdict, "UNRECOGNIZED PATH");
+  assert.equal(overlongRes.slug, null);
+  assert.ok(overlongRes.input.length <= 512);
+
+  const paddingLine = `C:\\Users\\Ben\\AppData\\Local\\Temp\\sub_${"x".repeat(144)}`;
+  const shortLine = `C:\\Users\\Ben\\AppData\\Local\\Temp\\sub_${"x".repeat(24)}`;
+  const prefixBlock = `${paddingLine}\n`.repeat(90) + `${shortLine}\n`;
+  const expectedPrefixLines = 91;
+  const cutPayload = `${prefixBlock}C:\\Users\\Ben\\AppData\\Local\\Temp\\..\\Windows\\System32`;
+  assert.ok(cutPayload.length > 16_384, `Expected > 16384 chars, got ${cutPayload.length}`);
+  const cutAnalysis = analyzeSafeToDeleteInput(cutPayload);
+  const lastResult = cutAnalysis.results[cutAnalysis.results.length - 1];
+  assert.equal(lastResult.verdict, "SAFE TO DELETE");
+  assert.equal(cutAnalysis.results.length, expectedPrefixLines);
+
+  // 5. OneDrive KFM & Env-Var Expansion
+  for (const odDl of [
+    "C:\\Users\\Ben\\OneDrive\\Downloads",
+    "C:\\Users\\Ben\\OneDrive - Org\\Downloads",
+    "%OneDrive%\\Downloads",
+    "%OneDriveCommercial%\\Downloads",
+    "%OneDriveConsumer%\\Downloads",
+  ]) {
+    const r = analyzeSafeToDeleteInput(odDl).results[0];
+    assert.equal(r.verdict, "CAUTION — DO NOT DELETE WITHOUT 30-DAY AGE FILTER", `Expected Downloads caution for ${odDl}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "amber");
+  }
+
+  for (const odCrit of [
+    "C:\\Users\\Ben\\OneDrive",
+    "C:\\Users\\Ben\\OneDrive - Org",
+    "%OneDrive%",
+    "%OneDriveCommercial%",
+    "%OneDriveConsumer%",
+    "%OneDrive%\\Desktop",
+    "%OneDriveCommercial%\\Documents",
+    "%OneDriveConsumer%\\Pictures",
+    "%Documents%\\Taxes.pdf",
+  ]) {
+    const r = analyzeSafeToDeleteInput(odCrit).results[0];
+    assert.equal(r.verdict, "DO NOT DELETE — OS CRITICAL", `Expected OS CRITICAL for ${odCrit}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "red");
+  }
+
+  // 6. Unix / macOS safety.rs parity & legitimate Unix/macOS caches
+  for (const unixDl of ["~/Downloads", "/Users/ben/Downloads", "/home/ben/Downloads", "$HOME/Downloads"]) {
+    const r = analyzeSafeToDeleteInput(unixDl).results[0];
+    assert.equal(r.verdict, "CAUTION — DO NOT DELETE WITHOUT 30-DAY AGE FILTER", `Expected Downloads caution for ${unixDl}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "amber");
+  }
+
+  for (const unixCrit of [
+    "~/Documents",
+    "~/Documents/taxes.pdf",
+    "~/Desktop",
+    "~/Pictures",
+    "~/Videos",
+    "~/Movies",
+    "~/Music",
+    "~/.ssh",
+    "~/.gnupg",
+    "/Users/ben/Documents",
+    "/home/ben/Documents",
+    "~",
+    "/home/ben",
+    "/Users/ben",
+    "~/.cache",
+    "/Users/ben/.cache",
+    "/home/ben/.cache",
+    "/etc/passwd",
+    "/bin/sh",
+    "/usr/local/bin",
+    "/System/Library/CoreServices",
+    "/Library/Application Support",
+    "/Library/Caches/com.apple.Safari",
+    "/Applications/Safari.app",
+    "/var/log",
+  ]) {
+    const r = analyzeSafeToDeleteInput(unixCrit).results[0];
+    assert.equal(r.verdict, "DO NOT DELETE — OS CRITICAL", `Expected OS CRITICAL for ${unixCrit}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "red");
+    assert.equal(r.slug, null);
+  }
+
+  // 7. Full expanded legitimate cache paths via POST /api/safe-to-delete/check
+  const expandedLegitCases: Array<[string, string, string]> = [
+    ["C:\\$Windows.~BT", "SAFE TO DELETE", "windows-bt-upgrade-folder"],
+    ["C:\\$Windows.~WS", "SAFE TO DELETE", "windows-bt-upgrade-folder"],
+    ["C:\\Windows\\LiveKernelReports", "SAFE TO DELETE", "windows-livekernelreports"],
+    ["C:\\ProgramData\\LGHUB\\depots", "SAFE TO DELETE", "logitech-ghub-installer-cache"],
+    ["%AppData%\\CapCut\\User Data\\Cache", "SAFE TO DELETE", "capcut-desktop-cache"],
+    ["%LocalAppData%\\Riot Games\\Riot Client\\Logs", "SAFE TO DELETE", "riot-client-logs"],
+    ["%USERPROFILE%\\.rustup\\toolchains", "SAFE TO DELETE", "rustup-toolchain-downloads"],
+    ["%LocalAppData%Low\\VRChat\\VRChat\\Cache-WindowsPlayer", "SAFE TO DELETE", "vrchat-cache"],
+    ["%LocalAppData%\\EpicGamesLauncher\\Saved\\webcache", "SAFE TO DELETE", "epic-games-webcache"],
+    ["C:\\Program Files (x86)\\Steam\\steamapps\\downloading", "SAFE TO DELETE", "steam-depotcache"],
+    ["%SystemRoot%\\WinSxS", "CAUTION — CONDITIONAL", "winsxs"],
+    ["%ProgramData%\\Package Cache", "CAUTION — CONDITIONAL", "programdata-package-cache"],
+    ["%ProgramFiles(x86)%\\Steam\\depotcache", "SAFE TO DELETE", "steam-depotcache"],
+    ["%Temp%\\Roblox", "SAFE TO DELETE", "roblox-http-cache"],
+    ["%LocalAppData%\\Temp\\7z12345", "SAFE TO DELETE", "7zip-winrar-temp-extractions"],
+    ["~/.cache/huggingface/hub", "SAFE TO DELETE", "huggingface-hub-cache"],
+    ["~/Library/Caches", "CAUTION — CONDITIONAL", "system-data-huge"],
+    ["~/Library/Caches/Google/Chrome", "CAUTION — CONDITIONAL", "system-data-huge"],
+    ["/Users/ben/Library/Caches", "CAUTION — CONDITIONAL", "system-data-huge"],
+  ];
+
+  const expandedRes = await app.request("/api/safe-to-delete/check", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ input: expandedLegitCases.map(([p]) => p).join("\n") }),
+  });
+  assert.equal(expandedRes.status, 200);
+  const expandedJson = (await expandedRes.json()) as {
+    results: Array<{ input: string; verdict: string; slug: string | null }>;
+  };
+  assert.equal(expandedJson.results.length, expandedLegitCases.length);
+  for (let i = 0; i < expandedLegitCases.length; i++) {
+    const [pathInput, expectedVerdict, expectedSlug] = expandedLegitCases[i];
+    assert.equal(expandedJson.results[i].verdict, expectedVerdict, `Legit path ${pathInput} verdict mismatch`);
+    assert.equal(expandedJson.results[i].slug, expectedSlug, `Legit path ${pathInput} slug mismatch`);
+  }
+
+  // 8. M4-R5 regressions: zero UNRECOGNIZED PATH in SSR/presets, main Chrome cache aliases, forward-slash comma CSV, and bare %LocalAppData%Low
+  const ssrRes = await app.request("/safe-to-delete");
+  assert.equal(ssrRes.status, 200);
+  const ssrHtml = await ssrRes.text();
+  assert.equal((ssrHtml.match(/UNRECOGNIZED PATH/g) || []).length, 0, "Initial SSR /safe-to-delete must have 0 UNRECOGNIZED PATH results");
+
+  const presetsMatch = ssrHtml.match(/const PRESETS = (\{[\s\S]*?\n    \});/);
+  assert.ok(presetsMatch, "Expected PRESETS object in /safe-to-delete HTML");
+  const presets = new Function(`return (${presetsMatch[1]})`)() as Record<string, string>;
+  for (const presetKey of ["gaming", "dev", "win"]) {
+    const presetInput = presets[presetKey];
+    assert.ok(presetInput, `Missing PRESETS.${presetKey}`);
+    const presetAnalysis = analyzeSafeToDeleteInput(presetInput);
+    const unrecognized = presetAnalysis.results.filter((r) => r.verdict === "UNRECOGNIZED PATH");
+    assert.equal(unrecognized.length, 0, `PRESETS.${presetKey} must have 0 UNRECOGNIZED PATH results, got: ${unrecognized.map((r) => r.input).join(", ")}`);
+  }
+
+  assert.equal(analyzeSafeToDeleteInput("%LocalAppData%\\Microsoft\\EdgeWebView\\Application").results[0].verdict, "UNRECOGNIZED PATH");
+  assert.equal(analyzeSafeToDeleteInput("%LocalAppData%\\Microsoft\\EdgeWebView\\User Data\\Default\\Cache").results[0].verdict, "SAFE TO DELETE");
+
+  for (const chromeSafe of [
+    "%LocalAppData%\\Google\\Chrome\\User Data\\Default\\Cache",
+    "%LocalAppData%\\Google\\Chrome\\User Data\\Default\\Cache\\Cache_Data",
+    "%LocalAppData%\\Google\\Chrome\\User Data\\Default\\Code Cache",
+  ]) {
+    const r = analyzeSafeToDeleteInput(chromeSafe).results[0];
+    assert.equal(r.verdict, "SAFE TO DELETE", `Expected SAFE TO DELETE for ${chromeSafe}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "green");
+    assert.equal(r.slug, "chrome-service-worker-cache");
+  }
+  for (const chromeUnrec of [
+    "%LocalAppData%\\Google\\Chrome\\User Data\\Default\\Bookmarks",
+    "D:\\Backup\\Google\\Chrome\\User Data\\Default\\Cache",
+  ]) {
+    const r = analyzeSafeToDeleteInput(chromeUnrec).results[0];
+    assert.equal(r.verdict, "UNRECOGNIZED PATH", `Expected UNRECOGNIZED PATH for ${chromeUnrec}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "gray");
+    assert.equal(r.slug, null);
+  }
+
+  // Forward-slash paths with commas in directory names + date cell preservation
+  const fwdSys32 = analyzeSafeToDeleteInput("C:/Users/Ben/Acme, Inc./Windows/System32, 2.5 GB").results[0];
+  assert.equal(fwdSys32.verdict, "DO NOT DELETE — OS CRITICAL");
+  assert.equal(fwdSys32.badge_color, "red");
+
+  const fwdTrav = analyzeSafeToDeleteInput("C:/Users/Ben/Acme, Inc./../Windows/System32, 2.5 GB").results[0];
+  assert.equal(fwdTrav.verdict, "DO NOT DELETE — PATH TRAVERSAL BLOCKED");
+  assert.equal(fwdTrav.badge_color, "red");
+
+  // C:\Users\<username>\... has 1 username segment (`Acme, Inc.` as username matches Downloads & AppData\Local\Temp; nested `Ben\Acme, Inc.` remains UNRECOGNIZED PATH matching backslash parity)
+  const fwdUserDl = analyzeSafeToDeleteInput("C:/Users/Acme, Inc./Downloads, 2.5 GB").results[0];
+  assert.equal(fwdUserDl.verdict, "CAUTION — DO NOT DELETE WITHOUT 30-DAY AGE FILTER");
+  assert.equal(fwdUserDl.badge_color, "amber");
+
+  const fwdUserTemp = analyzeSafeToDeleteInput("C:/Users/Acme, Inc./AppData/Local/Temp, 2.5 GB").results[0];
+  assert.equal(fwdUserTemp.verdict, "SAFE TO DELETE");
+  assert.equal(fwdUserTemp.slug, "appdata-temp");
+  assert.equal(fwdUserTemp.estimated_gb, 2.5);
+
+  assert.equal(analyzeSafeToDeleteInput("C:/Users/Ben/Acme, Inc./Downloads, 2.5 GB").results[0].verdict, "UNRECOGNIZED PATH");
+  assert.equal(analyzeSafeToDeleteInput("C:/Users/Ben/Acme, Inc./AppData/Local/Temp, 2.5 GB").results[0].verdict, "UNRECOGNIZED PATH");
+
+  const dateCellCrit = analyzeSafeToDeleteInput("C:\\Windows\\System32, 11/26/2026").results[0];
+  assert.equal(dateCellCrit.verdict, "DO NOT DELETE — OS CRITICAL");
+  assert.equal(dateCellCrit.badge_color, "red");
+
+  const bareLocalAppDataLow = analyzeSafeToDeleteInput("%LocalAppData%Low").results[0];
+  assert.equal(bareLocalAppDataLow.verdict, "DO NOT DELETE — OS CRITICAL");
+  assert.equal(bareLocalAppDataLow.badge_color, "red");
+
+  // 9. M4-R6 regressions: YYYY/MM/DD, N/A, Read/Write, R/W, anchored date regex, semicolon guard,
+  //    %SystemDrive% parity, /// comment guard, and Chrome/Edge/Brave multi-profile aliases
+  for (const csvCrit of [
+    "C:\\Windows\\System32, 2026/11/26",
+    "C:\\Windows\\System32, 2.5 GB, 2026/11/26",
+    "C:/Windows/System32, 2026/11/26",
+    "C:\\Windows\\System32, 2026/11/26T15:00:00Z",
+    "C:\\Windows\\System32, 2.5 GB, N/A",
+    "C:\\Windows\\System32, N/A, 2.5 GB",
+    "C:\\Windows\\System32, 2.5 GB, Read/Write",
+    "C:\\Windows\\System32, Read/Write, 2.5 GB",
+    "C:\\Windows\\System32, 2.5 GB, R/W",
+    "C:\\Windows\\System32, 11/26/2026 3:04 PM",
+    "C:/Users/Ben/Acme, Inc./Windows/System32, N/A, 2.5 GB",
+    "C:/Users/Ben/Acme, Inc./2026/11/26/Windows/System32, 2.5 GB",
+    "C:/Users/Ben/Acme, 01/02/2026/Windows/System32, 2.5 GB",
+    "C:\\Users\\Ben\\foo;bar\\Windows\\System32;2.5 GB",
+    "C:/Users/Ben/AppData/Local/Temp, 11/26/2026 /Windows/System32, 2.5 GB",
+    "C:/Users/Ben/AppData/Local/Temp, ..%2fWindows%2fSystem32, 2.5 GB",
+    "%SystemDrive%\\Windows",
+    "%SystemDrive%\\Users\\Ben\\Documents",
+    "%SystemDrive%\\Users\\Ben\\AppData\\Local",
+    "%SystemDrive%\\Program Files",
+    "///etc/passwd",
+  ]) {
+    const r = analyzeSafeToDeleteInput(csvCrit).results[0];
+    assert.equal(r.verdict, "DO NOT DELETE — OS CRITICAL", `Expected OS CRITICAL for ${csvCrit}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "red");
+    assert.equal(r.slug, null);
+  }
+
+  const sysDriveDl = analyzeSafeToDeleteInput("%SystemDrive%\\Users\\Ben\\Downloads").results[0];
+  assert.equal(sysDriveDl.verdict, "CAUTION — DO NOT DELETE WITHOUT 30-DAY AGE FILTER");
+  assert.equal(sysDriveDl.badge_color, "amber");
+
+  const sysDriveTemp = analyzeSafeToDeleteInput("%SystemDrive%\\Users\\Ben\\AppData\\Local\\Temp").results[0];
+  assert.equal(sysDriveTemp.verdict, "SAFE TO DELETE");
+  assert.equal(sysDriveTemp.slug, "appdata-temp");
+
+  const docCommentAnalysis = analyzeSafeToDeleteInput("/// doc comment");
+  assert.equal(docCommentAnalysis.total_inputs, 0);
+  assert.equal(docCommentAnalysis.results.length, 0);
+
+  const fwdTempIsoDate = analyzeSafeToDeleteInput("C:/Users/Acme, Inc./AppData/Local/Temp, 2026/11/26").results[0];
+  assert.equal(fwdTempIsoDate.verdict, "SAFE TO DELETE");
+  assert.equal(fwdTempIsoDate.slug, "appdata-temp");
+
+  for (const travBypass of [
+    "C:/Users/Ben/AppData/Local/Temp, 11/26/2026 /../Windows/System32, 2.5 GB",
+    "C:\\Users\\Ben\\AppData\\Local\\Temp;foo\\..\\Windows\\System32;2.5 GB",
+    "C:/Users/Ben/AppData/Local/Temp;foo/../Windows/System32;2.5 GB",
+  ]) {
+    const r = analyzeSafeToDeleteInput(travBypass).results[0];
+    assert.equal(r.verdict, "DO NOT DELETE — PATH TRAVERSAL BLOCKED", `Expected PATH TRAVERSAL BLOCKED for ${travBypass}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "red");
+    assert.equal(r.slug, null);
+  }
+
+  for (const unrecBypass of [
+    "C:/Users/Ben/AppData/Local/Temp, 11/26/2026 Documents/secret, 2.5 GB",
+    "C:\\Users\\Ben\\AppData\\Local\\Temp;a;b, 2.5 GB",
+    'C:/Users/Ben/AppData/Local/Temp, "..", 2.5 GB',
+  ]) {
+    const r = analyzeSafeToDeleteInput(unrecBypass).results[0];
+    assert.equal(r.verdict, "UNRECOGNIZED PATH", `Expected UNRECOGNIZED PATH for ${unrecBypass}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "gray");
+    assert.equal(r.slug, null);
+  }
+
+  const multiProfileSafeCases: Array<[string, string]> = [
+    ["%LocalAppData%\\Google\\Chrome\\User Data\\Profile 1\\Cache", "chrome-service-worker-cache"],
+    ["%LocalAppData%\\Google\\Chrome\\User Data\\Profile 1\\Cache\\Cache_Data", "chrome-service-worker-cache"],
+    ["%LocalAppData%\\Google\\Chrome\\User Data\\Profile 1\\Code Cache", "chrome-service-worker-cache"],
+    ["%LocalAppData%\\Google\\Chrome\\User Data\\Profile 1\\Service Worker\\CacheStorage", "chrome-service-worker-cache"],
+    ["%LocalAppData%\\Google\\Chrome\\User Data\\Guest Profile\\Cache", "chrome-service-worker-cache"],
+    ["C:\\Users\\Ben\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 1\\Cache", "chrome-service-worker-cache"],
+    ["%LocalAppData%\\Microsoft\\Edge\\User Data\\Default\\Code Cache", "edge-browser-cache"],
+    ["%LocalAppData%\\Microsoft\\Edge\\User Data\\Profile 1\\Cache", "edge-browser-cache"],
+    ["%LocalAppData%\\Microsoft\\Edge\\User Data\\Profile 1\\Cache\\Cache_Data", "edge-browser-cache"],
+    ["%LocalAppData%\\Microsoft\\Edge\\User Data\\Profile 1\\Code Cache", "edge-browser-cache"],
+    ["%LocalAppData%\\Microsoft\\Edge\\User Data\\Profile 1\\Service Worker\\CacheStorage", "edge-browser-cache"],
+    ["%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Code Cache", "brave-browser-cache"],
+    ["%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Service Worker\\CacheStorage", "brave-browser-cache"],
+    ["%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Profile 1\\Cache", "brave-browser-cache"],
+    ["%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Profile 1\\Cache\\Cache_Data", "brave-browser-cache"],
+    ["%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Profile 1\\Code Cache", "brave-browser-cache"],
+    ["%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Profile 1\\Service Worker\\CacheStorage", "brave-browser-cache"],
+  ];
+  for (const [profilePath, expectedSlug] of multiProfileSafeCases) {
+    const r = analyzeSafeToDeleteInput(profilePath).results[0];
+    assert.equal(r.verdict, "SAFE TO DELETE", `Expected SAFE TO DELETE for ${profilePath}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "green");
+    assert.equal(r.slug, expectedSlug);
+  }
+
+  for (const profileUnrec of [
+    "%LocalAppData%\\Google\\Chrome\\User Data\\Profile 1\\Bookmarks",
+    "%LocalAppData%\\Google\\Chrome\\User Data\\Profile 1\\Login Data",
+    "%LocalAppData%\\Google\\Chrome\\User Data\\Profile 1\\History",
+    "%LocalAppData%\\Google\\Chrome\\User Data\\Profile 1\\Cookies",
+    "%LocalAppData%\\Google\\Chrome\\User Data\\Default",
+    "%LocalAppData%\\Google\\Chrome\\User Data\\Profile 1",
+    "%LocalAppData%\\Google\\Chrome\\User Data\\Cache",
+    "D:\\Backup\\Google\\Chrome\\User Data\\Profile 1\\Cache",
+    "%LocalAppData%\\Microsoft\\Edge\\User Data\\Profile 1\\Login Data",
+    "%LocalAppData%\\BraveSoftware\\Brave-Browser\\User Data\\Profile 1\\Login Data",
+    "D:\\Backup\\Microsoft\\Edge\\User Data\\Profile 1\\Cache",
+    "D:\\Backup\\BraveSoftware\\Brave-Browser\\User Data\\Profile 1\\Cache",
+    "%LocalAppData%\\Microsoft\\EdgeWebView\\User Data\\Profile 1\\Cache",
+  ]) {
+    const r = analyzeSafeToDeleteInput(profileUnrec).results[0];
+    assert.equal(r.verdict, "UNRECOGNIZED PATH", `Expected UNRECOGNIZED PATH for ${profileUnrec}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "gray");
+    assert.equal(r.slug, null);
+  }
+
+  // 10. M4-R7 regressions: /// and //// POSIX path classification vs UNC & comments
+  for (const tripleSlashCrit of [
+    "///etc/passwd",
+    "///etc/passwd/sub/file",
+    "///usr/local/bin/python",
+    "///System/Library/CoreServices/Finder.app",
+    "///Users/alice/Documents/secret.docx",
+    "///home/alice/.ssh/id_rsa",
+    "////etc/passwd",
+    "////Users/alice/Documents/secret.docx",
+  ]) {
+    const r = analyzeSafeToDeleteInput(tripleSlashCrit).results[0];
+    assert.equal(r.verdict, "DO NOT DELETE — OS CRITICAL", `Expected OS CRITICAL for ${tripleSlashCrit}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "red");
+    assert.equal(r.slug, null);
+    assert.ok(!r.name.includes("Shallow UNC"), `Expected Unix/macOS boundary reason, not Shallow UNC, for ${tripleSlashCrit}: ${r.name}`);
+  }
+
+  const tripleSlashDl = analyzeSafeToDeleteInput("///Users/alice/Downloads/installer.pkg").results[0];
+  assert.equal(tripleSlashDl.verdict, "CAUTION — DO NOT DELETE WITHOUT 30-DAY AGE FILTER");
+  assert.equal(tripleSlashDl.badge_color, "amber");
+  assert.equal(tripleSlashDl.slug, null);
+
+  for (const uncPreserved of ["//server/share/Windows/System32", "//server/share/Temp"]) {
+    const r = analyzeSafeToDeleteInput(uncPreserved).results[0];
+    assert.equal(r.verdict, "DO NOT DELETE — OS CRITICAL", `Expected OS CRITICAL for UNC ${uncPreserved}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "red");
+    assert.equal(r.slug, null);
+  }
+
+  for (const commentLine of ["/// doc comment", "//// banner comment", "///section", "/// doc/comment", "///", "////", "// regular comment"]) {
+    const analysis = analyzeSafeToDeleteInput(commentLine);
+    assert.equal(analysis.total_inputs, 0, `Expected comment ${commentLine} to be skipped`);
+    assert.equal(analysis.results.length, 0);
+  }
+
+  // 11. M4-R8 regressions: 1-segment /// POSIX roots without trailing slash, /// POSIX fall-through & \\users collapse, 3+-slash Win32 verbatim/device paths
+  for (const oneSegPosixCrit of [
+    "///etc",
+    "////etc",
+    "///System",
+    "///Users",
+    "///bin",
+    "///usr",
+    "///var",
+    "///home",
+    "///sbin",
+    "///lib",
+    "///lib64",
+    "///dev",
+    "///proc",
+    "///sys",
+    "///root",
+    "///boot",
+    "///opt",
+    "///library",
+    "///applications",
+    "///volumes",
+    "///private",
+  ]) {
+    const r = analyzeSafeToDeleteInput(oneSegPosixCrit).results[0];
+    assert.ok(r, `Expected ${oneSegPosixCrit} not to be skipped as comment`);
+    assert.equal(r.verdict, "DO NOT DELETE — OS CRITICAL", `Expected OS CRITICAL for ${oneSegPosixCrit}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "red");
+    assert.equal(r.slug, null);
+    assert.ok(!r.name.includes("Shallow UNC"), `Expected Unix/macOS boundary, not Shallow UNC, for ${oneSegPosixCrit}: ${r.name}`);
+  }
+
+  // /tmp and ///tmp match safety.rs (:17 temp_dir exemption) with UNRECOGNIZED PATH rather than SKIPPED or Shallow UNC
+  const singleTmp = analyzeSafeToDeleteInput("/tmp");
+  const tripleTmp = analyzeSafeToDeleteInput("///tmp");
+  assert.equal(tripleTmp.total_inputs, 1);
+  assert.equal(tripleTmp.results[0].verdict, singleTmp.results[0].verdict);
+  assert.equal(tripleTmp.results[0].verdict, "UNRECOGNIZED PATH");
+
+  for (const posixUnrec of ["///tmp/safe.tmp", "///var/tmp/x", "///var/tmp"]) {
+    const singleCounterpart = analyzeSafeToDeleteInput(posixUnrec.replace(/^\/{2,}/, "/")).results[0];
+    const r = analyzeSafeToDeleteInput(posixUnrec).results[0];
+    assert.equal(r.verdict, singleCounterpart.verdict, `Expected single-slash parity for ${posixUnrec}`);
+    assert.equal(r.verdict, "UNRECOGNIZED PATH", `Expected UNRECOGNIZED PATH (not Shallow UNC) for ${posixUnrec}, got ${r.verdict} (${r.name})`);
+    assert.equal(r.badge_color, "gray");
+    assert.equal(r.slug, null);
+  }
+
+  for (const posixSafeCache of [
+    "///Users/alice/.cache/huggingface/hub",
+    "////Users/alice/.cache/huggingface/hub",
+    "///home/alice/.cache/huggingface/hub",
+  ]) {
+    const r = analyzeSafeToDeleteInput(posixSafeCache).results[0];
+    assert.equal(r.verdict, "SAFE TO DELETE", `Expected SAFE TO DELETE for ${posixSafeCache}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "green");
+    assert.equal(r.slug, "huggingface-hub-cache");
+  }
+
+  for (const posixLibCache of ["///Users/alice/Library/Caches", "////Users/alice/Library/Caches"]) {
+    const r = analyzeSafeToDeleteInput(posixLibCache).results[0];
+    assert.equal(r.verdict, "CAUTION — CONDITIONAL", `Expected CAUTION — CONDITIONAL for ${posixLibCache}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "amber");
+    assert.equal(r.slug, "system-data-huge");
+  }
+
+  for (const winVerbatimCrit of [
+    "\\\\\\?\\C:\\Users\\Ben\\Documents",
+    "///?/C:/Users/Ben/Documents",
+    "\\\\\\.\\C:\\Users\\Ben\\Documents",
+    "///./C:/Users/Ben/Documents",
+    "///C:/Users/Ben/Documents",
+    "///C:/Windows/System32",
+    "///?/C:/Windows/System32",
+    "\\\\\\?\\C:\\Windows\\System32",
+    "\\\\\\?\\UNC\\server\\share\\Temp",
+    "///?/UNC/server/share/Temp",
+    "///./PhysicalDrive0",
+    "///?/Volume{1234}",
+  ]) {
+    const r = analyzeSafeToDeleteInput(winVerbatimCrit).results[0];
+    assert.ok(r, `Expected ${winVerbatimCrit} to be analyzed`);
+    assert.equal(r.verdict, "DO NOT DELETE — OS CRITICAL", `Expected OS CRITICAL for ${winVerbatimCrit}, got ${r.verdict}`);
+    assert.equal(r.badge_color, "red");
+    assert.equal(r.slug, null);
+  }
+
+  for (const winVerbatimDl of [
+    "\\\\\\?\\C:\\Users\\Ben\\Downloads",
+    "///?/C:/Users/Ben/Downloads",
+    "\\\\\\.\\C:\\Users\\Ben\\Downloads",
+    "///./C:/Users/Ben/Downloads",
+    "///C:/Users/Ben/Downloads",
+  ]) {
+    const r = analyzeSafeToDeleteInput(winVerbatimDl).results[0];
+    assert.ok(r, `Expected ${winVerbatimDl} to be analyzed`);
+    assert.equal(
+      r.verdict,
+      "CAUTION — DO NOT DELETE WITHOUT 30-DAY AGE FILTER",
+      `Expected 30-day Downloads guard for ${winVerbatimDl}, got ${r.verdict}`
+    );
+    assert.equal(r.badge_color, "amber");
+    assert.equal(r.slug, null);
+  }
+});

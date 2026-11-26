@@ -1,17 +1,25 @@
 <script lang="ts" module>
-  import type { DuplicateGroup, LargeFilesReport } from "../lib/api";
+  import type {
+    DuplicateGroup,
+    LargeFilesReport,
+    StaleDevArtifactsReport,
+  } from "../lib/api";
 
   let cachedSourceTab: "pc" | "cloud" = "pc";
-  let cachedMode: "duplicates" | "large" = "duplicates";
+  let cachedMode: "duplicates" | "large" | "stale_dev" = "duplicates";
   let cachedGroups: DuplicateGroup[] = [];
   let cachedSelectedFiles: Record<string, boolean> = {};
   let cachedLargeReport: LargeFilesReport | null = null;
+  let cachedStaleReport: StaleDevArtifactsReport | null = null;
+  let cachedStaleMinDays = 30;
+  let cachedStaleRoots: string[] = [];
   let cachedScanned = false;
   let cachedSelectedDir = "Downloads";
 </script>
 
 <script lang="ts">
   import CloudClean from "./CloudClean.svelte";
+  import DiskSpaceMap from "./DiskSpaceMap.svelte";
   import PreCleanConfirmDrawer, {
     type ConfirmCleanCategoryItem,
   } from "./PreCleanConfirmDrawer.svelte";
@@ -22,12 +30,23 @@
     requestActivation,
     type AppInfo,
     type LicenseStatus,
+    type MacosApfsSpaceInfo,
   } from "../lib/api";
   import { formatBytes, formatCount, shortenPath } from "../lib/format";
   import { addLifetimeStats } from "../lib/store";
   import { lang, t } from "../lib/i18n";
 
-  let { license, info = null }: { license: LicenseStatus | null; info?: AppInfo | null } = $props();
+  let {
+    license,
+    info = null,
+    initialScanDir = null,
+    onInitialScanConsumed,
+  }: {
+    license: LicenseStatus | null;
+    info?: AppInfo | null;
+    initialScanDir?: string | null;
+    onInitialScanConsumed?: () => void;
+  } = $props();
   const osType = $derived(
     info?.platform?.toLowerCase() ||
       (typeof navigator !== "undefined" && /Mac/i.test(navigator.platform)
@@ -39,10 +58,13 @@
   const trashLabel = $derived(osType === "windows" ? "Recycle Bin" : "Trash");
   const deviceLabel = $derived(osType === "macos" ? "Mac" : osType === "linux" ? "System" : "PC");
   let sourceTab = $state<"pc" | "cloud">(cachedSourceTab);
-  let mode = $state<"duplicates" | "large">(cachedMode);
+  let mode = $state<"duplicates" | "large" | "stale_dev">(cachedMode);
   let groups = $state<DuplicateGroup[]>(cachedGroups);
   let selectedFiles = $state<Record<string, boolean>>(cachedSelectedFiles);
   let largeReport = $state<LargeFilesReport | null>(cachedLargeReport);
+  let staleReport = $state<StaleDevArtifactsReport | null>(cachedStaleReport);
+  let staleMinDays = $state(cachedStaleMinDays);
+  let staleCustomRoots = $state<string[]>(cachedStaleRoots);
   let minSizeMb = $state(25);
   let loading = $state(false);
   let cleaning = $state(false);
@@ -56,6 +78,72 @@
   let lastClickedFile = $state<string | null>(null);
   let showDupConfirm = $state(false);
   let pendingLargeFileTrash = $state<{ path: string; name: string; size: number } | null>(null);
+  let explorerMenuEnabled = $state(false);
+  let explorerMenuBusy = $state(false);
+  let apfsInfo = $state<MacosApfsSpaceInfo | null>(null);
+  let scanSeq = 0;
+
+  function isAbsoluteFolderPath(p: string): boolean {
+    if (!p || /[\r\n]/.test(p) || p.split(/[\\/]/).some((seg) => seg === "..")) return false;
+    if (osType === "windows") {
+      return /^(?:[A-Za-z]:[\\/]|\\\\[^\\/]+[\\/][^\\/]+)/.test(p);
+    }
+    return /^(?:[A-Za-z]:[\\/]|\\\\[^\\/]+[\\/][^\\/]+|\/)/.test(p);
+  }
+
+  function switchMode(nextMode: "duplicates" | "large" | "stale_dev") {
+    if (loading || cleaning) return;
+    mode = nextMode;
+    error = "";
+    statusMessage = "";
+    needsPro = false;
+    void scan();
+  }
+
+  function revealPath(path: string) {
+    void api.revealInFolder(path).catch((e) => {
+      error = errorMessage(e);
+    });
+  }
+
+  $effect(() => {
+    if (osType === "windows") {
+      api
+        .getExplorerContextMenuEnabled()
+        .then((v) => (explorerMenuEnabled = v))
+        .catch(() => {});
+    } else if (osType === "macos") {
+      api
+        .macosApfsSpaceInfo()
+        .then((res) => (apfsInfo = res))
+        .catch(() => {});
+    }
+  });
+
+  $effect(() => {
+    if (initialScanDir && initialScanDir.trim()) {
+      sourceTab = "pc";
+      mode = "large";
+      selectedDir = initialScanDir.trim();
+      onInitialScanConsumed?.();
+      void scan();
+    }
+  });
+
+  async function toggleExplorerContextMenu(nextEnabled: boolean) {
+    explorerMenuBusy = true;
+    error = "";
+    try {
+      explorerMenuEnabled = await api.setExplorerContextMenuEnabled(nextEnabled);
+      statusMessage = explorerMenuEnabled
+        ? 'Added "Scan with SWEEPR" to Windows File Explorer folder right-click menu.'
+        : 'Removed "Scan with SWEEPR" from Windows File Explorer folder right-click menu.';
+    } catch (e) {
+      error = errorMessage(e);
+    } finally {
+      explorerMenuBusy = false;
+    }
+  }
 
   const flatExtraFiles = $derived(groups.flatMap((g) => g.files.slice(1)));
 
@@ -82,16 +170,43 @@
   function onDropFolder(e: DragEvent) {
     e.preventDefault();
     dragOver = false;
+    if (loading || cleaning) return;
+    const item = e.dataTransfer?.items?.[0];
+    const entry = item?.webkitGetAsEntry?.();
     const f = e.dataTransfer?.files?.[0] as (File & { path?: string }) | undefined;
-    if (f?.path) {
-      selectedDir = f.path;
-      scan();
+    if (entry ? !entry.isDirectory : Boolean(f && (f.type !== "" || f.size > 0))) {
+      error =
+        mode === "stale_dev"
+          ? "Please drop a folder, not a file, to scan for stale dev artifacts."
+          : "Please drop a folder, not a file, to scan.";
       return;
     }
-    const text = e.dataTransfer?.getData("text/plain");
-    if (text) {
-      selectedDir = text.trim().replace(/^"+|"+$/g, "");
-      scan();
+    const filePath = f?.path?.trim();
+    const textPath =
+      !filePath && Boolean(f || entry?.isDirectory)
+        ? e.dataTransfer?.getData("text/plain")?.trim().replace(/^"+|"+$/g, "")
+        : "";
+    const p = filePath || textPath;
+    if (!p) {
+      if (e.dataTransfer?.getData("text/plain")?.trim()) {
+        error =
+          mode === "stale_dev"
+            ? "Please drop a folder, not text or a file, to scan for stale dev artifacts."
+            : "Please drop a folder, not text or a file, to scan.";
+      }
+      return;
+    }
+    if (!isAbsoluteFolderPath(p)) {
+      error =
+        mode === "stale_dev"
+          ? "Please drop an absolute folder path to scan for stale dev artifacts."
+          : "Please drop an absolute folder path to scan.";
+      return;
+    }
+    if (mode === "stale_dev") {
+      void scanWithTarget({ staleCustomRoots: [p] });
+    } else {
+      void scanWithTarget({ selectedDir: p });
     }
   }
 
@@ -101,6 +216,9 @@
     cachedGroups = groups;
     cachedSelectedFiles = selectedFiles;
     cachedLargeReport = largeReport;
+    cachedStaleReport = staleReport;
+    cachedStaleMinDays = staleMinDays;
+    cachedStaleRoots = staleCustomRoots;
     cachedScanned = scanned;
     cachedSelectedDir = selectedDir;
   });
@@ -140,10 +258,14 @@
 
   async function browseScanFolder() {
     try {
-      const picked = await api.pickFolder("Choose a folder to scan");
+      const picked = await api.pickFolder(
+        mode === "stale_dev" ? "Choose a developer workspace folder to scan" : "Choose a folder to scan"
+      );
       if (picked && picked.trim()) {
-        selectedDir = picked.trim();
-        await scan();
+        const trimmed = picked.trim();
+        await scanWithTarget(
+          mode === "stale_dev" ? { staleCustomRoots: [trimmed] } : { selectedDir: trimmed }
+        );
       }
     } catch {
       // Ignore cancel
@@ -151,17 +273,35 @@
   }
 
   async function scan() {
-    if (!selectedDir.trim()) {
+    return scanWithTarget();
+  }
+
+  async function scanWithTarget(override?: {
+    selectedDir?: string;
+    staleCustomRoots?: string[];
+  }) {
+    const activeMode = mode;
+    if (activeMode !== "stale_dev" && override?.selectedDir === undefined && !selectedDir.trim()) {
       selectedDir = "Downloads";
     }
+    const seq = ++scanSeq;
+    const targetDir = (override?.selectedDir ?? selectedDir).trim();
+    const targetRoots = override?.staleCustomRoots ?? [...staleCustomRoots];
+    const targetMinDays = staleMinDays;
+    const targetMinSizeMb = minSizeMb;
+
     loading = true;
     error = "";
     statusMessage = "";
     needsPro = false;
     try {
-      if (mode === "duplicates") {
+      if (activeMode === "duplicates") {
         const COPY_RE = /\(\d+\)| - copy|_copy/i;
-        const raw = await api.findDuplicates(selectedDir.trim());
+        const raw = await api.findDuplicates(targetDir);
+        if (seq !== scanSeq) return;
+        if (override?.selectedDir !== undefined) {
+          selectedDir = override.selectedDir;
+        }
         groups = raw.map((g) => {
           if (g.kind === "similar_photo") {
             return g;
@@ -178,10 +318,23 @@
         });
         smartSelectExtras();
         scanned = true;
+      } else if (activeMode === "large") {
+        const rep = await api.scanLargeFiles(targetDir, targetMinSizeMb * 1024 * 1024);
+        if (seq !== scanSeq) return;
+        if (override?.selectedDir !== undefined) {
+          selectedDir = override.selectedDir;
+        }
+        largeReport = rep;
       } else {
-        largeReport = await api.scanLargeFiles(selectedDir.trim(), minSizeMb * 1024 * 1024);
+        const rep = await api.scanStaleDevArtifacts(targetRoots, targetMinDays);
+        if (seq !== scanSeq) return;
+        if (override?.staleCustomRoots !== undefined) {
+          staleCustomRoots = override.staleCustomRoots;
+        }
+        staleReport = rep;
       }
     } catch (e) {
+      if (seq !== scanSeq) return;
       if (isPaymentRequired(e)) {
         needsPro = true;
         requestActivation();
@@ -189,7 +342,9 @@
         error = errorMessage(e);
       }
     } finally {
-      loading = false;
+      if (seq === scanSeq) {
+        loading = false;
+      }
     }
   }
 
@@ -401,29 +556,59 @@
     <div class="card scan-bar-card" style={dragOver ? "border-color: var(--accent); background: var(--accent-light);" : ""}>
       <div class="row" style="justify-content: space-between; flex-wrap: wrap; gap: 12px;">
         <div class="quick-folders-row">
-          {#each QUICK_FOLDERS as folder}
+          {#if mode === "stale_dev"}
             <button
               type="button"
               class="folder-chip"
-              class:active={selectedDir.trim().toLowerCase() === folder.toLowerCase()}
-              onclick={() => pickQuickFolder(folder)}
+              class:active={staleCustomRoots.length === 0}
+              onclick={() => {
+                staleCustomRoots = [];
+                void scan();
+              }}
+              disabled={loading || cleaning}
             >
-              <span>{folder}</span>
+              <span>Auto Dev Roots</span>
             </button>
-          {/each}
-          <button
-            type="button"
-            class="folder-chip"
-            class:active={!QUICK_FOLDERS.some((f) => f.toLowerCase() === selectedDir.trim().toLowerCase())}
-            onclick={browseScanFolder}
-            disabled={loading || cleaning}
-          >
-            <span>+ Folder</span>
-          </button>
+            <button
+              type="button"
+              class="folder-chip"
+              class:active={staleCustomRoots.length > 0}
+              onclick={browseScanFolder}
+              disabled={loading || cleaning}
+            >
+              <span>+ Folder</span>
+            </button>
+          {:else}
+            {#each QUICK_FOLDERS as folder}
+              <button
+                type="button"
+                class="folder-chip"
+                class:active={selectedDir.trim().toLowerCase() === folder.toLowerCase()}
+                onclick={() => pickQuickFolder(folder)}
+                disabled={loading || cleaning}
+              >
+                <span>{folder}</span>
+              </button>
+            {/each}
+            <button
+              type="button"
+              class="folder-chip"
+              class:active={!QUICK_FOLDERS.some((f) => f.toLowerCase() === selectedDir.trim().toLowerCase())}
+              onclick={browseScanFolder}
+              disabled={loading || cleaning}
+            >
+              <span>+ Folder</span>
+            </button>
+          {/if}
         </div>
 
-        <span class="badge free" title={selectedDir}>
-          {shortenPath(selectedDir, 36)}
+        <span
+          class="badge free"
+          title={mode === "stale_dev" ? (staleCustomRoots[0] || "Default developer workspace folders") : selectedDir}
+        >
+          {mode === "stale_dev"
+            ? (staleCustomRoots.length > 0 ? shortenPath(staleCustomRoots[0], 36) : "Auto Dev Roots")
+            : shortenPath(selectedDir, 36)}
         </span>
       </div>
 
@@ -434,10 +619,8 @@
           <button
             class="subtab-btn"
             class:active={mode === "duplicates"}
-            onclick={() => {
-              mode = "duplicates";
-              scan();
-            }}
+            onclick={() => switchMode("duplicates")}
+            disabled={loading || cleaning}
             role="tab"
             aria-selected={mode === "duplicates"}
           >
@@ -446,26 +629,55 @@
           <button
             class="subtab-btn"
             class:active={mode === "large"}
-            onclick={() => {
-              mode = "large";
-              scan();
-            }}
+            onclick={() => switchMode("large")}
+            disabled={loading || cleaning}
             role="tab"
             aria-selected={mode === "large"}
           >
             Large Files
+          </button>
+          <button
+            class="subtab-btn"
+            class:active={mode === "stale_dev"}
+            onclick={() => switchMode("stale_dev")}
+            disabled={loading || cleaning}
+            role="tab"
+            aria-selected={mode === "stale_dev"}
+          >
+            Stale Dev &amp; Docker
           </button>
         </div>
 
         <div class="row" style="gap: 10px;">
           {#if mode === "large"}
             <label class="row small" style="gap: 6px;">
-              <select bind:value={minSizeMb} onchange={scan} aria-label="Minimum file size" class="size-select">
+              <select
+                bind:value={minSizeMb}
+                onchange={scan}
+                disabled={loading || cleaning}
+                aria-label="Minimum file size"
+                class="size-select"
+              >
                 <option value={10}>&gt; 10 MB</option>
                 <option value={25}>&gt; 25 MB</option>
                 <option value={50}>&gt; 50 MB</option>
                 <option value={100}>&gt; 100 MB</option>
                 <option value={500}>&gt; 500 MB</option>
+              </select>
+            </label>
+          {:else if mode === "stale_dev"}
+            <label class="row small" style="gap: 6px;">
+              <select
+                bind:value={staleMinDays}
+                onchange={scan}
+                disabled={loading || cleaning}
+                aria-label="Minimum project inactivity days"
+                class="size-select"
+              >
+                <option value={14}>Inactive 14+ days</option>
+                <option value={30}>Inactive 30+ days</option>
+                <option value={60}>Inactive 60+ days</option>
+                <option value={90}>Inactive 90+ days</option>
               </select>
             </label>
           {/if}
@@ -474,6 +686,22 @@
           </button>
         </div>
       </div>
+
+      {#if osType === "windows"}
+        <div class="divider"></div>
+        <label class="row small" style="justify-content: space-between; gap: 10px; cursor: pointer;">
+          <span class="muted">
+            <strong>Explorer Right-Click: Scan with SWEEPR</strong>
+            <span> — Adds a per-user folder context menu entry launching SWEEPR straight into Disk Space Map.</span>
+          </span>
+          <input
+            type="checkbox"
+            checked={explorerMenuEnabled}
+            disabled={explorerMenuBusy}
+            onchange={(e) => toggleExplorerContextMenu((e.currentTarget as HTMLInputElement).checked)}
+          />
+        </label>
+      {/if}
     </div>
 
     {#if statusMessage}
@@ -488,7 +716,9 @@
         <p class="muted" style="margin-top: 14px;">
           {mode === "duplicates"
             ? `Looking for identical duplicate files in ${selectedDir}…`
-            : `Looking for the largest files in ${selectedDir}…`}
+            : mode === "large"
+              ? `Looking for the largest files in ${selectedDir}…`
+              : "Scanning stale build artifacts and Docker virtual disks…"}
         </p>
       </div>
     {:else if needsPro && !license?.active}
@@ -578,15 +808,44 @@
         </div>
       {/if}
     {:else if mode === "large"}
+      {#if osType === "macos" && apfsInfo?.supported}
+        <div class="card" style="padding: 16px 20px;">
+          <div class="row" style="justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <div>
+              <strong style="font-size: 14.5px;">APFS Purgeable Space &amp; Local Snapshots</strong>
+              <div class="muted small" style="margin-top: 2px;">{apfsInfo.note}</div>
+            </div>
+            <div class="row" style="gap: 8px;">
+              <span class="badge free">Purgeable: {formatBytes(apfsInfo.purgeable_bytes)}</span>
+              <span class="badge free">
+                Local Snapshots: {apfsInfo.snapshot_count}
+              </span>
+            </div>
+          </div>
+        </div>
+      {/if}
+
       {#if !largeReport}
         <div class="card center-state">
           <strong>{selectedDir}</strong>
           <button class="primary scan-btn" style="margin-top: 12px;" onclick={scan}>Scan</button>
         </div>
       {:else}
+        <DiskSpaceMap
+          report={largeReport}
+          onDrillScan={(p) => {
+            selectedDir = p;
+            void scan();
+          }}
+        />
+
         <div class="card" style="padding: 20px 24px;">
           <div class="row" style="margin-bottom: 14px; flex-wrap: wrap; gap: 12px;">
             <strong>Largest Files ({largeReport.top_files.length})</strong>
+            <div class="spacer"></div>
+            <span class="muted small">
+              Total scanned: {formatBytes(largeReport.total_scanned_bytes)} across {formatCount(largeReport.total_scanned_files)} files
+            </span>
           </div>
 
           {#if largeReport.top_files.length === 0}
@@ -608,7 +867,7 @@
                   <strong style="color: var(--accent); font-size: 15px;">{formatBytes(lf.size)}</strong>
                   <button
                     class="ghost small-btn"
-                    onclick={() => void api.revealInFolder(lf.path)}
+                    onclick={() => revealPath(lf.path)}
                     title="Show in Folder"
                   >
                     Reveal
@@ -622,6 +881,118 @@
                   </button>
                   <button class="ghost small-btn" onclick={() => requestTrashLargeFile(lf)}>
                     Trash
+                  </button>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {/if}
+    {:else if mode === "stale_dev"}
+      {#if !staleReport}
+        <div class="card center-state">
+          <strong>{staleCustomRoots.length > 0 ? staleCustomRoots[0] : "Auto Dev Roots & Docker"}</strong>
+          <p class="muted small" style="margin-top: 6px;">
+            Inspect inactive project caches (node_modules, target, .next, .gradle, .venv) and Docker virtual disks.
+          </p>
+          <button class="primary scan-btn" style="margin-top: 12px;" onclick={scan}>Scan</button>
+        </div>
+      {:else}
+        <div class="card toolbar-card">
+          <strong>
+            {staleReport.artifacts.length} stale dev artifact folder{staleReport.artifacts.length === 1 ? "" : "s"}
+          </strong>
+          <span class="muted small">
+            · {formatCount(staleReport.total_artifact_files)} files · {staleReport.duration_ms} ms
+          </span>
+          <div class="spacer"></div>
+          <strong style="color: var(--accent);">{formatBytes(staleReport.total_artifact_bytes)}</strong>
+        </div>
+
+        <div class="card" style="padding: 18px 22px;">
+          <div class="row" style="margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+            <strong>Docker Virtual Disks &amp; BuildKit Cache</strong>
+            <div class="spacer"></div>
+            <span class="badge free">
+              Disks: {formatBytes(staleReport.docker.total_vhdx_bytes)}
+            </span>
+            <span class="badge free">
+              BuildKit: {formatBytes(staleReport.docker.buildkit_reclaimable_bytes)}
+            </span>
+          </div>
+          {#if staleReport.docker.vhdx_files.length === 0 && staleReport.docker.buildkit_reclaimable_bytes === 0}
+            <div class="muted small">
+              No Docker Desktop virtual disks (.vhdx / Docker.raw) or BuildKit caches detected on this device.
+            </div>
+          {:else}
+            {#if staleReport.docker.vhdx_files.length > 0}
+              <div class="large-list">
+                {#each staleReport.docker.vhdx_files as vhdx, i (vhdx.path)}
+                  <div class="row large-file-row" style={`--stagger-i: ${Math.min(i, 7)};`}>
+                    <div style="flex: 1; min-width: 0;">
+                      <strong style="font-size: 14px; display: block;">{fileNameOf(vhdx.path)}</strong>
+                      <div
+                        class="muted small path"
+                        style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                        title={vhdx.path}
+                      >
+                        {shortenPath(vhdx.path, 68)}
+                      </div>
+                    </div>
+                    <strong style="color: var(--accent); font-size: 15px;">{formatBytes(vhdx.size)}</strong>
+                    <button
+                      class="ghost small-btn"
+                      onclick={() => revealPath(vhdx.path)}
+                      title="Show Docker disk in folder"
+                    >
+                      Reveal
+                    </button>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+            {#if staleReport.docker.buildkit_reclaimable_bytes > 0}
+              <div class="muted small" style="margin-top: 10px;">
+                BuildKit / Buildx cache detected ({formatBytes(staleReport.docker.buildkit_reclaimable_bytes)}). Run
+                <code>docker builder prune</code> to compact safely.
+              </div>
+            {/if}
+          {/if}
+        </div>
+
+        <div class="card" style="padding: 20px 24px;">
+          <div class="row" style="margin-bottom: 14px; flex-wrap: wrap; gap: 12px;">
+            <strong>Stale Build &amp; Dependency Folders ({staleReport.artifacts.length})</strong>
+            <div class="spacer"></div>
+            <span class="muted small">Threshold: {staleMinDays}+ days inactive</span>
+          </div>
+
+          {#if staleReport.artifacts.length === 0}
+            <div class="muted small">
+              No stale dev artifacts inactive for {staleMinDays}+ days in the selected roots.
+            </div>
+          {:else}
+            <div class="large-list" style="max-height: 460px;">
+              {#each staleReport.artifacts as entry, i (entry.artifact_path)}
+                <div class="row large-file-row" style={`--stagger-i: ${Math.min(i, 7)};`}>
+                  <span class="badge pro">{entry.artifact_kind}</span>
+                  <div style="flex: 1; min-width: 0;">
+                    <strong style="font-size: 14px; display: block;">{fileNameOf(entry.project_root)}</strong>
+                    <div
+                      class="muted small path"
+                      style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                      title={entry.artifact_path}
+                    >
+                      {shortenPath(entry.project_root, 56)} · {entry.inactive_days}d inactive · {formatCount(entry.files_count)} files
+                    </div>
+                  </div>
+                  <strong style="color: var(--accent); font-size: 15px;">{formatBytes(entry.size_bytes)}</strong>
+                  <button
+                    class="ghost small-btn"
+                    onclick={() => revealPath(entry.artifact_path)}
+                    title="Show artifact folder in Explorer"
+                  >
+                    Reveal
                   </button>
                 </div>
               {/each}

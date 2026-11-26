@@ -67,7 +67,21 @@ const TOP_25_SLUGS = [
   "localappdata-webview2-ebwebview-cache",
 ];
 
-const TOP_10_SLUGS = TOP_25_SLUGS.slice(0, 10);
+const PROOF_SLUGS = [
+  "appdata-local-folder-huge-windows-11",
+  "appdata-temp",
+  "c-drive-filling-up-by-itself-windows-11",
+  "cargo-registry-cache",
+  "chrome-service-worker-cache",
+  "directx-d3dscache",
+  "edge-browser-cache",
+  "gradle-wrapper-caches",
+  "npm-cache",
+  "programdata-package-cache",
+  "system-and-reserved-storage-100gb-windows-11",
+  "vscode-cacheddata",
+  "winsxs",
+];
 
 describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stress Suite", () => {
   // --------------------------------------------------------------------------
@@ -222,7 +236,7 @@ describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stre
       assert.equal(org["@id"], "https://sweeprcleaner.com/#organization");
       assert.equal(org.name, "SWEEPR Cleaner");
       assert.equal(org.url, "https://sweeprcleaner.com");
-      assert.ok(org.logo && org.logo.startsWith("https://"), `Guide ${slug} Organization missing valid logo URL`);
+      assert.equal(org.logo, "https://sweeprcleaner.com/icon-512.png", `Guide ${slug} Organization must use icon-512.png logo URL`);
 
       // sameAs array validation
       assert.ok(
@@ -243,6 +257,15 @@ describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stre
         `sameAs must include Winget link`
       );
 
+      // 1b. Top-level Person (#founder) node linked to #organization
+      const founder = nodes.find((n: any) => n["@id"] === "https://sweeprcleaner.com/#founder");
+      assert.ok(founder, `Guide ${slug} must contain top-level #founder Person node in @graph`);
+      assert.equal(founder["@type"], "Person");
+      assert.equal(founder.name, "Benjamin Cook");
+      assert.equal(founder.url, "https://sweeprcleaner.com/about");
+      assert.equal(founder.worksFor?.["@id"], "https://sweeprcleaner.com/#organization");
+      assert.equal(org.founder?.["@id"], "https://sweeprcleaner.com/#founder");
+
       // 2. BreadcrumbList node
       const breadcrumb = nodes.find((n: any) => n["@type"] === "BreadcrumbList");
       assert.ok(breadcrumb, `Guide ${slug} must contain BreadcrumbList node in @graph`);
@@ -260,17 +283,19 @@ describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stre
       );
       const article = nodes.find((n: any) => n["@type"] === "TechArticle");
       assert.ok(article?.headline && article?.author && article?.mainEntityOfPage, `Guide ${slug} TechArticle must include headline, author, and mainEntityOfPage`);
+      assert.equal(article?.author?.["@id"], "https://sweeprcleaner.com/#founder", `Guide ${slug} TechArticle author must reference #founder`);
+      assert.equal(article?.publisher?.["@id"], "https://sweeprcleaner.com/#organization", `Guide ${slug} TechArticle publisher must reference #organization`);
     }
   });
 
   // --------------------------------------------------------------------------
   // Area 3: Visual Proof Asset Verification
   // --------------------------------------------------------------------------
-  test("CH-M2-04: Top 10 visual proof WebP files physically exist, are valid WebP binaries, and serve HTTP 200", async () => {
+  test("CH-M2-04: Visual proof WebP files physically exist, are valid WebP binaries, and serve HTTP 200", async () => {
     const { app } = setup();
     const proofDir = resolve("public/img/proof");
 
-    for (const slug of TOP_10_SLUGS) {
+    for (const slug of PROOF_SLUGS) {
       const fileName = `${slug}-proof.webp`;
       const filePath = join(proofDir, fileName);
 
@@ -307,11 +332,12 @@ describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stre
     }
   });
 
-  test("CH-M2-05: Rendered HTML for top 10 guides includes visual proof <figure> and <img>", async () => {
+  test("CH-M2-05: Rendered HTML for proof guides includes visual proof <figure> and <img>", async () => {
     const { app } = setup();
     const items = getCleanItems();
+    const proofSet = new Set(PROOF_SLUGS);
 
-    for (const slug of TOP_10_SLUGS) {
+    for (const slug of PROOF_SLUGS) {
       const item = items.find((i) => i.slug === slug)!;
       const res = await app.request(`/clean/${item.category}/${slug}`);
       const html = await res.text();
@@ -337,14 +363,14 @@ describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stre
       assert.ok(html.includes("<figcaption"), `Guide ${slug} proof figure must include <figcaption>`);
     }
 
-    // Negative check: Guides 11 through 25 must NOT render #verified-visual-proof
-    for (const slug of TOP_25_SLUGS.slice(10)) {
+    // Negative check: Top-25 guides without proofImage must NOT render #verified-visual-proof
+    for (const slug of TOP_25_SLUGS.filter((s) => !proofSet.has(s))) {
       const item = items.find((i) => i.slug === slug)!;
       const res = await app.request(`/clean/${item.category}/${slug}`);
       const html = await res.text();
       assert.ok(
         !html.includes('id="verified-visual-proof"'),
-        `Guide ${slug} (not in top 10) must not render #verified-visual-proof`
+        `Guide ${slug} (no proofImage) must not render #verified-visual-proof`
       );
     }
   });
@@ -355,7 +381,7 @@ describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stre
   test("CH-M2-06: Verified engineering attribution badge is present in 100% of rendered guide pages", async () => {
     const { app } = setup();
     const items = getCleanItems();
-    const targetBadgeString = "Tested on Windows 11 24H2 · Verified Microsoft Authenticode Publisher: Benjamin Cook";
+    const targetBadgeString = "Verified Authenticode IV Publisher: Benjamin Cook";
 
     // Test across all 25 top guides
     for (const slug of TOP_25_SLUGS) {
@@ -391,7 +417,7 @@ describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stre
     }
   });
 
-  test("CH-M2-07: All CTA anchors linking to /download and /order carry rel='nofollow'", async () => {
+  test("CH-M2-07: Parameterized /download?... and /order* CTA anchors carry rel='nofollow' while clean /download omits it", async () => {
     const { app } = setup();
     const items = getCleanItems();
 
@@ -409,11 +435,16 @@ describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stre
         const fullTag = match[0];
         const href = match[1];
 
-        if (href.startsWith("/download") || href.startsWith("/order")) {
+        if (href.startsWith("/download?") || href === "/order" || href.startsWith("/order?")) {
           ctaCount++;
           assert.ok(
             fullTag.includes('rel="nofollow"') || fullTag.includes("rel='nofollow'"),
             `CTA anchor for '${href}' in guide ${slug} must include rel="nofollow". Tag: ${fullTag}`
+          );
+        } else if (href === "/download") {
+          assert.ok(
+            !fullTag.includes('rel="nofollow"') && !fullTag.includes("rel='nofollow'"),
+            `Clean /download anchor in guide ${slug} must not carry rel="nofollow". Tag: ${fullTag}`
           );
         }
       }
@@ -442,7 +473,7 @@ describe("Challenger M2-2: Empirical Rendering, Schema, Proof & Attribution Stre
       const html = await res.text();
 
       assert.ok(
-        html.includes("Tested on Windows 11 24H2 · Verified Microsoft Authenticode Publisher: Benjamin Cook"),
+        html.includes("Verified Authenticode IV Publisher: Benjamin Cook"),
         `Googlebot must receive verified attribution badge on ${slug}`
       );
       assert.ok(

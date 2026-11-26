@@ -3,8 +3,11 @@ use crate::commands::AppState;
 use crate::error::{AppError, AppResult};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::State;
+
+static BACKUP_SEQ: AtomicU64 = AtomicU64::new(1);
 
 #[derive(Serialize, Clone)]
 pub struct RegistryIssue {
@@ -50,8 +53,9 @@ pub fn record_backup(data_dir: &Path, key: &str, name: &str, issue_type: &str, v
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_secs())
         .unwrap_or(0);
+    let seq = BACKUP_SEQ.fetch_add(1, Ordering::Relaxed);
     let mut entries = load_backups(data_dir);
-    let id = format!("reg_{ts}_{}", entries.len() + 1);
+    let id = format!("reg_{ts}_{seq}");
     let entry = RegistryBackupEntry {
         id,
         key: key.to_string(),
@@ -66,19 +70,29 @@ pub fn record_backup(data_dir: &Path, key: &str, name: &str, issue_type: &str, v
     Ok(entry)
 }
 
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+fn remove_backup_by_id(data_dir: &Path, id: &str) {
+    let mut entries = load_backups(data_dir);
+    let before = entries.len();
+    entries.retain(|e| e.id != id);
+    if entries.len() != before {
+        let _ = save_backups(data_dir, &entries);
+    }
+}
+
 #[cfg(target_os = "windows")]
 const APP_PATHS: &str = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths";
 #[cfg(target_os = "windows")]
 const RUN: &str = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
 
-/// An App Paths default value is broken if it names a file that doesn't exist.
-/// Returns the target path when broken.
+/// An App Paths default value is broken if it names an absolute path that doesn't exist.
+/// Bare filenames and unresolved environment variables are never flagged.
 pub fn app_path_target_missing(default_val: &str) -> Option<String> {
-    if default_val.is_empty() {
+    if default_val.trim().is_empty() {
         return None;
     }
     let cleaned = crate::cmdline::expand_env(default_val.trim().trim_matches('"'));
-    if cleaned.contains('%') || std::path::Path::new(&cleaned).exists() {
+    if cleaned.contains('%') || !is_abs_or_win_drive(&cleaned) || std::path::Path::new(&cleaned).exists() {
         None
     } else {
         Some(cleaned)
@@ -233,9 +247,14 @@ fn fix_issue_blocking(data_dir: &Path, key_path: &str) -> AppResult<()> {
             if app_path_target_missing(&default_val).is_none() {
                 return Err(fixed());
             }
-            // Automatically back up the entry before removing it.
-            let _ = record_backup(data_dir, key_path, sub, "Broken App Path", &default_val);
-            parent.delete_subkey(sub).map_err(failed)
+            // Automatically back up the entry before removing it; abort if backup cannot be persisted.
+            let backup = record_backup(data_dir, key_path, sub, "Broken App Path", &default_val)
+                .map_err(|e| AppError::Other(format!("Could not save registry backup before repair: {e}")))?;
+            if let Err(e) = parent.delete_subkey(sub) {
+                remove_backup_by_id(data_dir, &backup.id);
+                return Err(failed(e));
+            }
+            Ok(())
         }
         IssueRef::Run(name) => {
             let run = hkcu.open_subkey_with_flags(RUN, KEY_QUERY_VALUE | KEY_SET_VALUE).map_err(failed)?;
@@ -244,8 +263,13 @@ fn fix_issue_blocking(data_dir: &Path, key_path: &str) -> AppResult<()> {
             if run_entry_target_missing(&val_str).is_none() {
                 return Err(fixed());
             }
-            let _ = record_backup(data_dir, key_path, name, "Orphaned Startup Registry", &val_str);
-            run.delete_value(name).map_err(failed)
+            let backup = record_backup(data_dir, key_path, name, "Orphaned Startup Registry", &val_str)
+                .map_err(|e| AppError::Other(format!("Could not save registry backup before repair: {e}")))?;
+            if let Err(e) = run.delete_value(name) {
+                remove_backup_by_id(data_dir, &backup.id);
+                return Err(failed(e));
+            }
+            Ok(())
         }
     }
 }
@@ -261,6 +285,11 @@ fn restore_backup_blocking(data_dir: &Path, backup_id: &str) -> AppResult<()> {
         .position(|b| b.id == backup_id)
         .ok_or_else(|| AppError::NotFound("Registry backup entry not found".into()))?;
     let entry = backups[idx].clone();
+    if entry.issue_type == "Force Uninstall Entry" {
+        return Err(AppError::Other(
+            "Force-removed Uninstall entries are audit snapshots; restore the app's files from Recycle Bin or reinstall.".into(),
+        ));
+    }
     let failed = |e: std::io::Error| AppError::Other(format!("Could not restore registry entry: {e}"));
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
@@ -351,10 +380,42 @@ mod tests {
     #[test]
     fn backup_roundtrip() {
         let dir = std::env::temp_dir().join(format!("sweepr-reg-backup-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
         let entry = record_backup(&dir, "Run\\TestApp", "TestApp", "Orphaned Startup Registry", "C:\\missing\\test.exe").unwrap();
         let loaded = load_backups(&dir);
         assert_eq!(loaded.len(), 1);
         assert_eq!(loaded[0], entry);
+
+        // Rapid consecutive backups (even past 200 cap) never produce colliding IDs
+        let e2 = record_backup(&dir, "Run\\TestApp2", "TestApp2", "Orphaned Startup Registry", "C:\\missing\\test2.exe").unwrap();
+        assert_ne!(entry.id, e2.id);
+        remove_backup_by_id(&dir, &e2.id);
+        let after_rm = load_backups(&dir);
+        assert_eq!(after_rm.len(), 1);
+        assert_eq!(after_rm[0].id, entry.id);
+
+        assert!(app_path_target_missing("bare.exe").is_none());
+        assert!(app_path_target_missing("%UNRESOLVED_SWEEPR_TEST_VAR%\\missing.exe").is_none());
+        assert!(app_path_target_missing(r#""C:\definitely\missing\app.exe""#).is_some());
+
+        #[cfg(target_os = "windows")]
+        {
+            let snap = record_backup(
+                &dir,
+                r"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\OldApp",
+                "OldApp",
+                "Force Uninstall Entry",
+                r#"{"display_name":"OldApp"}"#,
+            )
+            .unwrap();
+            let err = restore_backup_blocking(&dir, &snap.id).unwrap_err();
+            let msg = err.to_string();
+            assert!(msg.contains("audit snapshots"));
+            assert!(msg.contains("Recycle Bin"));
+            // Snapshot remains intact in registry_backups.json
+            assert!(load_backups(&dir).iter().any(|b| b.id == snap.id));
+        }
+
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

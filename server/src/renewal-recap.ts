@@ -153,7 +153,7 @@ export async function processAnnualRenewalRecap(
   const subject =
     recap.segment === "active"
       ? `Your SWEEPR Pro Annual Recap: You reclaimed ${recap.total_cleaned_gb} GB this year`
-      : `Your SWEEPR Pro Renewal Reminder — Run a 60s Scan (~${recap.estimated_buildup_gb} GB est. cache build-up)`;
+      : `Your SWEEPR Pro Renewal Reminder — Run a Storage Scan (~${recap.estimated_buildup_gb} GB est. cache build-up)`;
 
   const safeName = escapeHtml(recap.name || "Customer");
   const bodyText =
@@ -183,7 +183,7 @@ export async function processAnnualRenewalRecap(
     </p>
     <div style="margin:20px 0;text-align:center;">
       <a href="https://sweeprcleaner.com/download" style="display:inline-block;background:#0d6847;color:#ffffff;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
-        ${recap.segment === "active" ? "Open SWEEPR Cleaner Pro" : "Run a 60-Second Storage Scan Now"}
+        ${recap.segment === "active" ? "Open SWEEPR Cleaner Pro" : "Run a Quick Storage Scan Now"}
       </a>
     </div>
     <p style="font-size:12.5px;color:#64748b;text-align:center;">

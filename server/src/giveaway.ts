@@ -341,11 +341,16 @@ export interface GiveawayLifecycleSweepResult {
  */
 export async function runGiveawayUpgradeSweep(
   repo: Repo,
-  opts?: { nowSec?: number; limit?: number }
+  opts?: {
+    nowSec?: number;
+    limit?: number;
+    dispatchEmail?: typeof dispatchTransactionalCustomerEmail;
+  }
 ): Promise<GiveawayLifecycleSweepResult> {
   ensureGiveawayTables(repo);
   const nowSec = opts?.nowSec ?? Math.floor(Date.now() / 1000);
   const limit = Math.max(1, Math.min(250, opts?.limit ?? 100));
+  const sendEmail = opts?.dispatchEmail ?? dispatchTransactionalCustomerEmail;
   const cfg = getGiveawayConfig(repo, nowSec);
 
   const rows = repo.db
@@ -404,7 +409,7 @@ export async function runGiveawayUpgradeSweep(
 
     // 1. T-3d Final Expiry Reminder (<= 3 days remaining)
     if (!r.expiry_3d_sent_at && r.expires_at - nowSec <= 3 * 86400) {
-      const dispatch = await dispatchTransactionalCustomerEmail({
+      const dispatch = await sendEmail({
         to: r.email,
         subject: `Final Reminder: Your 6-Month SWEEPR Cleaner Pro license expires in ${daysRemaining} day${daysRemaining === 1 ? "" : "s"} (50% Off Renewal)`,
         textBody: [
@@ -412,14 +417,14 @@ export async function runGiveawayUpgradeSweep(
           "",
           `Your 6-Month Giveaway of the Day SWEEPR Cleaner Pro license expires in ${daysRemaining} day${daysRemaining === 1 ? "" : "s"}.`,
           "",
-          `Keep automatic background cleanups active and expand coverage to 5 Devices (Windows, Mac, Android & iOS) for 50% off with your partner code ${cfg.upgrade_coupon}:`,
+          `Keep optional scheduled storage cleanups active and expand coverage to 5 Devices (Windows, Mac, Android & iOS (Safari web companion / TestFlight beta)) for 50% off with your partner code ${cfg.upgrade_coupon}:`,
           `Upgrade for 50% Off: ${upgradeUrl}`,
           "",
-          "— The SWEEPR Team",
+          "— Benjamin Cook (SWEEPR Cleaner)",
         ].join("\n"),
         htmlBody: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0f1f17;">
           <h2 style="margin:0 0 12px;">Your 6-Month Pro License Expires in ${daysRemaining} Day${daysRemaining === 1 ? "" : "s"}</h2>
-          <p>Keep automatic background storage cleanup active and protect up to <strong>5 Devices (Windows, Mac, Android &amp; iOS)</strong> for a full year at <strong>${cfg.upgrade_discount_pct}% OFF</strong> with code <code>${escapeHtml(cfg.upgrade_coupon)}</code>.</p>
+          <p>Keep optional scheduled storage cleanups active and protect up to <strong>5 Devices (Windows, Mac, Android &amp; iOS (Safari web companion / TestFlight beta))</strong> for a full year at <strong>${cfg.upgrade_discount_pct}% OFF</strong> with code <code>${escapeHtml(cfg.upgrade_coupon)}</code>.</p>
           <p style="margin:20px 0;"><a href="${escapeHtml(upgradeUrl)}" style="display:inline-block;background:#059669;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;">Renew &amp; Unlock 5 Devices (${cfg.upgrade_discount_pct}% Off) &rarr;</a></p>
         </div>`,
       });
@@ -442,7 +447,7 @@ export async function runGiveawayUpgradeSweep(
 
     // 2. T-14d Expiry Warning (<= 14 days remaining)
     if (!r.expiry_14d_sent_at && r.expires_at - nowSec <= 14 * 86400) {
-      const dispatch = await dispatchTransactionalCustomerEmail({
+      const dispatch = await sendEmail({
         to: r.email,
         subject: `Your 6-Month SWEEPR Cleaner Pro license expires in ${daysRemaining} days — claim 50% off Annual Pro`,
         textBody: [
@@ -450,14 +455,14 @@ export async function runGiveawayUpgradeSweep(
           "",
           `Your 6-Month Giveaway of the Day SWEEPR Cleaner Pro license expires in ${daysRemaining} days.`,
           "",
-          `As a Giveaway community member, you can lock in 50% off our 5-Device Annual Pro Plan (Windows, Mac, Android & iOS) using code ${cfg.upgrade_coupon}:`,
+          `As a Giveaway community member, you can lock in 50% off our 5-Device Annual Pro Plan (Windows, Mac, Android & iOS (Safari web companion / TestFlight beta)) using code ${cfg.upgrade_coupon}:`,
           `Claim 50% Off: ${upgradeUrl}`,
           "",
-          "— The SWEEPR Team",
+          "— Benjamin Cook (SWEEPR Cleaner)",
         ].join("\n"),
         htmlBody: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0f1f17;">
           <h2 style="margin:0 0 12px;">Your 6-Month License Expires in ${daysRemaining} Days</h2>
-          <p>Lock in <strong>${cfg.upgrade_discount_pct}% OFF</strong> the <strong>5-Device Annual Pro Plan</strong> across Windows, Mac, Android &amp; iOS using your partner code <code>${escapeHtml(cfg.upgrade_coupon)}</code>.</p>
+          <p>Lock in <strong>${cfg.upgrade_discount_pct}% OFF</strong> the <strong>5-Device Annual Pro Plan</strong> across Windows, Mac, Android &amp; iOS (Safari web companion / TestFlight beta) using your partner code <code>${escapeHtml(cfg.upgrade_coupon)}</code>.</p>
           <p style="margin:20px 0;"><a href="${escapeHtml(upgradeUrl)}" style="display:inline-block;background:#059669;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;">Claim ${cfg.upgrade_discount_pct}% Off 5-Device Pro &rarr;</a></p>
         </div>`,
       });
@@ -480,7 +485,7 @@ export async function runGiveawayUpgradeSweep(
 
     // 3. T+3d Multi-PC / Mobile Value Upsell (>= 3 days after activation)
     if (!r.nurture_3d_sent_at && nowSec - r.created_at >= 3 * 86400) {
-      const dispatch = await dispatchTransactionalCustomerEmail({
+      const dispatch = await sendEmail({
         to: r.email,
         subject: "How is SWEEPR Cleaner Pro running? Unlock 5 Devices for 50% off (GOTD50)",
         textBody: [
@@ -491,10 +496,10 @@ export async function runGiveawayUpgradeSweep(
           `Want to protect your laptop, second PC, Mac, or phone too? Use partner code ${cfg.upgrade_coupon} to upgrade to the 5-Device Annual Pro Plan for 50% off:`,
           `Upgrade 5 Devices (50% Off): ${upgradeUrl}`,
           "",
-          "— The SWEEPR Team",
+          "— Benjamin Cook (SWEEPR Cleaner)",
         ].join("\n"),
         htmlBody: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0f1f17;">
-          <h2 style="margin:0 0 12px;">Protect Up to 5 Devices Across Windows, Mac, Android &amp; iOS</h2>
+          <h2 style="margin:0 0 12px;">Protect Up to 5 Devices Across Windows, Mac, Android &amp; iOS (Safari web companion / TestFlight beta)</h2>
           <p>Your Giveaway license covers <strong>1 Windows PC for 6 months</strong>. Need to clean a laptop, second desktop, or mobile device? Upgrade to the <strong>5-Device Annual Pro Plan</strong> for <strong>${cfg.upgrade_discount_pct}% OFF</strong> with code <code>${escapeHtml(cfg.upgrade_coupon)}</code>.</p>
           <p style="margin:20px 0;"><a href="${escapeHtml(upgradeUrl)}" style="display:inline-block;background:#059669;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;">Unlock 5-Device Pro (${cfg.upgrade_discount_pct}% Off) &rarr;</a></p>
         </div>`,
@@ -534,7 +539,8 @@ export async function triggerGiveawayDeviceLimitUpgradeEmail(
   repo: Repo,
   accountId: string,
   email: string | null | undefined,
-  nowSec = Math.floor(Date.now() / 1000)
+  nowSec = Math.floor(Date.now() / 1000),
+  dispatchEmail: typeof dispatchTransactionalCustomerEmail = dispatchTransactionalCustomerEmail
 ): Promise<{ triggered: boolean; upgrade_url: string }> {
   const cfg = getGiveawayConfig(repo, nowSec);
   const safeEmail = String(email || "").trim().toLowerCase();
@@ -555,7 +561,7 @@ export async function triggerGiveawayDeviceLimitUpgradeEmail(
   }
 
   const fullUpgradeUrl = `https://sweeprcleaner.com${upgradeUrl}`;
-  const dispatch = await dispatchTransactionalCustomerEmail({
+  const dispatch = await dispatchEmail({
     to: safeEmail,
     subject: "Add your 2nd PC to SWEEPR Cleaner Pro — 50% Off 5-Device Upgrade (GOTD50)",
     textBody: [
@@ -565,7 +571,7 @@ export async function triggerGiveawayDeviceLimitUpgradeEmail(
       "Your Giveaway of the Day edition covers 1 Windows PC. You can upgrade to our 5-Device Annual Pro Plan for 50% off with code GOTD50:",
       `Unlock 5 Devices (50% Off): ${fullUpgradeUrl}`,
       "",
-      "— The SWEEPR Team",
+      "— Benjamin Cook (SWEEPR Cleaner)",
     ].join("\n"),
     htmlBody: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0f1f17;">
       <h2 style="margin:0 0 12px;">Need SWEEPR Cleaner Pro on a 2nd PC?</h2>
@@ -617,8 +623,8 @@ export function buildGiveawayReadmeTxt(cfg: GiveawayConfig): string {
     "----------------------------------------------------------------------",
     "EXCLUSIVE 50% OFF UPGRADE FOR GIVEAWAY OF THE DAY USERS:",
     "----------------------------------------------------------------------",
-    "Want to protect up to 5 Devices across Windows, macOS, Android & iOS",
-    "with a full 12-Month Pro License, free major updates & 24/7 support?",
+    "Want to protect up to 5 Devices across Windows, macOS, Android & iOS (Safari web companion / TestFlight beta)",
+    "with a full 12-Month Pro License, free major updates & direct developer email support?",
     "",
     `Claim 50% OFF here: https://sweeprcleaner.com/order?plan=annual&coupon=${cfg.upgrade_coupon}`,
     "",
@@ -833,9 +839,9 @@ export function renderGiveawayPageHtml(cfg: GiveawayConfig, nowSec = Math.floor(
       <div id="gotdResult" class="result-box"></div>
 
       <div class="steps-box">
-        <strong>How to unlock the SWEEPR Cleaner desktop app in 30 seconds:</strong>
+        <strong>How to unlock the SWEEPR Cleaner desktop app in 3 quick steps:</strong>
         <ol style="margin: 8px 0 0; padding-left: 20px;">
-          <li>Download &amp; launch <a href="/download" rel="nofollow" style="color:var(--emerald-dark);font-weight:700;">SWEEPRCleaner.exe</a> (5 MB native Rust installer, SSL.com Authenticode signed).</li>
+          <li>Download &amp; launch <a href="/download" style="color:var(--emerald-dark);font-weight:700;">SWEEPRCleaner.exe</a> (6.76 MB native Rust installer, SSL.com Authenticode signed).</li>
           <li>Open the <strong>Account / Settings</strong> tab inside the app, enter your email address, and click <strong>Send Code</strong>.</li>
           <li>Enter your full Giveaway Key <span class="key-pill">${safeKey}</span> and click <strong>Activate</strong>.</li>
         </ol>
@@ -844,9 +850,9 @@ export function renderGiveawayPageHtml(cfg: GiveawayConfig, nowSec = Math.floor(
 
     <div class="upgrade-banner">
       <div>
-        <h2>Want 5-Device Pro Across Windows, Mac, Android &amp; iOS?</h2>
+        <h2>Want 5-Device Pro Across Windows, Mac, Android &amp; iOS (Safari Web Companion / TestFlight Beta)?</h2>
         <p>
-          The free Giveaway license covers <strong>1 Windows PC for 6 months</strong> (non-commercial). Upgrade today with code <strong>${safeCoupon}</strong> for <strong>${cfg.upgrade_discount_pct}% OFF</strong> our full <strong>5-Device Annual Pro Plan</strong> including all major updates and 24/7 priority support.
+          The free Giveaway license covers <strong>1 Windows PC for 6 months</strong> (non-commercial). Upgrade today with code <strong>${safeCoupon}</strong> for <strong>${cfg.upgrade_discount_pct}% OFF</strong> our full <strong>5-Device Annual Pro Plan</strong> including all major updates and priority developer email support.
         </p>
       </div>
       <a href="/order?plan=annual&amp;coupon=${safeCoupon}" class="upgrade-btn" id="gotdUpgradeLink">

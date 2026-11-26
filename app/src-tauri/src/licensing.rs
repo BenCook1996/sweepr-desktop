@@ -475,10 +475,111 @@ fn load_account(path: &std::path::Path, device_id: &str) -> Option<Account> {
     None
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ActivationTokenKind {
+    PairingToken(String),
+    EnterpriseJws(String),
+}
+
+pub fn normalize_policy_token(raw: Option<&str>) -> Option<String> {
+    let trimmed = raw?.trim();
+    let unquoted = trimmed
+        .strip_prefix('"')
+        .and_then(|s| s.strip_suffix('"'))
+        .or_else(|| trimmed.strip_prefix('\'').and_then(|s| s.strip_suffix('\'')))
+        .unwrap_or(trimmed)
+        .trim();
+    if unquoted.is_empty() {
+        None
+    } else {
+        Some(unquoted.to_string())
+    }
+}
+
+pub fn classify_activation_token(raw: &str) -> Option<ActivationTokenKind> {
+    let token = normalize_policy_token(Some(raw))?;
+    if let Some(idx) = token.find("ptk_") {
+        let extracted = token[idx..]
+            .split(|c: char| !c.is_ascii_alphanumeric() && c != '_' && c != '-')
+            .next()
+            .unwrap_or("");
+        if extracted.starts_with("ptk_") && extracted.len() >= 24 {
+            return Some(ActivationTokenKind::PairingToken(extracted.to_string()));
+        }
+    }
+    let mut parts = token.split('.');
+    if let (Some(h), Some(p), Some(s), None) = (parts.next(), parts.next(), parts.next(), parts.next()) {
+        let is_b64url = |seg: &str| {
+            !seg.is_empty()
+                && seg
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '=')
+        };
+        if is_b64url(h) && is_b64url(p) && is_b64url(s) {
+            return Some(ActivationTokenKind::EnterpriseJws(token));
+        }
+    }
+    None
+}
+
+#[cfg(windows)]
+pub fn read_enterprise_policy_token() -> Option<String> {
+    use winreg::enums::{HKEY_LOCAL_MACHINE, KEY_READ};
+    use winreg::RegKey;
+
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let key = hklm
+        .open_subkey_with_flags(r"Software\Policies\SWEEPRCleaner", KEY_READ)
+        .ok()?;
+    for name in ["LicenseToken", "ActivationToken"] {
+        if let Ok(val) = key.get_value::<String, _>(name) {
+            if let Some(norm) = normalize_policy_token(Some(&val)) {
+                return Some(norm);
+            }
+        }
+    }
+    None
+}
+
+#[cfg(not(windows))]
+pub fn read_enterprise_policy_token() -> Option<String> {
+    None
+}
+
+fn sha256_hex(input: &str) -> String {
+    let mut h = Sha256::new();
+    h.update(input.as_bytes());
+    h.finalize().iter().map(|b| format!("{b:02x}")).collect()
+}
+
+fn apply_jws_to_state(
+    data_dir: &Path,
+    device_id: &str,
+    st: &mut State,
+    jws: &str,
+    primary_key: &VerifyingKey,
+    backup_key: Option<&VerifyingKey>,
+) -> AppResult<LicenseStatus> {
+    let claims = verify_token_with_keys(jws.trim(), primary_key, backup_key, device_id)?;
+    crate::safety::atomic_write(&data_dir.join("entitlement.jws"), jws.trim().as_bytes())
+        .map_err(|e| AppError::License(format!("failed to persist entitlement token: {e}")))?;
+    let status = active_status(&claims, false);
+    st.token = Some((jws.trim().to_string(), claims));
+    Ok(status)
+}
+
 impl Licensing {
     pub fn new(data_dir: PathBuf) -> Self {
+        Self::new_with_api(data_dir, load_api_url())
+    }
+
+    #[cfg(test)]
+    pub(crate) fn new_with_api_for_test(data_dir: PathBuf, api: String) -> Self {
+        Self::new_with_api(data_dir, api)
+    }
+
+    fn new_with_api(data_dir: PathBuf, api: String) -> Self {
         let _ = std::fs::create_dir_all(&data_dir);
-        let api = load_api_url();
         // Release builds refuse to talk to a plain-HTTP, non-local licence
         // server (tokens/refresh tokens would travel in clear text).
         let api_ok = cfg!(debug_assertions) || is_acceptable_api_url(&api);
@@ -497,6 +598,23 @@ impl Licensing {
         if let (Some(key), Ok(tok)) = (&pubkey, std::fs::read_to_string(data_dir.join("entitlement.jws"))) {
             if let Ok(claims) = verify_token_with_keys(tok.trim(), key, backup_pubkey.as_ref(), &device_id) {
                 state.token = Some((tok.trim().to_string(), claims));
+            }
+        }
+        // Apply offline/enterprise JWS policy token synchronously on startup if present
+        if let (Some(key), Some(policy_raw)) = (&pubkey, read_enterprise_policy_token()) {
+            if let Some(ActivationTokenKind::EnterpriseJws(jws)) = classify_activation_token(&policy_raw) {
+                let policy_hash = sha256_hex(&jws);
+                let hash_path = data_dir.join("policy_token.sha256");
+                let already_applied = std::fs::read_to_string(&hash_path)
+                    .ok()
+                    .map(|s| s.trim() == policy_hash)
+                    .unwrap_or(false)
+                    && matches!(&state.token, Some((_, c)) if c.exp > now());
+                if !already_applied {
+                    if apply_jws_to_state(&data_dir, &device_id, &mut state, &jws, key, backup_pubkey.as_ref()).is_ok() {
+                        let _ = crate::safety::atomic_write(&hash_path, policy_hash.as_bytes());
+                    }
+                }
             }
         }
 
@@ -636,6 +754,21 @@ impl Licensing {
                     return Ok(active_status(c, false));
                 }
             }
+            let has_local_identity = st.account.is_some()
+                || st.token.is_some()
+                || self.data_dir.join("account.json").is_file()
+                || self.data_dir.join("entitlement.jws").is_file();
+            if !crate::commands::is_telemetry_enabled(&self.data_dir) && !has_local_identity {
+                return Ok(LicenseStatus {
+                    active: false,
+                    status: "free".into(),
+                    plan: None,
+                    addons: Vec::new(),
+                    expires_at: None,
+                    offline: false,
+                    dev_unlock: false,
+                });
+            }
         }
 
         let Some(key) = self.pubkey.clone() else {
@@ -729,6 +862,11 @@ impl Licensing {
         }
         let st = self.state.lock().await;
         matches!(&st.token, Some((_, c)) if c.exp > now())
+    }
+
+    pub async fn has_local_account(&self) -> bool {
+        let st = self.state.lock().await;
+        st.account.is_some() || self.data_dir.join("account.json").is_file()
     }
 
     pub async fn require_active(&self) -> AppResult<()> {
@@ -1266,6 +1404,100 @@ impl Licensing {
         sanitize_qr_svg(&mut parsed.qr_svg);
         Ok(parsed)
     }
+
+    /// Verifies and persists an Ed25519 JWS activation token using explicit keys.
+    pub async fn activate_jws_with_keys(
+        &self,
+        jws: &str,
+        primary_key: &VerifyingKey,
+        backup_key: Option<&VerifyingKey>,
+    ) -> AppResult<LicenseStatus> {
+        let mut st = self.state.lock().await;
+        apply_jws_to_state(
+            &self.data_dir,
+            &self.device_id,
+            &mut st,
+            jws,
+            primary_key,
+            backup_key,
+        )
+    }
+
+    /// Enterprise / CLI Phase-1 activation entrypoint: accepts either a `ptk_...` pairing
+    /// token (redeemed online via `/api/device-link/redeem`) or a compact Ed25519 JWS
+    /// entitlement token (verified locally and persisted to `entitlement.jws`).
+    pub async fn activate_token(&self, token: &str) -> AppResult<LicenseStatus> {
+        match classify_activation_token(token) {
+            Some(ActivationTokenKind::PairingToken(ptk)) => self.redeem_pairing_token(&ptk).await,
+            Some(ActivationTokenKind::EnterpriseJws(jws)) => {
+                let Some(key) = self.pubkey.as_ref() else {
+                    return Err(AppError::License(
+                        "app built without SWEEPR_LICENSE_PUBKEY".into(),
+                    ));
+                };
+                self.activate_jws_with_keys(&jws, key, self.backup_pubkey.as_ref())
+                    .await
+            }
+            None => Err(AppError::License(
+                "Invalid activation token format. Expected a ptk_... pairing key or signed Ed25519 JWS token.".into(),
+            )),
+        }
+    }
+
+    /// Applies an enterprise policy token from `HKLM\Software\Policies\SWEEPRCleaner` if configured,
+    /// without blocking GUI startup or looping on already-processed one-time `ptk_...` tokens.
+    pub async fn apply_policy_token_if_present(&self) -> Option<LicenseStatus> {
+        let raw = read_enterprise_policy_token();
+        self.apply_policy_token_str(raw.as_deref()).await
+    }
+
+    pub async fn apply_policy_token_str(&self, raw_token: Option<&str>) -> Option<LicenseStatus> {
+        let norm = normalize_policy_token(raw_token)?;
+        let kind = classify_activation_token(&norm)?;
+        let canonical = match &kind {
+            ActivationTokenKind::PairingToken(ptk) => ptk.as_str(),
+            ActivationTokenKind::EnterpriseJws(jws) => jws.as_str(),
+        };
+        let policy_hash = sha256_hex(canonical);
+        let hash_path = self.data_dir.join("policy_token.sha256");
+        let prev_hash = std::fs::read_to_string(&hash_path).ok();
+        let hash_matches = prev_hash
+            .as_deref()
+            .map(|s| s.trim() == policy_hash)
+            .unwrap_or(false);
+
+        match kind {
+            ActivationTokenKind::PairingToken(ptk) => {
+                if hash_matches {
+                    // Never re-redeem the exact same one-time pairing token across restarts.
+                    return None;
+                }
+                match self.redeem_pairing_token(&ptk).await {
+                    Ok(status) => {
+                        let _ = crate::safety::atomic_write(&hash_path, policy_hash.as_bytes());
+                        Some(status)
+                    }
+                    Err(AppError::Network(_)) => None,
+                    Err(_) => {
+                        let _ = crate::safety::atomic_write(&hash_path, policy_hash.as_bytes());
+                        None
+                    }
+                }
+            }
+            ActivationTokenKind::EnterpriseJws(jws) => {
+                if hash_matches && self.has_cached_active_token().await {
+                    return None;
+                }
+                match self.activate_token(&jws).await {
+                    Ok(status) => {
+                        let _ = crate::safety::atomic_write(&hash_path, policy_hash.as_bytes());
+                        Some(status)
+                    }
+                    Err(_) => None,
+                }
+            }
+        }
+    }
 }
 
 fn sanitize_qr_svg(qr_svg: &mut String) {
@@ -1491,5 +1723,175 @@ mod tests {
         assert!(status.active);
         assert!(status.addons.contains(&"battery_care".to_string()));
         assert!(status.addons.contains(&"cloud_vault".to_string()));
+    }
+
+    #[test]
+    fn enterprise_policy_and_cli_token_classification_and_jws_activation() {
+        assert_eq!(normalize_policy_token(None), None);
+        assert_eq!(normalize_policy_token(Some("   ")), None);
+        assert_eq!(
+            normalize_policy_token(Some("  \"ptk_1234567890abcdef12345678\"  ")),
+            Some("ptk_1234567890abcdef12345678".to_string())
+        );
+
+        assert_eq!(
+            classify_activation_token("ptk_abcdefghijklmnopqrstuvwx"),
+            Some(ActivationTokenKind::PairingToken("ptk_abcdefghijklmnopqrstuvwx".to_string()))
+        );
+        assert_eq!(
+            classify_activation_token("aaa.bbb.ccc"),
+            Some(ActivationTokenKind::EnterpriseJws("aaa.bbb.ccc".to_string()))
+        );
+        assert_eq!(classify_activation_token("not-a-valid-token"), None);
+        assert_eq!(classify_activation_token("ptk_short"), None);
+
+        // Verify read_enterprise_policy_token executes cleanly without panicking on host OS
+        let _ = read_enterprise_policy_token();
+
+        // Verify JWS activation persists entitlement.jws and updates Licensing state
+        let dir = std::env::temp_dir().join(format!("sweepr-ent-jws-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let lic = Licensing::new(dir.clone());
+        let sk = SigningKey::from_bytes(&[31u8; 32]);
+        let vk = sk.verifying_key();
+        let jws = make_token(
+            &sk,
+            serde_json::json!({
+                "sub": "ent_org_1",
+                "device_id": lic.device_id(),
+                "project_id": "cleaner",
+                "status": "active",
+                "plan": "enterprise_annual",
+                "exp": now() + 3600
+            }),
+        );
+
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let st = rt
+            .block_on(lic.activate_jws_with_keys(&jws, &vk, None))
+            .expect("valid enterprise JWS must activate");
+        assert!(st.active);
+        assert_eq!(st.plan.as_deref(), Some("enterprise_annual"));
+        assert!(dir.join("entitlement.jws").is_file());
+        assert!(rt.block_on(lic.has_cached_active_token()));
+
+        // Invalid token format returns AppError::License
+        assert!(matches!(
+            rt.block_on(lic.activate_token("invalid-token")),
+            Err(AppError::License(_))
+        ));
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn zero_telemetry_status_makes_zero_outbound_requests_when_unactivated() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::Arc;
+
+        let dir = std::env::temp_dir().join(format!("sweepr-zero-tel-lic-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        listener.set_nonblocking(true).unwrap();
+
+        let hits = Arc::new(AtomicUsize::new(0));
+        let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let hits_bg = Arc::clone(&hits);
+        let stop_bg = Arc::clone(&stop);
+        let handle = std::thread::spawn(move || {
+            use std::io::Write;
+            while !stop_bg.load(Ordering::Relaxed) {
+                match listener.accept() {
+                    Ok((mut stream, _)) => {
+                        hits_bg.fetch_add(1, Ordering::SeqCst);
+                        let _ = stream.write_all(
+                            b"HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+                        );
+                    }
+                    Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                        std::thread::sleep(Duration::from_millis(10));
+                    }
+                    Err(_) => break,
+                }
+            }
+        });
+
+        let lic = Licensing::new_with_api_for_test(dir.clone(), format!("http://{addr}"));
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+
+        // Background status(false) with telemetry_enabled=false and no local account/token: 0 requests
+        let st = rt.block_on(lic.status(false)).expect("offline free status succeeds");
+        assert!(!st.active);
+        assert_eq!(st.status, "free");
+        assert_eq!(hits.load(Ordering::SeqCst), 0);
+
+        // Explicit force=true still performs a live check when requested by the user
+        let _ = rt.block_on(lic.status(true));
+        assert!(hits.load(Ordering::SeqCst) > 0);
+
+        stop.store(true, Ordering::Relaxed);
+        let _ = handle.join();
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn policy_ptk_persists_hash_only_after_non_network_outcome() {
+        use std::io::{Read, Write};
+
+        let dir = std::env::temp_dir().join(format!("sweepr-ptk-retry-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let ptk = "ptk_abcdefghijklmnopqrstuvwx";
+
+        // 1. Unreachable / closed port => AppError::Network => policy_token.sha256 MUST NOT be written
+        let closed_listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let closed_addr = closed_listener.local_addr().unwrap();
+        drop(closed_listener);
+
+        let lic_offline = Licensing::new_with_api_for_test(dir.clone(), format!("http://{closed_addr}"));
+        assert!(rt.block_on(lic_offline.apply_policy_token_str(Some(ptk))).is_none());
+        assert!(
+            !dir.join("policy_token.sha256").exists(),
+            "transient network failure must not suppress retry on next boot"
+        );
+
+        // 2. Terminal HTTP 404 => AppError::License => policy_token.sha256 IS written
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let handle = std::thread::spawn(move || {
+            if let Ok((mut stream, _)) = listener.accept() {
+                let mut buf = [0u8; 1024];
+                let _ = stream.read(&mut buf);
+                let _ = stream.write_all(
+                    b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+                );
+            }
+        });
+
+        let lic_online = Licensing::new_with_api_for_test(dir.clone(), format!("http://{addr}"));
+        assert!(rt.block_on(lic_online.apply_policy_token_str(Some(ptk))).is_none());
+        let _ = handle.join();
+        assert!(
+            dir.join("policy_token.sha256").is_file(),
+            "terminal non-network redemption failure should record policy_token.sha256"
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

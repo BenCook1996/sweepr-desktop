@@ -16,9 +16,9 @@
       <key>Label</key>
       <string>SWEEPR Cleaner</string>
       <key>PayloadDescription</key>
-      <string>Installs the SWEEPR Cleaner app onto your iPhone or iPad Home Screen.</string>
+      <string>Adds the SWEEPR Cleaner Safari Web Companion shortcut to your iPhone or iPad Home Screen.</string>
       <key>PayloadDisplayName</key>
-      <string>SWEEPR Cleaner iOS App</string>
+      <string>SWEEPR Cleaner Web Companion</string>
       <key>PayloadIdentifier</key>
       <string>com.sweeprcleaner.ios.webclip</string>
       <key>PayloadType</key>
@@ -34,13 +34,13 @@
     </dict>
   </array>
   <key>PayloadDescription</key>
-  <string>1-Tap SWEEPR Cleaner Installer for iPhone and iPad. Installs the SWEEPR Cleaner iOS App to scan duplicate photos, large videos, and manage your 3-device Pro subscription.</string>
+  <string>Adds the SWEEPR Cleaner Safari Web Companion shortcut to your iPhone or iPad Home Screen to check selected photos for exact duplicates, clear browser origin storage, and manage your 5-device Pro subscription (TestFlight Beta available; no App Store app yet).</string>
   <key>PayloadDisplayName</key>
-  <string>SWEEPR Cleaner (iPhone &amp; iPad Installer)</string>
+  <string>SWEEPR Cleaner (iOS Safari Web Companion)</string>
   <key>PayloadIdentifier</key>
   <string>com.sweeprcleaner.ios.installer</string>
   <key>PayloadOrganization</key>
-  <string>SWEEPR Technologies</string>
+  <string>Benjamin Cook (SWEEPR Cleaner)</string>
   <key>PayloadRemovalDisallowed</key>
   <false/>
   <key>PayloadType</key>

@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SWEEPR Cleaner: Fast PC, Mac &amp; Phone Storage Cleaner</title>
-  <meta name="description" content="Reclaim gigabytes of lost storage in 60 seconds across PC, Mac, iPhone &amp; Android. Inspect every file path safely with zero junkware or background slowdowns." />
-  <meta name="keywords" content="PC cleaner, Windows 11 cleaner, Mac cleaner, iPhone photo cleaner, Android cleaner, disk cleanup, duplicate file finder, battery care, CCleaner alternative, SWEEPR Cleaner" />
+  <meta name="description" content="Unlimited free scan &amp; unlimited Temp &amp; Browser Cache clean (to OS Recycle Bin) for Windows, Mac &amp; Android (plus iOS Safari web companion / TestFlight beta). Inspect paths safely with no adware." />
+  <meta name="keywords" content="PC cleaner, Windows 11 cleaner, Mac cleaner, iOS storage companion, iPhone storage cleaner, Android cleaner, disk cleanup, duplicate file finder, battery care, CCleaner alternative, SWEEPR Cleaner" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
   <link rel="canonical" href="https://sweeprcleaner.com/" />
   <link rel="alternate" hreflang="en" href="https://sweeprcleaner.com/" />
@@ -19,32 +19,37 @@
   <!-- Open Graph / Social -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="SWEEPR Cleaner" />
-  <meta property="og:title" content="SWEEPR Cleaner: One Cleaner for Your PC, Mac, iPhone &amp; Android" />
-  <meta property="og:description" content="Reclaim gigabytes of hidden system cache, duplicate bursts, and leftover app bloat in under 60 seconds. Zero background bloatware." />
+  <meta property="og:title" content="SWEEPR Cleaner: PC, Mac &amp; Android Storage Cleaner (+ iOS Safari Web Companion / TestFlight Beta)" />
+  <meta property="og:description" content="SWEEPR Free: Unlimited Temp &amp; Browser Cache Clean (to OS Recycle Bin) for Windows, Mac, and Android. Zero-Telemetry / Offline Mode by default and 7-Day Undo Quarantine (2–10 GB budget, 5 GB default) in Pro." />
   <meta property="og:url" content="https://sweeprcleaner.com/" />
   <meta property="og:image" content="https://sweeprcleaner.com/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="SWEEPR Cleaner: Fast PC, Mac &amp; Mobile Cleaner" />
+  <meta name="twitter:title" content="SWEEPR Cleaner: PC, Mac &amp; Android Storage Cleaner" />
   <meta name="twitter:description" content="Reclaim gigabytes of lost storage, merge duplicate photos, and protect battery health across 5 devices." />
   <meta name="twitter:image" content="https://sweeprcleaner.com/og-image.png" />
 
   <!-- Structured Data: SoftwareApplication + Organization -->
-  <script type="application/ld+json">
+  <script id="softwareAppJsonLd" type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
+  "@id": "https://sweeprcleaner.com/#software",
   "name": "SWEEPR Cleaner",
   "image": [
     "https://sweeprcleaner.com/og-image.png",
     "https://sweeprcleaner.com/icon-512.png"
   ],
-  "operatingSystem": "Windows 10, Windows 11, macOS, Android, iOS",
+  "screenshot": "https://sweeprcleaner.com/screenshot.png",
+  "operatingSystem": "Windows 10, Windows 11, macOS, Android",
   "applicationCategory": "UtilitiesApplication",
-  "description": "Fast, safe computer and phone cleaner, duplicate photo finder, 80% battery health saver, and storage optimizer for Windows, Mac, iOS, and Android.",
+  "description": "SWEEPR Free: Unlimited Temp & Browser Cache Clean (to OS Recycle Bin); Pro unlocks Deep GPU/AI/Dev Caches, SHA-256 Duplicates, Uninstaller, Scheduler & 7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget; excludes shredded files, browser DBs, and registry edits) across Windows, macOS, Android, and iOS (Safari web companion / TestFlight beta).",
   "url": "https://sweeprcleaner.com/",
   "downloadUrl": "https://sweeprcleaner.com/download",
   "softwareVersion": "0.1.0",
-  "fileSize": "6.52MB",
+  "fileSize": "6.76MB",
+  "publisher": {
+    "@id": "https://sweeprcleaner.com/#organization"
+  },
   "offers": [
     {
       "@type": "Offer",
@@ -67,58 +72,7 @@
           "priceCurrency": "GBP",
           "priceType": "https://schema.org/StrikethroughPrice"
         }
-      ],
-      "hasMerchantReturnPolicy": {
-        "@type": "MerchantReturnPolicy",
-        "applicableCountry": [
-          "GB",
-          "US",
-          "DE",
-          "FR",
-          "ES",
-          "CA",
-          "AU"
-        ],
-        "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
-        "merchantReturnDays": 14,
-        "returnMethod": "https://schema.org/ReturnByMail",
-        "returnFees": "https://schema.org/FreeReturn"
-      },
-      "shippingDetails": {
-        "@type": "OfferShippingDetails",
-        "shippingRate": {
-          "@type": "MonetaryAmount",
-          "value": "0.00",
-          "currency": "GBP"
-        },
-        "shippingDestination": {
-          "@type": "DefinedRegion",
-          "addressCountry": [
-            "GB",
-            "US",
-            "DE",
-            "FR",
-            "ES",
-            "CA",
-            "AU"
-          ]
-        },
-        "deliveryTime": {
-          "@type": "ShippingDeliveryTime",
-          "handlingTime": {
-            "@type": "QuantitativeValue",
-            "minValue": 0,
-            "maxValue": 0,
-            "unitCode": "DAY"
-          },
-          "transitTime": {
-            "@type": "QuantitativeValue",
-            "minValue": 0,
-            "maxValue": 0,
-            "unitCode": "DAY"
-          }
-        }
-      }
+      ]
     },
     {
       "@type": "Offer",
@@ -141,58 +95,7 @@
           "priceCurrency": "GBP",
           "priceType": "https://schema.org/StrikethroughPrice"
         }
-      ],
-      "hasMerchantReturnPolicy": {
-        "@type": "MerchantReturnPolicy",
-        "applicableCountry": [
-          "GB",
-          "US",
-          "DE",
-          "FR",
-          "ES",
-          "CA",
-          "AU"
-        ],
-        "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
-        "merchantReturnDays": 14,
-        "returnMethod": "https://schema.org/ReturnByMail",
-        "returnFees": "https://schema.org/FreeReturn"
-      },
-      "shippingDetails": {
-        "@type": "OfferShippingDetails",
-        "shippingRate": {
-          "@type": "MonetaryAmount",
-          "value": "0.00",
-          "currency": "GBP"
-        },
-        "shippingDestination": {
-          "@type": "DefinedRegion",
-          "addressCountry": [
-            "GB",
-            "US",
-            "DE",
-            "FR",
-            "ES",
-            "CA",
-            "AU"
-          ]
-        },
-        "deliveryTime": {
-          "@type": "ShippingDeliveryTime",
-          "handlingTime": {
-            "@type": "QuantitativeValue",
-            "minValue": 0,
-            "maxValue": 0,
-            "unitCode": "DAY"
-          },
-          "transitTime": {
-            "@type": "QuantitativeValue",
-            "minValue": 0,
-            "maxValue": 0,
-            "unitCode": "DAY"
-          }
-        }
-      }
+      ]
     },
     {
       "@type": "Offer",
@@ -201,58 +104,15 @@
       "priceCurrency": "GBP",
       "priceValidUntil": "2027-12-31",
       "availability": "https://schema.org/InStock",
-      "url": "https://sweeprcleaner.com/order?plan=monthly",
-      "hasMerchantReturnPolicy": {
-        "@type": "MerchantReturnPolicy",
-        "applicableCountry": [
-          "GB",
-          "US",
-          "DE",
-          "FR",
-          "ES",
-          "CA",
-          "AU"
-        ],
-        "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
-        "merchantReturnDays": 14,
-        "returnMethod": "https://schema.org/ReturnByMail",
-        "returnFees": "https://schema.org/FreeReturn"
-      },
-      "shippingDetails": {
-        "@type": "OfferShippingDetails",
-        "shippingRate": {
-          "@type": "MonetaryAmount",
-          "value": "0.00",
-          "currency": "GBP"
-        },
-        "shippingDestination": {
-          "@type": "DefinedRegion",
-          "addressCountry": [
-            "GB",
-            "US",
-            "DE",
-            "FR",
-            "ES",
-            "CA",
-            "AU"
-          ]
-        },
-        "deliveryTime": {
-          "@type": "ShippingDeliveryTime",
-          "handlingTime": {
-            "@type": "QuantitativeValue",
-            "minValue": 0,
-            "maxValue": 0,
-            "unitCode": "DAY"
-          },
-          "transitTime": {
-            "@type": "QuantitativeValue",
-            "minValue": 0,
-            "maxValue": 0,
-            "unitCode": "DAY"
-          }
-        }
-      }
+      "url": "https://sweeprcleaner.com/order?plan=monthly"
+    },
+    {
+      "@type": "Offer",
+      "name": "SWEEPR Cleaner Free — Unlimited Temp & Browser Cache Clean",
+      "price": "0.00",
+      "priceCurrency": "GBP",
+      "availability": "https://schema.org/InStock",
+      "url": "https://sweeprcleaner.com/download"
     }
   ]
 }
@@ -261,18 +121,35 @@
   {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": "https://sweeprcleaner.com/#organization",
     "name": "SWEEPR Cleaner",
+    "legalName": "Benjamin Cook t/a SWEEPR Cleaner",
+    "founder": {
+      "@type": "Person",
+      "@id": "https://sweeprcleaner.com/#founder",
+      "name": "Benjamin Cook",
+      "url": "https://sweeprcleaner.com/about",
+      "sameAs": [
+        "https://github.com/BenCook1996"
+      ]
+    },
     "url": "https://sweeprcleaner.com",
-    "logo": "https://sweeprcleaner.com/icon-512.png",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://sweeprcleaner.com/icon-512.png",
+      "width": 512,
+      "height": 512
+    },
     "contactPoint": {
       "@type": "ContactPoint",
       "email": "support@sweeprcleaner.com",
       "contactType": "customer support"
     },
     "sameAs": [
+      "https://github.com/BenCook1996",
       "https://github.com/BenCook1996/sweepr-desktop",
       "https://github.com/BenCook1996/scoop-sweepr",
-      "https://github.com/microsoft/winget-pkgs/pull/480164",
+      "https://github.com/microsoft/winget-pkgs/tree/master/manifests/s/Sweepr/SweeprCleaner",
       "https://alternativeto.net/software/sweeprcleaner/",
       "https://www.saashub.com/sweepr-cleaner",
       "https://sourceforge.net/software/product/SWEEPR-Cleaner/",
@@ -503,6 +380,58 @@
     }
     .header-cta:hover {
       background: var(--accent-hover);
+    }
+
+    .mobile-nav-toggle {
+      display: none;
+      min-width: 42px;
+      min-height: 42px;
+      padding: 0 10px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--surface-elevated);
+      color: var(--text);
+      font-size: 0.84rem;
+      font-weight: 700;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .mobile-nav-drawer {
+      display: none;
+      border-top: 1px solid var(--border);
+      background: var(--surface-elevated);
+      padding: 12px clamp(1rem, 3vw, 2.25rem) 16px;
+    }
+    .mobile-nav-drawer.open {
+      display: block;
+    }
+    .mobile-nav-links {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .mobile-nav-links a {
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.94rem;
+      font-weight: 600;
+      color: var(--text);
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+    }
+    .mobile-nav-links a:hover {
+      background: var(--surface);
+    }
+    @media (max-width: 740px) {
+      .header-nav {
+        display: none;
+      }
+      .mobile-nav-toggle {
+        display: inline-flex;
+      }
     }
 
     /* Main Container */
@@ -1124,6 +1053,7 @@
         <a href="/clean" class="nav-link">Guides</a>
         <a href="/tools" class="nav-link">Tools</a>
         <a href="/pricing" class="nav-link">Pricing</a>
+        <a href="/about" class="nav-link">About</a>
         <a href="/dashboard" class="nav-link">My Account</a>
       </nav>
 
@@ -1138,16 +1068,56 @@
           <option value="chf">CHF · CH</option>
           <option value="sek">SEK (kr) · SE</option>
           <option value="nok">NOK (kr) · NO</option>
-          <option value="dkk">DKK (kr) · DK</option>
+          <option value="dkk">DKK (kr.) · DK</option>
           <option value="pln">PLN (zł) · PL</option>
+          <option value="czk">CZK (Kč) · CZ</option>
+          <option value="ron">RON (lei) · RO</option>
+          <option value="bgn">BGN (лв.) · BG</option>
+          <option value="try">TRY (₺) · TR</option>
           <option value="jpy">JPY (¥) · JP</option>
-          <option value="inr">INR (₹) · IN</option>
+          <option value="krw">KRW (₩) · KR</option>
           <option value="sgd">SGD (S$) · SG</option>
+          <option value="hkd">HKD (HK$) · HK</option>
+          <option value="twd">TWD (NT$) · TW</option>
+          <option value="inr">INR (₹) · IN</option>
           <option value="brl">BRL (R$) · BR</option>
+          <option value="mxn">MXN (MX$) · MX</option>
+          <option value="zar">ZAR (R) · ZA</option>
+          <option value="aed">AED · AE</option>
+          <option value="sar">SAR · SA</option>
+          <option value="ils">ILS (₪) · IL</option>
+          <option value="myr">MYR (RM) · MY</option>
+          <option value="thb">THB (฿) · TH</option>
+          <option value="php">PHP (₱) · PH</option>
         </select>
-        <a href="/download" id="headerDownloadBtn" class="header-cta btn-press" rel="nofollow">Free Download</a>
+        <a href="/download" id="headerDownloadBtn" class="header-cta btn-press">Free Download</a>
+        <button type="button" id="siteMobileMenuBtn" class="mobile-nav-toggle" aria-expanded="false" aria-controls="siteMobileDrawer">Menu</button>
       </div>
     </div>
+    <div id="siteMobileDrawer" class="mobile-nav-drawer" aria-label="Mobile Navigation">
+      <div class="mobile-nav-links">
+        <a href="/clean">Storage Guides</a>
+        <a href="/tools">Cleaner Tools</a>
+        <a href="/safe-to-delete">Path Safety Checker</a>
+        <a href="/tools/pc-cache-calculator">PC Cache Calculator</a>
+        <a href="/state-of-windows-storage">2026 Storage Study</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/about">About</a>
+        <a href="/dashboard">My Account</a>
+      </div>
+    </div>
+    <script>
+      (function(){
+        var btn = document.getElementById('siteMobileMenuBtn');
+        var drawer = document.getElementById('siteMobileDrawer');
+        if (!btn || !drawer) return;
+        btn.addEventListener('click', function(){
+          var isOpen = drawer.classList.toggle('open');
+          btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          btn.textContent = isOpen ? 'Close' : 'Menu';
+        });
+      })();
+    </script>
   </header>
 
   <main id="main-content" class="container">
@@ -1156,11 +1126,11 @@
       <!-- Left Column: Device-Adaptive Headline, CTA & 3-Stage Interactive Scrubber -->
       <div>
         <h1 id="hero-heading" class="w3-headline">
-          One simple cleaner for your <em>PC, Mac, iPhone,</em> and Android.
+          One simple cleaner for your <em>PC, Mac,</em> and Android (+ iOS Safari Web Companion / TestFlight Beta).
         </h1>
 
         <p class="w3-lead" id="heroLeadText">
-          A lightweight, fast app that clears hidden junk files, finds duplicate photos, and speeds up your computer or phone in one click. It only runs when you open it, and never touches your personal files or saved passwords.
+          <strong>SWEEPR Free: Unlimited Temp &amp; Browser Cache Clean (to OS Recycle Bin)</strong> on Windows &amp; Mac&mdash;plus Android app and iOS (Safari web companion / TestFlight beta). Pro unlocks Deep GPU/AI/Dev Caches, SHA-256 Duplicates, Uninstaller, Scheduler &amp; 7-Day Undo Quarantine. Zero-Telemetry / Offline Mode is enabled by default and never touches your personal files or saved passwords.
         </p>
 
         <div class="w3-cta-row">
@@ -1172,6 +1142,9 @@
             <span class="mono" id="secondaryOrderPriceBadge">£49.99/yr</span>
           </a>
         </div>
+        <p style="font-size:0.84rem;color:var(--muted);margin-bottom:14px;">
+          SWEEPR Free includes <strong>unlimited storage scan + Unlimited Temp &amp; Browser Cache Clean</strong> (to OS Recycle Bin, zero byte cap). No card required. <a href="/pricing" style="text-decoration:underline;color:var(--accent-ink);font-weight:700;">Compare Free vs. Pro →</a>
+        </p>
 
         <div class="trust-strip" aria-label="Why people trust SWEEPR">
           <span class="trust-point">
@@ -1200,24 +1173,28 @@
               <circle cx="8" cy="8" r="7" fill="rgba(13, 104, 71, 0.14)" stroke="currentColor" stroke-width="1.4" />
               <path d="M5.2 8.2L7.1 10.1L10.9 6.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            <span>7-Day Undo — Put Back Any File in 1 Click</span>
+            <span>7-Day Undo Quarantine — 2–10 GB Budget (5 GB Default, O(1) Move)</span>
           </span>
         </div>
 
         <!-- 3-Stage Interactive Preview Scrubber (Doherty Threshold <16ms) -->
         <div id="preview-stage" class="scrubber-card" aria-label="Interactive feature preview">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.72rem;color:var(--muted);font-family:var(--font-mono);margin-bottom:8px;padding:0 4px;">
+            <span>Interactive Feature Preview</span>
+            <span>Illustrative preview · Example footprint</span>
+          </div>
           <div class="scrubber-tabs" role="tablist" aria-label="Preview stages">
             <button type="button" class="scrubber-tab btn-press" role="tab" aria-selected="true" aria-controls="panel-audit" id="tab-audit" data-stage="audit">
               1. What We Clean
-              <span class="mono" style="display:block;font-size:0.7rem;color:var(--accent);">14.8 GB Free Space Found</span>
+              <span class="mono" style="display:block;font-size:0.7rem;color:var(--accent);">Example footprint: ~14.8 GB</span>
             </button>
             <button type="button" class="scrubber-tab btn-press" role="tab" aria-selected="false" aria-controls="panel-photos" id="tab-photos" data-stage="photos">
-              2. Duplicate Photo Cleaner
-              <span class="mono" style="display:block;font-size:0.7rem;color:var(--accent);">Keep Best Photo</span>
+              2. Duplicates &amp; Dev Artifacts
+              <span class="mono" style="display:block;font-size:0.7rem;color:var(--accent);">2-Stage SHA-256</span>
             </button>
             <button type="button" class="scrubber-tab btn-press" role="tab" aria-selected="false" aria-controls="panel-guard" id="tab-guard" data-stage="guard">
               3. Battery &amp; File Protection
-              <span class="mono" style="display:block;font-size:0.7rem;color:var(--accent);">80% Battery Saver</span>
+              <span class="mono" style="display:block;font-size:0.7rem;color:var(--accent);">80% Battery Cap / Alert</span>
             </button>
           </div>
 
@@ -1229,48 +1206,48 @@
                   <strong>Temporary Files &amp; Web Browser Clutter</strong>
                   <span class="path-tag" id="auditPath1">Old temporary files and leftover web browser clutter (keeps your logins &amp; passwords safe)</span>
                 </div>
-                <span class="path-size">6.4 GB</span>
+                <span class="path-size">Example: 6.4 GB</span>
               </div>
               <div class="path-audit-row">
                 <div>
                   <strong>Leftover Files from Old Updates &amp; Apps</strong>
                   <span class="path-tag" id="auditPath2">Old system update installers and leftover junk from uninstalled apps</span>
                 </div>
-                <span class="path-size">5.1 GB</span>
+                <span class="path-size">Example: 5.1 GB</span>
               </div>
               <div class="path-audit-row">
                 <div>
                   <strong>Identical Duplicate Photos &amp; Downloads</strong>
                   <span class="path-tag" id="auditPath3">Extra copies of the exact same photo or file (always keeps your original safe)</span>
                 </div>
-                <span class="path-size">3.3 GB</span>
+                <span class="path-size">Example: 3.3 GB</span>
               </div>
             </div>
           </div>
 
-          <!-- Stage 2: Duplicate Photo Cleaner -->
+          <!-- Stage 2: Duplicates, Android Swipe & Stale Dev Artifacts -->
           <div id="panel-photos" class="scrubber-panel" role="tabpanel" aria-labelledby="tab-photos">
             <div class="path-audit-list">
               <div class="path-audit-row">
                 <div>
-                  <strong>Picks Your Sharpest Photo Automatically</strong>
-                  <span class="path-tag">Spots blurry repeat shots and keeps your clearest, sharpest photo</span>
+                  <strong>2-Stage Parallel SHA-256 Exact Deduplication</strong>
+                  <span class="path-tag">Size bucket &rarr; 16 KiB pre-hash &rarr; full 64 KiB buffered SHA-256 (<code class="mono">duplicates.rs</code>); keeps your original file safe</span>
                 </div>
-                <span class="path-size">Keep Best</span>
+                <span class="path-size">Exact SHA-256</span>
               </div>
               <div class="path-audit-row">
                 <div>
-                  <strong>Simple Swipe-to-Clean Photo Cards</strong>
-                  <span class="path-tag">Swipe left to remove clutter or swipe right to keep — review a month of photos in 45 seconds</span>
+                  <strong>Android Best-Shot &amp; Swipe Cleanup</strong>
+                  <span class="path-tag">Quick visual swipe triage for photo bursts on Android &mdash; swipe left to stage clutter or swipe right to keep</span>
                 </div>
-                <span class="path-size">4.2 GB Saved</span>
+                <span class="path-size">Example: 4.2 GB</span>
               </div>
               <div class="path-audit-row">
                 <div>
-                  <strong>Large Video &amp; Screenshot Shrinker</strong>
-                  <span class="path-tag">Shrinks huge video files so they take up less room without looking blurry</span>
+                  <strong>Stale Dev &amp; Docker Artifacts (<code class="mono">scanner.rs:539-842</code>)</strong>
+                  <span class="path-tag">Inspects Docker <code class="mono">ext4.vhdx</code> / <code class="mono">Docker.raw</code> + BuildKit and inactive <code class="mono">node_modules</code>, Cargo <code class="mono">target</code>, <code class="mono">.next</code>, <code class="mono">.gradle</code> &amp; <code class="mono">.venv</code></span>
                 </div>
-                <span class="path-size">3.8 GB Saved</span>
+                <span class="path-size">Example: 3.8 GB</span>
               </div>
             </div>
           </div>
@@ -1280,22 +1257,22 @@
             <div class="path-audit-list">
               <div class="path-audit-row">
                 <div>
-                  <strong>80% Battery Health Saver &amp; Cooling Alert</strong>
-                  <span class="path-tag">Reminds you to unplug at 80% and stops apps from overheating your battery so it lasts longer</span>
+                  <strong>80% Battery Health Saver</strong>
+                  <span class="path-tag">80% firmware charge cap on supported ASUS WMI, Dell CCTK &amp; Linux sysfs laptops; software unplug alert on other Windows &amp; Mac devices</span>
                 </div>
                 <span class="path-size" id="scrubberBatteryPrice">+£9.99/yr</span>
               </div>
               <div class="path-audit-row">
                 <div>
-                  <strong>Private File Lockbox &amp; Automatic Backup</strong>
-                  <span class="path-tag">Password-locks your private photos and documents and backs up important folders automatically</span>
+                  <strong>Private File Lockbox &amp; Local Sync Mirror</strong>
+                  <span class="path-tag">Encrypts private files locally with Argon2id + AES-256-GCM (.swvault Vault) and mirrors folders one-way to your locally mounted cloud drive folder</span>
                 </div>
                 <span class="path-size" id="scrubberCloudPrice">+£9.99/yr</span>
               </div>
               <div class="path-audit-row">
                 <div>
                   <strong>Easy 1-Scan Phone &amp; Computer Linking</strong>
-                  <span class="path-tag">Clean up to 5 devices by scanning a simple QR code</span>
+                  <span class="path-tag">One Pro license covers up to 5 devices across Windows, Mac &amp; Android (plus iOS Safari web companion / TestFlight beta)</span>
                 </div>
                 <span class="path-size">5 Devices</span>
               </div>
@@ -1331,19 +1308,19 @@
             <span class="giant-price-strike" id="giantPriceStrike">£119.88/yr</span>
           </div>
           <p class="giant-price-caption" id="giantPriceCaption">
-            Clean up to 5 devices across PC, Mac, iPhone, and Android. Billed yearly (£4.16/mo equivalent). Cancel anytime in 1 click.
+            Clean up to 5 devices across PC, Mac &amp; Android (plus iOS Safari web companion / TestFlight beta). Billed yearly (£4.16/mo equivalent). Cancel anytime in 1 click.
           </p>
         </div>
 
-        <!-- Full-Row <label> Add-on Pills (Fitts's Law 56px targets, 9.99 each) -->
-        <div class="addons-heading">Optional Add-Ons (9.99/yr each)</div>
+        <!-- Full-Row <label> Add-on Pills (Fitts's Law 56px targets) -->
+        <div class="addons-heading" id="addonsHeading">Optional Pro Add-Ons (+£9.99/yr each)</div>
         <div class="addon-list">
           <label class="addon-pill" for="addonBatteryCheckbox">
             <span class="addon-left">
               <input type="checkbox" id="addonBatteryCheckbox" class="addon-checkbox" value="battery_care" />
               <span>
                 <span class="addon-title">Battery Health Saver</span>
-                <span class="addon-desc">80% charge alert, overheating protection &amp; background battery saver</span>
+                <span class="addon-desc">80% firmware charge cap (ASUS WMI, Dell CCTK, Linux sysfs) or unplug alert elsewhere</span>
               </span>
             </span>
             <span class="addon-price-tag" id="addonBatteryPriceTag">+£9.99/yr</span>
@@ -1353,8 +1330,8 @@
             <span class="addon-left">
               <input type="checkbox" id="addonCloudCheckbox" class="addon-checkbox" value="cloud_vault" />
               <span>
-                <span class="addon-title">Private File Lockbox &amp; Cloud Backup</span>
-                <span class="addon-desc">Password-locks private files &amp; automatically backs up your folders</span>
+                <span class="addon-title">Private File Lockbox &amp; Local Sync Mirror</span>
+                <span class="addon-desc">Local Argon2id + AES-256-GCM Vault (.swvault) &amp; additive one-way local folder mirror</span>
               </span>
             </span>
             <span class="addon-price-tag" id="addonCloudPriceTag">+£9.99/yr</span>
@@ -1371,6 +1348,7 @@
           <span>Secure Stripe Checkout</span>
           <span>Instant Activation</span>
           <a href="/pricing" style="text-decoration:underline;">See 6-Month Plan &amp; Full Details</a>
+          <a href="/refund" style="text-decoration:underline;">14-Day Refund Policy</a>
         </div>
       </aside>
     </section>
@@ -1383,54 +1361,184 @@
           See what's taking up space
         </h2>
         <p style="color:var(--muted);">
-          No confusing error codes or scary fake warnings. Whether you use Windows, Mac, iPhone, or Android, SWEEPR organizes your clutter into four simple categories.
+          No confusing error codes or scary fake warnings. Whether you use Windows, Mac, or Android (plus iOS Safari Web Companion &amp; TestFlight beta), SWEEPR organizes your clutter into four simple categories. Example footprint values from a sample Windows machine; your scan results will vary.
         </p>
       </div>
 
       <div class="semantic-grid">
         <article class="semantic-tile tile-green">
           <div>
-            <div class="tile-metric">6.4 GB</div>
+            <div class="tile-metric">Example: 6.4 GB</div>
             <h3 class="tile-title">Temporary Files &amp; Browser Clutter</h3>
           </div>
           <p class="tile-body">
-            Clears old temporary files and web browser clutter from Chrome, Edge, and Safari without logging you out of websites or erasing saved passwords.
+            Clears old temporary files and web browser caches from Chrome, Edge, Brave, and Firefox without logging you out or erasing saved passwords. <strong>SWEEPR Free</strong> provides Unlimited Temp &amp; Browser Cache Clean (to OS Recycle Bin, zero byte cap). Verify folders via the <a href="/safe-to-delete" style="text-decoration:underline;font-weight:700;">Safe-to-Delete Checker</a>.
           </p>
           <span class="tile-badge">Windows · Mac · Android</span>
         </article>
 
         <article class="semantic-tile tile-cobalt">
           <div>
-            <div class="tile-metric">4.2 GB</div>
-            <h3 class="tile-title">Duplicate Photos &amp; Large Videos</h3>
+            <div class="tile-metric">Example: 4.2 GB</div>
+            <h3 class="tile-title">Exact SHA-256 Duplicates &amp; Android Photo Triage</h3>
           </div>
           <p class="tile-body">
-            Finds identical copies of files on your computer and lets you swipe through duplicate or blurry photos on your iPhone or Android in seconds.
+            Finds identical file copies on your computer via 2-stage parallel SHA-256 deduplication (16 KiB pre-hash then 64 KiB full digest) and lets you review photo bursts with Best-Shot &amp; Swipe Cleanup on Android. <a href="/pricing" style="text-decoration:underline;font-weight:700;">Included in Pro plans</a>.
           </p>
-          <span class="tile-badge">iPhone · Android · Computer</span>
+          <span class="tile-badge">2-Stage SHA-256 · Android Best-Shot &amp; Swipe</span>
         </article>
 
         <article class="semantic-tile tile-amber">
           <div>
-            <div class="tile-metric">3.1 GB</div>
-            <h3 class="tile-title">Old App Leftovers &amp; Slow Startups</h3>
+            <div class="tile-metric">Example: 5.1 GB</div>
+            <h3 class="tile-title">Stale Dev, Docker &amp; Unused Downloads</h3>
           </div>
           <p class="tile-body">
-            Removes leftover folders from deleted apps, clears old system update files, and stops unnecessary apps from slowing down your computer when it turns on.
+            Surfaces stale Docker <code class="mono">ext4.vhdx</code> / <code class="mono">Docker.raw</code> + BuildKit, inactive <code class="mono">node_modules</code>, Cargo <code class="mono">target</code>, <code class="mono">.next</code>, <code class="mono">.gradle</code> &amp; <code class="mono">.venv</code>, plus 30-day unused Downloads checked via 5-signal <code class="mono">Recent\*.lnk</code> and non-touching <code class="mono">access_mode(0).share_mode(0)</code> lock checks. See <a href="/state-of-windows-storage" style="text-decoration:underline;font-weight:700;">2026 Storage Study</a>.
           </p>
-          <span class="tile-badge">7-Day Undo Safety Net</span>
+          <span class="tile-badge">7-Day Undo (2–10 GB budget, 5 GB default)</span>
         </article>
 
         <article class="semantic-tile tile-plum">
           <div>
             <div class="tile-metric" id="tilePlumPrice">+£9.99/yr</div>
-            <h3 class="tile-title">Battery Saver &amp; Private File Lockbox</h3>
+            <h3 class="tile-title">Battery Saver &amp; Local File Lockbox</h3>
           </div>
           <p class="tile-body">
-            Optional 80% charge alerts to help your laptop and phone battery last years longer, plus a password-locked folder and automatic cloud backup.
+            Optional 80% firmware charge cap (ASUS WMI, Dell CCTK, Linux sysfs) or unplug alert elsewhere, plus a local Argon2id + AES-256-GCM .swvault Vault and additive local folder mirror. <a href="/pricing" style="text-decoration:underline;font-weight:700;">View Pro add-on pricing</a>.
           </p>
-          <span class="tile-badge">Optional 9.99 Add-ons</span>
+          <span class="tile-badge" id="tilePlumBadge">Optional Pro Add-ons (+£9.99/yr)</span>
         </article>
+      </div>
+    </section>
+
+    <!-- REAL DESKTOP CAPTURES, LOCAL BENCHMARK & SAFETY BOUNDARIES -->
+    <section class="section-block" aria-labelledby="desktop-captures-heading">
+      <div class="section-header">
+        <div class="section-tag">Real Desktop &amp; Android Captures · Measured Local Benchmark</div>
+        <h2 id="desktop-captures-heading" class="section-title">
+          Inside the 6.76 MB Native Rust Desktop &amp; Android Apps
+        </h2>
+        <p style="color:var(--muted);">
+          Real captures of SWEEPR Cleaner&rsquo;s Smart Scan, Path Inspection, 7-Day Undo Quarantine, Argon2id Lockbox, Stale Dev &amp; Docker scanner, and Android cleaner screens, paired with our measured local benchmark on entry-level SATA hardware.
+        </p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:20px;">
+        <figure class="info-card" style="padding:14px;">
+          <img src="/screenshot.png" alt="SWEEPR Cleaner live Windows Tauri Smart Scan showing 14.3 GB reclaimable across 4.2 GB free and 10.1 GB Pro categories" width="1280" height="800" loading="lazy" decoding="async" style="width:100%;height:auto;border-radius:10px;border:1px solid var(--border);display:block;" />
+          <figcaption style="font-size:0.8rem;color:var(--muted);margin-top:8px;"><strong>Live Tauri Desktop Overview (Example scan):</strong> Smart Scan finds 14.3 GB reclaimable (4.2 GB Free + 10.1 GB Pro) with single-source <code class="mono">for_each_target_with_exclusions</code> parity.</figcaption>
+        </figure>
+        <figure class="info-card" style="padding:14px;">
+          <img src="/img/desktop-smart-scan.webp" alt="SWEEPR Cleaner Smart Scan screen showing deterministic folder categories and reclaimable space" width="1280" height="800" loading="lazy" decoding="async" style="width:100%;height:auto;border-radius:10px;border:1px solid var(--border);display:block;" />
+          <figcaption style="font-size:0.8rem;color:var(--muted);margin-top:8px;"><strong>Smart Scan (<code class="mono">scanner.rs:352</code>):</strong> Rayon parallel rule walker scans 71 cross-OS rules (455 patterns) without locking active apps.</figcaption>
+        </figure>
+        <figure class="info-card" style="padding:14px;">
+          <img src="/img/desktop-path-inspection.webp" alt="SWEEPR Cleaner Path Inspection view with plain-English safety explanations before cleaning" width="1280" height="800" loading="lazy" decoding="async" style="width:100%;height:auto;border-radius:10px;border:1px solid var(--border);display:block;" />
+          <figcaption style="font-size:0.8rem;color:var(--muted);margin-top:8px;"><strong>Path Inspection (<code class="mono">scanner.rs:110</code>):</strong> Non-touching <code class="mono">access_mode(0)</code> / <code class="mono">share_mode(0)</code> check skips files returning <code class="mono">ERROR_SHARING_VIOLATION</code>.</figcaption>
+        </figure>
+        <figure class="info-card" style="padding:14px;">
+          <img src="/img/desktop-quarantine-undo.webp" alt="SWEEPR Cleaner 7-Day Undo Quarantine view with configurable 2 to 10 GB disk budget" width="1280" height="800" loading="lazy" decoding="async" style="width:100%;height:auto;border-radius:10px;border:1px solid var(--border);display:block;" />
+          <figcaption style="font-size:0.8rem;color:var(--muted);margin-top:8px;"><strong>7-Day Undo Quarantine:</strong> Configurable 2–10 GB disk budget (5 GB default) with same-volume O(1) move and OS Recycle Bin fallback.</figcaption>
+        </figure>
+        <figure class="info-card" style="padding:14px;">
+          <img src="/img/desktop-argon2-lockbox.webp" alt="SWEEPR Cleaner Private File Lockbox encrypted locally with Argon2id and AES-256-GCM STREAM" width="1280" height="800" loading="lazy" decoding="async" style="width:100%;height:auto;border-radius:10px;border:1px solid var(--border);display:block;" />
+          <figcaption style="font-size:0.8rem;color:var(--muted);margin-top:8px;"><strong>Argon2id + AES-256-GCM STREAM Lockbox:</strong> Local-only <code class="mono">.swvault</code> encryption (<code class="mono">vault.rs:4-219</code>) plus 72-hour Ed25519 offline-grace licensing.</figcaption>
+        </figure>
+        <figure class="info-card" style="padding:14px;">
+          <img src="/img/desktop-stale-dev-docker.webp" alt="SWEEPR Cleaner Tools Stale Dev and Docker view showing ext4.vhdx, node_modules, target, .next, .gradle, and .venv inspection" width="1280" height="800" loading="lazy" decoding="async" style="width:100%;height:auto;border-radius:10px;border:1px solid var(--border);display:block;" />
+          <figcaption style="font-size:0.8rem;color:var(--muted);margin-top:8px;"><strong>Stale Dev &amp; Docker (<code class="mono">scanner.rs:539-842</code>):</strong> Inspects Docker <code class="mono">ext4.vhdx</code> / BuildKit and stale <code class="mono">node_modules</code>, <code class="mono">target</code>, <code class="mono">.next</code>, <code class="mono">.gradle</code>, and <code class="mono">.venv</code>.</figcaption>
+        </figure>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <div class="section-tag" style="margin-bottom:10px;">Authentic Android &amp; Tablet Captures</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;align-items:start;">
+          <figure class="info-card" style="padding:14px;">
+            <img src="/img/android-dashboard.webp" alt="SWEEPR Cleaner Android phone dashboard showing storage overview and cleanup categories" width="540" height="1169" loading="lazy" decoding="async" style="width:100%;max-width:220px;height:auto;margin:0 auto;border-radius:10px;border:1px solid var(--border);display:block;" />
+            <figcaption style="font-size:0.78rem;color:var(--muted);margin-top:8px;text-align:center;"><strong>Android Dashboard:</strong> On-device storage breakdown and one-tap cache triage.</figcaption>
+          </figure>
+          <figure class="info-card" style="padding:14px;">
+            <img src="/img/android-bestshot.webp" alt="SWEEPR Cleaner Android Best-Shot burst photo comparison screen" width="540" height="1169" loading="lazy" decoding="async" style="width:100%;max-width:220px;height:auto;margin:0 auto;border-radius:10px;border:1px solid var(--border);display:block;" />
+            <figcaption style="font-size:0.78rem;color:var(--muted);margin-top:8px;text-align:center;"><strong>Android Best-Shot:</strong> Compare burst shots side-by-side and keep your preferred frame.</figcaption>
+          </figure>
+          <figure class="info-card" style="padding:14px;">
+            <img src="/img/android-swipe-cleanup.webp" alt="SWEEPR Cleaner Android swipe-to-clean photo review interface" width="540" height="1169" loading="lazy" decoding="async" style="width:100%;max-width:220px;height:auto;margin:0 auto;border-radius:10px;border:1px solid var(--border);display:block;" />
+            <figcaption style="font-size:0.78rem;color:var(--muted);margin-top:8px;text-align:center;"><strong>Android Swipe Cleanup:</strong> Swipe left to stage clutter or right to keep.</figcaption>
+          </figure>
+          <figure class="info-card" style="padding:14px;">
+            <img src="/img/android-tablet.webp" alt="SWEEPR Cleaner Android tablet layout showing multi-pane storage review" width="1200" height="750" loading="lazy" decoding="async" style="width:100%;height:auto;border-radius:10px;border:1px solid var(--border);display:block;" />
+            <figcaption style="font-size:0.78rem;color:var(--muted);margin-top:8px;text-align:center;"><strong>Android Tablet View:</strong> Wide-screen storage &amp; media cleanup included in your 5-device account.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <div class="two-col-grid">
+        <div class="info-card">
+          <div class="section-tag">Measured Local Rust Scan Benchmark (2026-11-26)</div>
+          <h3 class="tile-title" style="margin-bottom:8px;">Entry-Level Celeron N5095 + SATA SSD Scan Telemetry</h3>
+          <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px;">
+            Measured via <code class="mono">scanner::tests::benchmark_local_windows_scan</code> (<code class="mono">--release</code> read-only <code class="mono">scan_all_with_exclusions</code>) on an entry-level <strong>Intel(R) Celeron(R) N5095 @ 2.00GHz</strong> (4C/4T) PC with <strong>15.78 GB RAM</strong> and a <strong>XINCUU-512GB SATA SSD</strong> (SATA, not NVMe) running <strong>Windows 11 Pro Build 26200 (25H2)</strong> on <strong>2026-11-26</strong>:
+          </p>
+          <div class="path-audit-list">
+            <div class="path-audit-row">
+              <span><strong>Scanned Files &amp; Throughput</strong></span>
+              <span class="mono">98,247 files · 180.6 files/sec (544,007 ms / 544.01 s)</span>
+            </div>
+            <div class="path-audit-row">
+              <span><strong>Reclaimable Caches Found</strong></span>
+              <span class="mono">14.97 GB (13.94 GiB / 14,973,281,719 B) across 27 rules / 14 non-empty categories</span>
+            </div>
+            <div class="path-audit-row">
+              <span><strong>Top Measured Categories</strong></span>
+              <span class="mono">build_caches 4.59 GB · downloads 4.07 GB · chrome 2.62 GB · dev_caches 1.72 GB · temp 999.4 MB · delivery_opt 508.5 MB · edge 208.5 MB</span>
+            </div>
+            <div class="path-audit-row">
+              <span><strong>Rust Engine Architecture</strong></span>
+              <span class="mono">Rayon parallel walker (scanner.rs:352) · access_mode(0).share_mode(0) · 5-signal Recent\*.lnk · 2-stage SHA-256 · Argon2id + AES-256-GCM · Ed25519 72h offline grace</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-card" id="what-sweepr-never-touches">
+          <div class="section-tag">Hard-Coded in safety.rs:8–134</div>
+          <h3 class="tile-title" style="margin-bottom:8px;">What SWEEPR Never Touches</h3>
+          <p style="font-size:0.88rem;color:var(--muted);margin-bottom:10px;">
+            Before any scan or deletion runs, <code class="mono">safety::is_safe_root</code>, <code class="mono">is_safe_scan_root</code>, and <code class="mono">is_link_like</code> enforce five compile-time boundary guards:
+          </p>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.8rem;text-align:left;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border);background:var(--surface);">
+                  <th scope="col" style="padding:8px 10px;">Safety Guard (<code class="mono">safety.rs</code>)</th>
+                  <th scope="col" style="padding:8px 10px;">Protected Paths &amp; Conditions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid var(--border);">
+                  <td style="padding:8px 10px;font-weight:700;vertical-align:top;">1. Shallow &amp; Relative Path Guard<br><code class="mono" style="font-weight:500;">is_safe_root (8–19)</code></td>
+                  <td style="padding:8px 10px;color:var(--muted);">Rejects relative paths and paths with <code class="mono">&lt; 2</code> normal segments (except <code class="mono">std::env::temp_dir()</code>).</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border);">
+                  <td style="padding:8px 10px;font-weight:700;vertical-align:top;">2. Personal User Libraries<br><code class="mono" style="font-weight:500;">is_safe_root (21–40)</code></td>
+                  <td style="padding:8px 10px;color:var(--muted);">Hard-denies <code class="mono">home_dir</code>, <code class="mono">Documents</code>, <code class="mono">Desktop</code>, <code class="mono">Pictures</code>, <code class="mono">Videos</code>, <code class="mono">Audio</code> / <code class="mono">Music</code>, and <code class="mono">AppData</code> (<code class="mono">data_dir</code> / <code class="mono">data_local_dir</code> / <code class="mono">config_dir</code>) roots.</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border);">
+                  <td style="padding:8px 10px;font-weight:700;vertical-align:top;">3. Downloads 30-Day + 5-Signal Guard<br><code class="mono" style="font-weight:500;">is_safe_scan_root (60–74)</code></td>
+                  <td style="padding:8px 10px;color:var(--muted);"><code class="mono">Downloads</code> refused unless <code class="mono">min_age_hours &gt;= 720</code> (30 days) AND file passes mtime, ctime, atime, <code class="mono">Recent\*.lnk</code>, and <code class="mono">access_mode(0).share_mode(0)</code> checks (<code class="mono">scanner.rs:129–168</code>).</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border);">
+                  <td style="padding:8px 10px;font-weight:700;vertical-align:top;">4. OS &amp; Program Roots<br><code class="mono" style="font-weight:500;">is_safe_root (41–55)</code></td>
+                  <td style="padding:8px 10px;color:var(--muted);">Denies Windows <code class="mono">SystemRoot</code>, <code class="mono">ProgramFiles</code>, <code class="mono">ProgramFiles(x86)</code>, <code class="mono">ProgramData</code>; Unix <code class="mono">/</code>, <code class="mono">/usr</code>, <code class="mono">/bin</code>, <code class="mono">/etc</code>, <code class="mono">/var</code>, <code class="mono">/System</code>, <code class="mono">/Library</code>, <code class="mono">/Applications</code>.</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 10px;font-weight:700;vertical-align:top;">5. Symlinks, Junctions &amp; OneDrive<br><code class="mono" style="font-weight:500;">is_link_like / has_symlink_component (80–134)</code></td>
+                  <td style="padding:8px 10px;color:var(--muted);">Rejects <code class="mono">..</code> parent traversal, symlinks, NTFS junctions, and Windows <code class="mono">FILE_ATTRIBUTE_REPARSE_POINT (0x400)</code> OneDrive cloud placeholders across every ancestor.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1453,20 +1561,20 @@
             <h3 class="tile-title">Safe to Use — Keeps Logins, Passwords &amp; Photos Safe</h3>
           </div>
           <p class="tile-body">
-            Every cleanup shows a plain-English explanation before removing anything, backed by a 7-Day Undo folder so you can put any file back in one click.
+            Every cleanup shows a plain-English explanation before removing anything, backed by Pro 7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget; excludes shredded files, browser DBs, and registry edits). <a href="/safe-to-delete" style="text-decoration:underline;font-weight:700;">Inspect folder safety verdicts</a>.
           </p>
-          <span class="tile-badge">Plain-English Explanations · 7-Day Undo</span>
+          <span class="tile-badge">Plain-English Explanations · 7-Day Undo (5 GB Default)</span>
         </article>
 
         <article class="semantic-tile tile-cobalt">
           <div>
-            <div class="tile-metric" style="font-size:1.15rem;">vs. Single-Device Cleaners ($39.95/yr)</div>
+            <div class="tile-metric" style="font-size:1.15rem;">vs. Single-Device Cleaners</div>
             <h3 class="tile-title">One Account Covers 5 Computers &amp; Phones</h3>
           </div>
           <p class="tile-body">
-            Clean up to 5 devices across Windows, Mac, iPhone, and Android under one simple plan — instead of buying separate apps for your computer and phone.
+            Clean up to 5 devices across Windows, Mac &amp; Android (plus iOS Safari web companion / TestFlight beta) under one simple plan — instead of buying separate single-device licences. <a href="/pricing" style="text-decoration:underline;font-weight:700;">Compare 5-device plans</a>.
           </p>
-          <span class="tile-badge">PC · Mac · iPhone · Android</span>
+          <span class="tile-badge">PC · Mac · Android · iOS Companion (Beta)</span>
         </article>
 
         <article class="semantic-tile tile-amber">
@@ -1475,9 +1583,9 @@
             <h3 class="tile-title">No Annoying Pop-Ups or Background Slowdowns</h3>
           </div>
           <p class="tile-body">
-            Installs in seconds and only runs when you open it — no background bloatware slowing down your computer, no scary fake warnings, and 100% private on-device scanning.
+            Runs on-demand with an optional lightweight system tray and scheduled cleaning — no adware pop-ups, no scary fake warnings, and local file scanning with <strong>Zero-Telemetry / Offline Mode</strong> enabled by default (<code style="font-family:var(--font-mono);font-size:0.8em;">telemetry_enabled = false</code>; opt-in only). <a href="/vs/ccleaner" style="text-decoration:underline;font-weight:700;">See SWEEPR vs CCleaner</a>.
           </p>
-          <span class="tile-badge">Never Slows Your PC · Scans in Seconds</span>
+          <span class="tile-badge">No Adware Pop-Ups · Zero-Telemetry / Offline Mode</span>
         </article>
 
         <article class="semantic-tile tile-plum">
@@ -1486,7 +1594,7 @@
             <h3 class="tile-title">Always Up to Date &amp; 14-Day Money-Back Guarantee</h3>
           </div>
           <p class="tile-body">
-            Automatically stays up to date as Windows, Mac, browsers, and apps change where they hide clutter — backed by 1-click cancellation and a 14-day refund guarantee.
+            Automatically stays up to date as Windows, Mac, browsers, and apps change where they hide clutter — backed by 1-click cancellation and a <a href="/refund" style="text-decoration:underline;font-weight:700;">14-day money-back refund policy</a>. <a href="/pricing" style="text-decoration:underline;font-weight:700;">See full pricing</a>.
           </p>
           <span class="tile-badge">Cancel Anytime in 1 Click</span>
         </article>
@@ -1500,25 +1608,31 @@
           <div class="section-tag">Why People Switch to SWEEPR</div>
           <h2 class="section-title" style="font-size:1.45rem;">Never slows down your computer. Shows you everything before cleaning.</h2>
           <p style="color:var(--muted);font-size:0.9rem;margin-bottom:16px;">
-            Old-fashioned cleaners install annoying pop-ups and run constantly in the background, slowing down the very computer they promised to speed up. SWEEPR only runs when you open it.
+            Old-fashioned cleaners install annoying pop-ups and run constantly in the background, slowing down the very computer they promised to speed up. SWEEPR runs on-demand with an optional lightweight system tray and scheduled cleaning—no adware pop-ups or forced bloatware.
           </p>
           <div class="path-audit-list">
             <div class="path-audit-row">
-              <span><strong>Tiny, Fast Download</strong></span>
-              <span class="mono">Installs in 10 seconds · No extra junk</span>
+              <span><strong>Lightweight 6.76 MB (7,085,912 B) Native Rust Installer</strong></span>
+              <span class="mono">Rayon parallel walker (scanner.rs:352) · for_each_target_with_exclusions parity · Unlimited free scan + Unlimited Temp &amp; Browser Cache Clean</span>
             </div>
             <div class="path-audit-row">
-              <span><strong>7-Day Undo Safety Net</strong></span>
-              <span class="mono">Put back any cleaned file in 1 click</span>
+              <span><strong>Non-Touching Lock &amp; 5-Signal Safety</strong></span>
+              <span class="mono">access_mode(0).share_mode(0) lock check (scanner.rs:110) · 5-signal Recent\*.lnk check (scanner.rs:80–168) · safety.rs reparse guard</span>
             </div>
             <div class="path-audit-row">
-              <span><strong>One Account for Everything</strong></span>
-              <span class="mono">Clean up to 5 devices</span>
+              <span><strong>7-Day Undo Quarantine &amp; Offline Licensing</strong></span>
+              <span class="mono">Configurable 2–10 GB disk budget (5 GB default, O(1) move; OS Recycle Bin fallback) · 72h Ed25519 offline grace · Zero-Telemetry default</span>
+            </div>
+            <div class="path-audit-row">
+              <span><strong>Exact Duplicates, Stale Dev &amp; Lockbox</strong></span>
+              <span class="mono">2-stage parallel SHA-256 · Stale Dev &amp; Docker (ext4.vhdx, node_modules, target) · Argon2id + AES-256-GCM STREAM · Up to 5 devices</span>
             </div>
           </div>
           <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
             <a href="/vs/ccleaner" class="nav-link" style="background:var(--surface);border:1px solid var(--border);">SWEEPR vs CCleaner →</a>
             <a href="/alternatives/ccleaner" class="nav-link" style="background:var(--surface);border:1px solid var(--border);">Compare Other Cleaners →</a>
+            <a href="/pricing" class="nav-link" style="background:var(--surface);border:1px solid var(--border);">Compare Plans &amp; Pricing →</a>
+            <a href="/state-of-windows-storage" class="nav-link" style="background:var(--surface);border:1px solid var(--border);">2026 Storage Study →</a>
           </div>
         </div>
 
@@ -1528,19 +1642,19 @@
           <details class="faq-item" open>
             <summary class="faq-summary">What is the difference between the Yearly, 6-Month, and Monthly plans?</summary>
             <p class="faq-answer" id="faqPlanAnswer">
-              All three plans (Monthly, 6-Month, and Yearly) let you clean up to 5 devices across Windows, macOS, iOS, and Android. The Yearly plan is £49.99/year (saving 58%, or £4.16/month), the 6-Month plan is £38.99 every 6 months (£6.50/month), and the Monthly plan is £9.99/month with no long-term commitment. You can cancel anytime in one click.
+              <span id="faqPlanDynamic">All three plans (Monthly, 6-Month, and Yearly) let you clean up to 5 devices across Windows, macOS, and Android (plus iOS Safari Web Companion &amp; TestFlight beta). SWEEPR Free includes an unlimited storage scan and Unlimited Temp &amp; Browser Cache Clean (to OS Recycle Bin); Pro unlocks Deep GPU/AI/Dev Caches, SHA-256 Duplicates, Uninstaller, Scheduler &amp; 7-Day Undo Quarantine. The Yearly plan is £49.99/year (saving 58%, or £4.16/month), the 6-Month plan is £38.99 every 6 months (saving 35%), and the Monthly plan is £9.99/month with no long-term commitment.</span> <a href="/pricing" style="text-decoration:underline;font-weight:700;">Compare Free vs. Pro</a> · <a href="/refund" style="text-decoration:underline;font-weight:700;">14-day refund policy</a>.
             </p>
           </details>
           <details class="faq-item">
             <summary class="faq-summary">Can I get a file back if I clean it by mistake?</summary>
             <p class="faq-answer">
-              Yes! On Windows and Mac, cleaned files are kept safely in SWEEPR's 7-Day Undo folder so you can put any file right back where it was in one click. On iPhone and Android, deleted photos stay in your phone's Recently Deleted album for 30 days.
+              Yes. With SWEEPR Pro on Windows and macOS, cleaned temp and cache files move into SWEEPR's 7-Day Undo Quarantine (configurable 2–10 GB disk budget, 5 GB default, same-volume O(1) move; OS Recycle Bin fallback if file exceeds budget; excludes shredded files, browser DBs, and registry edits). SWEEPR Free cleans route directly to your OS Recycle Bin/Trash. Check paths first with our <a href="/safe-to-delete" style="text-decoration:underline;font-weight:700;">Safe-to-Delete Checker</a>.
             </p>
           </details>
           <details class="faq-item">
             <summary class="faq-summary">How do the Battery Health Saver and Cloud Protection add-ons work?</summary>
             <p class="faq-answer" id="faqAddonAnswer">
-              Each optional add-on is £9.99/year. Battery Health Saver alerts you at 80% charge, pauses idle browser tabs, and cools down hot laptops. Cloud Protection gives you a password-locked folder for private files and automatically backs up important folders to OneDrive, Google Drive, Dropbox, or iCloud.
+              <span id="faqAddonDynamic">Each optional Pro add-on is £9.99/year (£1.99/month on monthly billing). Battery Health Saver enforces an 80% hardware charge cap on supported ASUS WMI, Dell CCTK, and Linux sysfs laptops (and provides an 80% software unplug alert on other Windows PCs and Macs), while suspending idle tabs. Private File Lockbox encrypts private files locally with Argon2id + AES-256-GCM (.swvault Vault) and mirrors folders one-way (additive sync) to your locally mounted OneDrive, Google Drive, Dropbox, or iCloud folder (no SWEEPR-hosted cloud storage).</span> <a href="/pricing" style="text-decoration:underline;font-weight:700;">See Pro &amp; add-on details</a>.
             </p>
           </details>
         </div>
@@ -1560,6 +1674,7 @@
             <a href="/tools" class="nav-link" style="background:var(--surface);border:1px solid var(--border);font-size:0.8rem;">Cleaner Tools →</a>
             <a href="/safe-to-delete" class="nav-link" style="background:var(--surface);border:1px solid var(--border);font-size:0.8rem;">Path Safety Checker →</a>
             <a href="/tools/pc-cache-calculator" class="nav-link" style="background:var(--surface);border:1px solid var(--border);font-size:0.8rem;">Cache Bloat Calculator →</a>
+            <a href="/state-of-windows-storage" class="nav-link" style="background:var(--surface);border:1px solid var(--border);font-size:0.8rem;">2026 Windows Storage Study →</a>
             <a href="/clean" class="nav-link" style="background:var(--accent-soft);color:var(--accent-ink);border:1px solid var(--border);font-size:0.8rem;font-weight:700;">All Storage Guides →</a>
           </div>
         </div>
@@ -1604,7 +1719,7 @@
           <a href="/alternatives/glary-utilities" style="color:var(--muted);text-decoration:underline;">Glary Utilities Alternatives</a>
           <a href="/vs/wise-disk-cleaner" style="color:var(--muted);text-decoration:underline;">SWEEPR vs Wise Disk Cleaner</a>
           <a href="/alternatives/wise-disk-cleaner" style="color:var(--muted);text-decoration:underline;">Wise Disk Cleaner Alternatives</a>
-          <a href="/vs/cleanmymac" style="color:var(--muted);text-decoration:underline;">SWEEPR vs CleanMyMac X</a>
+          <a href="/vs/cleanmymac" style="color:var(--muted);text-decoration:underline;">SWEEPR vs CleanMyMac</a>
           <a href="/alternatives/cleanmymac" style="color:var(--muted);text-decoration:underline;">CleanMyMac Alternatives</a>
           <a href="/vs/daisydisk" style="color:var(--muted);text-decoration:underline;">SWEEPR vs DaisyDisk</a>
           <a href="/vs/pearcleaner" style="color:var(--muted);text-decoration:underline;">SWEEPR vs Pearcleaner</a>
@@ -1616,12 +1731,14 @@
   <footer class="site-footer">
     <div class="footer-inner">
       <div>
-        <strong>SWEEPR Cleaner Inc.</strong> · Fast, safe cleanup for Windows, Mac, iPhone &amp; Android.<br />
-        <span>© 2026 SWEEPR Cleaner Inc. All rights reserved.</span>
+        <strong>SWEEPR Cleaner (Benjamin Cook)</strong> · Fast, safe cleanup for Windows, Mac &amp; Android (plus iOS Safari web companion / TestFlight beta).<br />
+        <span>© 2026 Benjamin Cook t/a SWEEPR Cleaner (UK Sole Trader). All rights reserved.</span><br />
+        <span>Correspondence: 87 Upper Brighton Road, Worthing, West Sussex · Direct developer support (<!--email_off--><a href="mailto:support@sweeprcleaner.com" style="text-decoration:underline;">support@sweeprcleaner.com</a><!--/email_off-->) within 1 business day (UK time).</span>
       </div>
       <div class="footer-links">
         <a href="/pricing">Pricing</a>
-        <a href="/download" rel="nofollow">Download</a>
+        <a href="/about">About</a>
+        <a href="/download">Download</a>
         <a href="/tools">Cleaner Tools</a>
         <a href="/safe-to-delete">Path Checker</a>
         <a href="/tools/pc-cache-calculator">Cache Calculator</a>
@@ -1630,7 +1747,7 @@
         <a href="/alternatives/ccleaner">Alternatives</a>
         <a href="/clean">Storage Guides</a>
         <a href="/state-of-windows-storage">2026 Storage Study</a>
-        <a href="https://sweeprdeepblock.com/order?plan=suite_annual&amp;utm_source=sweeprcleaner&amp;utm_medium=footer_suite_bundle" target="_blank" rel="noopener nofollow">Complete Security Suite (£89.99/yr — Save 45%)</a>
+        <a href="https://sweeprdeepblock.com/order?plan=suite_annual&amp;utm_source=sweeprcleaner&amp;utm_medium=footer_suite_bundle" target="_blank" rel="noopener nofollow">Complete Security Suite (Save 45%)</a>
         <a href="https://sweeprdeepblock.com/?utm_source=sweeprcleaner&amp;utm_medium=cross_promo&amp;utm_campaign=footer_ecosystem" target="_blank" rel="noopener nofollow">SWEEPR DeepBlock (Ad &amp; Cookie Blocker)</a>
         <a href="https://sweeprvpn.com/?utm_source=sweeprcleaner&amp;utm_medium=cross_promo&amp;utm_campaign=footer_ecosystem" target="_blank" rel="noopener nofollow">SWEEPR VPN &amp; Wi-Fi Scanner</a>
         <a href="/support">Support</a>
@@ -1649,10 +1766,10 @@
       <button type="button" id="closePostDownloadModalBtn" aria-label="Close download helper" style="border:none;background:transparent;color:var(--muted);font-size:1.1rem;font-weight:800;cursor:pointer;line-height:1;">✕</button>
     </div>
     <h3 id="postDownloadModalTitle" style="font-size:1.02rem;font-weight:800;line-height:1.3;margin-bottom:6px;color:var(--text);">
-      Want your free 500 MB activation link &amp; easy step-by-step setup guide emailed to you?
+      Want your easy step-by-step setup guide &amp; unlimited free clean tips emailed to you?
     </h3>
     <p style="font-size:0.8rem;color:var(--muted);line-height:1.45;margin-bottom:12px;">
-      Enter your email and we'll send your 1-click installation guide and free 500 MB activation link in case you need a hand getting started.
+      Enter your email and we'll send your 1-click installation guide and free Temp &amp; Browser Cache cleanup tips in case you need a hand getting started.
     </p>
     <form id="postDownloadEmailForm" style="display:flex;gap:8px;flex-wrap:wrap;">
       <input type="email" id="postDownloadEmailInput" required placeholder="you@example.com" aria-label="Your email address" style="flex:1;min-width:170px;min-height:42px;padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:0.86rem;" />
@@ -1668,24 +1785,56 @@
   <!-- Dynamic Geo-Currency, Device/OS & Add-On Pricing Engine -->
   <script>
     (function () {
-      // 1. Complete Multi-Currency Fallback Catalog (Matches server/src/pricing.ts 1:1)
+      var IS_BOT = /bot|crawl|spider|googlebot|google-inspectiontool|googleother|google-extended|bingbot|adidxbot|applebot|slurp|duckduckbot|duckassistbot|yandex|baiduspider|bytespider|petalbot|ahrefsbot|semrushbot|mj12bot|dotbot|ccbot|gptbot|oai-searchbot|chatgpt-user|perplexitybot|perplexity-user|claudebot|claude-user|claude-searchbot|meta-externalagent|facebookexternalhit|dataforseobot|barkrowler|seekportbot|zoominfobot|amazonbot|sogou|headlesschrome|phantomjs|playwright|puppeteer|selenium|webdriver/i.test(navigator.userAgent || '');
+
+      function fmtCurrencyVal(c, v) {
+        var numStr = c.zeroDec
+          ? Math.round(v).toLocaleString('en-US')
+          : Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return c.pos === 'suffix' ? (numStr + c.symbol) : (c.symbol + numStr);
+      }
+
+      function apiNumStr(c, v) {
+        return c.zeroDec ? String(Math.round(v)) : Number(v).toFixed(2);
+      }
+
+      // 1. Complete Multi-Currency Fallback Catalog (Matches server/src/pricing.ts 1:1 — all 30 currencies)
       var FALLBACK_PRICING = {
-        gbp: { code: 'gbp', symbol: '£', label: 'United Kingdom (GBP)', annual: 49.99, annualEq: '£4.16', annualStrike: '£119.88', sixMo: 38.99, annualSavingsPercent: 58, sixMonthSavingsPercent: 35, intro: 1.99, monthly: 9.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return '£' + v.toFixed(2); } },
-        usd: { code: 'usd', symbol: '$', label: 'United States (USD)', annual: 64.99, annualEq: '$5.41', annualStrike: '$143.88', sixMo: 47.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 1.99, monthly: 11.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return '$' + v.toFixed(2); } },
-        eur: { code: 'eur', symbol: '€', label: 'Eurozone (EUR)', annual: 59.99, annualEq: '€4.99', annualStrike: '€131.88', sixMo: 44.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 32, intro: 1.99, monthly: 10.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return '€' + v.toFixed(2); } },
-        cad: { code: 'cad', symbol: 'CA$', label: 'Canada (CAD)', annual: 89.99, annualEq: 'CA$7.49', annualStrike: 'CA$191.88', sixMo: 64.99, annualSavingsPercent: 53, sixMonthSavingsPercent: 32, intro: 2.99, monthly: 15.99, addonAnnual: 14.99, addonMonthly: 2.99, fmt: function(v) { return 'CA$' + v.toFixed(2); } },
-        aud: { code: 'aud', symbol: 'A$', label: 'Australia (AUD)', annual: 99.99, annualEq: 'A$8.33', annualStrike: 'A$215.88', sixMo: 74.99, annualSavingsPercent: 54, sixMonthSavingsPercent: 31, intro: 2.99, monthly: 17.99, addonAnnual: 15.99, addonMonthly: 2.99, fmt: function(v) { return 'A$' + v.toFixed(2); } },
-        nzd: { code: 'nzd', symbol: 'NZ$', label: 'New Zealand (NZD)', annual: 109.99, annualEq: 'NZ$9.16', annualStrike: 'NZ$239.88', sixMo: 79.99, annualSavingsPercent: 54, sixMonthSavingsPercent: 33, intro: 2.99, monthly: 19.99, addonAnnual: 17.99, addonMonthly: 3.49, fmt: function(v) { return 'NZ$' + v.toFixed(2); } },
-        chf: { code: 'chf', symbol: 'CHF ', label: 'Switzerland (CHF)', annual: 59.99, annualEq: 'CHF 4.99', annualStrike: 'CHF 131.88', sixMo: 44.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 32, intro: 1.99, monthly: 10.99, addonAnnual: 9.99, addonMonthly: 1.99, fmt: function(v) { return 'CHF ' + v.toFixed(2); } },
-        sek: { code: 'sek', symbol: ' kr', label: 'Sweden (SEK)', annual: 699.99, annualEq: '58.33 kr', annualStrike: '1 559.88 kr', sixMo: 519.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 19.99, monthly: 129.99, addonAnnual: 119.99, addonMonthly: 19.99, fmt: function(v) { return v.toFixed(2) + ' kr'; } },
-        nok: { code: 'nok', symbol: ' kr', label: 'Norway (NOK)', annual: 699.99, annualEq: '58.33 kr', annualStrike: '1 559.88 kr', sixMo: 519.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 19.99, monthly: 129.99, addonAnnual: 119.99, addonMonthly: 19.99, fmt: function(v) { return v.toFixed(2) + ' kr'; } },
-        dkk: { code: 'dkk', symbol: ' kr.', label: 'Denmark (DKK)', annual: 449.99, annualEq: '37.49 kr.', annualStrike: '1 019.88 kr.', sixMo: 329.99, annualSavingsPercent: 56, sixMonthSavingsPercent: 35, intro: 14.99, monthly: 84.99, addonAnnual: 79.99, addonMonthly: 14.99, fmt: function(v) { return v.toFixed(2) + ' kr.'; } },
-        pln: { code: 'pln', symbol: ' zł', label: 'Poland (PLN)', annual: 259.99, annualEq: '21.66 zł', annualStrike: '575.88 zł', sixMo: 189.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 34, intro: 7.99, monthly: 47.99, addonAnnual: 44.99, addonMonthly: 7.99, fmt: function(v) { return v.toFixed(2) + ' zł'; } },
-        jpy: { code: 'jpy', symbol: '¥', label: 'Japan (JPY)', annual: 9980, annualEq: '¥831', annualStrike: '¥22,560', sixMo: 7480, annualSavingsPercent: 56, sixMonthSavingsPercent: 34, intro: 290, monthly: 1880, addonAnnual: 1580, addonMonthly: 290, fmt: function(v) { return '¥' + Math.round(v).toLocaleString(); } },
-        inr: { code: 'inr', symbol: '₹', label: 'India (INR)', annual: 5499.99, annualEq: '₹458.33', annualStrike: '₹11,999.88', sixMo: 3999.99, annualSavingsPercent: 54, sixMonthSavingsPercent: 33, intro: 169.99, monthly: 999.99, addonAnnual: 899.99, addonMonthly: 169.99, fmt: function(v) { return '₹' + v.toFixed(2); } },
-        sgd: { code: 'sgd', symbol: 'S$', label: 'Singapore (SGD)', annual: 84.99, annualEq: 'S$7.08', annualStrike: 'S$191.88', sixMo: 62.99, annualSavingsPercent: 56, sixMonthSavingsPercent: 34, intro: 2.99, monthly: 15.99, addonAnnual: 13.99, addonMonthly: 2.49, fmt: function(v) { return 'S$' + v.toFixed(2); } },
-        brl: { code: 'brl', symbol: 'R$ ', label: 'Brazil (BRL)', annual: 349.99, annualEq: 'R$ 29.16', annualStrike: 'R$ 779.88', sixMo: 259.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 9.99, monthly: 64.99, addonAnnual: 59.99, addonMonthly: 9.99, fmt: function(v) { return 'R$ ' + v.toFixed(2); } }
+        gbp: { code: 'gbp', currencyCode: 'GBP', symbol: '£', pos: 'prefix', zeroDec: false, label: 'United Kingdom (GBP)', annual: 49.99, annualEq: '£4.16', annualStrike: '£119.88', sixMo: 38.99, annualSavingsPercent: 58, sixMonthSavingsPercent: 35, intro: 1.99, monthly: 9.99, addonAnnual: 9.99, addonMonthly: 1.99 },
+        usd: { code: 'usd', currencyCode: 'USD', symbol: '$', pos: 'prefix', zeroDec: false, label: 'United States (USD)', annual: 64.99, annualEq: '$5.41', annualStrike: '$143.88', sixMo: 47.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 1.99, monthly: 11.99, addonAnnual: 9.99, addonMonthly: 1.99 },
+        eur: { code: 'eur', currencyCode: 'EUR', symbol: '€', pos: 'prefix', zeroDec: false, label: 'Eurozone (EUR)', annual: 59.99, annualEq: '€4.99', annualStrike: '€131.88', sixMo: 44.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 32, intro: 1.99, monthly: 10.99, addonAnnual: 9.99, addonMonthly: 1.99 },
+        cad: { code: 'cad', currencyCode: 'CAD', symbol: 'CA$', pos: 'prefix', zeroDec: false, label: 'Canada (CAD)', annual: 89.99, annualEq: 'CA$7.49', annualStrike: 'CA$191.88', sixMo: 64.99, annualSavingsPercent: 53, sixMonthSavingsPercent: 32, intro: 2.99, monthly: 15.99, addonAnnual: 14.99, addonMonthly: 2.99 },
+        aud: { code: 'aud', currencyCode: 'AUD', symbol: 'A$', pos: 'prefix', zeroDec: false, label: 'Australia (AUD)', annual: 99.99, annualEq: 'A$8.33', annualStrike: 'A$215.88', sixMo: 74.99, annualSavingsPercent: 54, sixMonthSavingsPercent: 31, intro: 2.99, monthly: 17.99, addonAnnual: 15.99, addonMonthly: 2.99 },
+        nzd: { code: 'nzd', currencyCode: 'NZD', symbol: 'NZ$', pos: 'prefix', zeroDec: false, label: 'New Zealand (NZD)', annual: 109.99, annualEq: 'NZ$9.16', annualStrike: 'NZ$239.88', sixMo: 79.99, annualSavingsPercent: 54, sixMonthSavingsPercent: 33, intro: 2.99, monthly: 19.99, addonAnnual: 17.99, addonMonthly: 3.49 },
+        chf: { code: 'chf', currencyCode: 'CHF', symbol: 'CHF ', pos: 'prefix', zeroDec: false, label: 'Switzerland (CHF)', annual: 59.99, annualEq: 'CHF 4.99', annualStrike: 'CHF 131.88', sixMo: 44.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 32, intro: 1.99, monthly: 10.99, addonAnnual: 9.99, addonMonthly: 1.99 },
+        sek: { code: 'sek', currencyCode: 'SEK', symbol: ' kr', pos: 'suffix', zeroDec: false, label: 'Sweden (SEK)', annual: 699.99, annualEq: '58.33 kr', annualStrike: '1,559.88 kr', sixMo: 519.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 19.99, monthly: 129.99, addonAnnual: 119.99, addonMonthly: 19.99 },
+        nok: { code: 'nok', currencyCode: 'NOK', symbol: ' kr', pos: 'suffix', zeroDec: false, label: 'Norway (NOK)', annual: 699.99, annualEq: '58.33 kr', annualStrike: '1,559.88 kr', sixMo: 519.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 19.99, monthly: 129.99, addonAnnual: 119.99, addonMonthly: 19.99 },
+        dkk: { code: 'dkk', currencyCode: 'DKK', symbol: ' kr.', pos: 'suffix', zeroDec: false, label: 'Denmark (DKK)', annual: 449.99, annualEq: '37.49 kr.', annualStrike: '1,019.88 kr.', sixMo: 329.99, annualSavingsPercent: 56, sixMonthSavingsPercent: 35, intro: 14.99, monthly: 84.99, addonAnnual: 79.99, addonMonthly: 14.99 },
+        pln: { code: 'pln', currencyCode: 'PLN', symbol: ' zł', pos: 'suffix', zeroDec: false, label: 'Poland (PLN)', annual: 259.99, annualEq: '21.66 zł', annualStrike: '575.88 zł', sixMo: 189.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 34, intro: 7.99, monthly: 47.99, addonAnnual: 44.99, addonMonthly: 7.99 },
+        czk: { code: 'czk', currencyCode: 'CZK', symbol: ' Kč', pos: 'suffix', zeroDec: false, label: 'Czechia (CZK)', annual: 1499.99, annualEq: '124.99 Kč', annualStrike: '3,359.88 Kč', sixMo: 1099.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 35, intro: 49.99, monthly: 279.99, addonAnnual: 249.99, addonMonthly: 44.99 },
+        ron: { code: 'ron', currencyCode: 'RON', symbol: ' lei', pos: 'suffix', zeroDec: false, label: 'Romania (RON)', annual: 299.99, annualEq: '24.99 lei', annualStrike: '659.88 lei', sixMo: 219.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 9.99, monthly: 54.99, addonAnnual: 49.99, addonMonthly: 9.99 },
+        bgn: { code: 'bgn', currencyCode: 'BGN', symbol: ' лв.', pos: 'suffix', zeroDec: false, label: 'Bulgaria (BGN)', annual: 119.99, annualEq: '9.99 лв.', annualStrike: '263.88 лв.', sixMo: 89.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 32, intro: 3.99, monthly: 21.99, addonAnnual: 19.99, addonMonthly: 3.99 },
+        try: { code: 'try', currencyCode: 'TRY', symbol: '₺', pos: 'prefix', zeroDec: false, label: 'Turkey (TRY)', annual: 2199.99, annualEq: '₺183.33', annualStrike: '₺4,799.88', sixMo: 1649.99, annualSavingsPercent: 54, sixMonthSavingsPercent: 31, intro: 69.99, monthly: 399.99, addonAnnual: 399.99, addonMonthly: 69.99 },
+        jpy: { code: 'jpy', currencyCode: 'JPY', symbol: '¥', pos: 'prefix', zeroDec: true, label: 'Japan (JPY)', annual: 9980, annualEq: '¥831', annualStrike: '¥22,560', sixMo: 7480, annualSavingsPercent: 56, sixMonthSavingsPercent: 34, intro: 290, monthly: 1880, addonAnnual: 1580, addonMonthly: 290 },
+        krw: { code: 'krw', currencyCode: 'KRW', symbol: '₩', pos: 'prefix', zeroDec: true, label: 'South Korea (KRW)', annual: 89900, annualEq: '₩7,491', annualStrike: '₩202,800', sixMo: 65900, annualSavingsPercent: 56, sixMonthSavingsPercent: 35, intro: 2900, monthly: 16900, addonAnnual: 14900, addonMonthly: 2900 },
+        sgd: { code: 'sgd', currencyCode: 'SGD', symbol: 'S$', pos: 'prefix', zeroDec: false, label: 'Singapore (SGD)', annual: 84.99, annualEq: 'S$7.08', annualStrike: 'S$191.88', sixMo: 62.99, annualSavingsPercent: 56, sixMonthSavingsPercent: 34, intro: 2.99, monthly: 15.99, addonAnnual: 13.99, addonMonthly: 2.49 },
+        hkd: { code: 'hkd', currencyCode: 'HKD', symbol: 'HK$', pos: 'prefix', zeroDec: false, label: 'Hong Kong (HKD)', annual: 499.99, annualEq: 'HK$41.66', annualStrike: 'HK$1,139.88', sixMo: 369.99, annualSavingsPercent: 56, sixMonthSavingsPercent: 35, intro: 15.99, monthly: 94.99, addonAnnual: 79.99, addonMonthly: 14.99 },
+        twd: { code: 'twd', currencyCode: 'TWD', symbol: 'NT$', pos: 'prefix', zeroDec: false, label: 'Taiwan (TWD)', annual: 2099.99, annualEq: 'NT$174.99', annualStrike: 'NT$4,679.88', sixMo: 1549.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 34, intro: 64.99, monthly: 389.99, addonAnnual: 349.99, addonMonthly: 64.99 },
+        inr: { code: 'inr', currencyCode: 'INR', symbol: '₹', pos: 'prefix', zeroDec: false, label: 'India (INR)', annual: 5499.99, annualEq: '₹458.33', annualStrike: '₹11,999.88', sixMo: 3999.99, annualSavingsPercent: 54, sixMonthSavingsPercent: 33, intro: 169.99, monthly: 999.99, addonAnnual: 899.99, addonMonthly: 169.99 },
+        brl: { code: 'brl', currencyCode: 'BRL', symbol: 'R$ ', pos: 'prefix', zeroDec: false, label: 'Brazil (BRL)', annual: 349.99, annualEq: 'R$ 29.16', annualStrike: 'R$ 779.88', sixMo: 259.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 9.99, monthly: 64.99, addonAnnual: 59.99, addonMonthly: 9.99 },
+        mxn: { code: 'mxn', currencyCode: 'MXN', symbol: 'MX$', pos: 'prefix', zeroDec: false, label: 'Mexico (MXN)', annual: 1299.99, annualEq: 'MX$108.33', annualStrike: 'MX$2,879.88', sixMo: 949.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 34, intro: 39.99, monthly: 239.99, addonAnnual: 219.99, addonMonthly: 39.99 },
+        zar: { code: 'zar', currencyCode: 'ZAR', symbol: 'R ', pos: 'prefix', zeroDec: false, label: 'South Africa (ZAR)', annual: 1149.99, annualEq: 'R 95.83', annualStrike: 'R 2,519.88', sixMo: 849.99, annualSavingsPercent: 54, sixMonthSavingsPercent: 33, intro: 34.99, monthly: 209.99, addonAnnual: 199.99, addonMonthly: 34.99 },
+        aed: { code: 'aed', currencyCode: 'AED', symbol: 'AED ', pos: 'prefix', zeroDec: false, label: 'UAE (AED)', annual: 239.99, annualEq: 'AED 19.99', annualStrike: 'AED 539.88', sixMo: 179.99, annualSavingsPercent: 56, sixMonthSavingsPercent: 33, intro: 7.99, monthly: 44.99, addonAnnual: 39.99, addonMonthly: 7.99 },
+        sar: { code: 'sar', currencyCode: 'SAR', symbol: 'SAR ', pos: 'prefix', zeroDec: false, label: 'Saudi Arabia (SAR)', annual: 244.99, annualEq: 'SAR 20.41', annualStrike: 'SAR 539.88', sixMo: 179.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 7.99, monthly: 44.99, addonAnnual: 39.99, addonMonthly: 7.99 },
+        ils: { code: 'ils', currencyCode: 'ILS', symbol: '₪', pos: 'prefix', zeroDec: false, label: 'Israel (ILS)', annual: 244.99, annualEq: '₪20.41', annualStrike: '₪539.88', sixMo: 179.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 7.99, monthly: 44.99, addonAnnual: 39.99, addonMonthly: 7.99 },
+        myr: { code: 'myr', currencyCode: 'MYR', symbol: 'RM', pos: 'prefix', zeroDec: false, label: 'Malaysia (MYR)', annual: 279.99, annualEq: 'RM23.33', annualStrike: 'RM623.88', sixMo: 209.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 33, intro: 8.99, monthly: 51.99, addonAnnual: 44.99, addonMonthly: 8.99 },
+        thb: { code: 'thb', currencyCode: 'THB', symbol: '฿', pos: 'prefix', zeroDec: false, label: 'Thailand (THB)', annual: 2199.99, annualEq: '฿183.33', annualStrike: '฿4,799.88', sixMo: 1599.99, annualSavingsPercent: 54, sixMonthSavingsPercent: 33, intro: 69.99, monthly: 399.99, addonAnnual: 349.99, addonMonthly: 69.99 },
+        php: { code: 'php', currencyCode: 'PHP', symbol: '₱', pos: 'prefix', zeroDec: false, label: 'Philippines (PHP)', annual: 3699.99, annualEq: '₱308.33', annualStrike: '₱8,279.88', sixMo: 2749.99, annualSavingsPercent: 55, sixMonthSavingsPercent: 34, intro: 119.99, monthly: 689.99, addonAnnual: 599.99, addonMonthly: 109.99 }
       };
+
+      function getCurr(key) {
+        return (key && Object.hasOwn(FALLBACK_PRICING, key)) ? FALLBACK_PRICING[key] : FALLBACK_PRICING.gbp;
+      }
 
       var OS_PROFILES = {
         windows: {
@@ -1705,11 +1854,11 @@
           path3: 'Extra copies of identical photos and files in Pictures & Downloads'
         },
         ios: {
-          badge: 'For iPhone & iPad',
-          ctaLabel: 'Get SWEEPR Cleaner for iPhone',
+          badge: 'For iPhone & iPad (Web Companion & TestFlight)',
+          ctaLabel: 'Open iOS Companion / TestFlight',
           href: '/download?platform=ios',
-          path1: 'Similar burst photos, blurry pictures & duplicate screenshots',
-          path2: 'Large videos & chat clips (shrinks file size without losing quality)',
+          path1: 'Safari web companion cleanup checklist & burst photo triage guide',
+          path2: 'TestFlight beta early access (no App Store release yet)',
           path3: 'Duplicate contacts cleanup & 80% battery health charge alert'
         },
         android: {
@@ -1718,15 +1867,7 @@
           href: '/download?platform=android',
           path1: 'Hidden app cache clutter & old leftover installer files',
           path2: 'Camera & WhatsApp duplicate photos, blurry shots & old screenshots',
-          path3: 'Phone cooling alert & 80% battery health charge reminder'
-        },
-        linux: {
-          badge: 'For Linux Computers',
-          ctaLabel: 'Download Free for Linux',
-          href: '/download?platform=linux',
-          path1: 'Browser cache clutter & old temporary trash files',
-          path2: 'Old system logs and leftover package files',
-          path3: 'Extra copies of identical files in your Downloads & Home folders'
+          path3: '80% battery health charge reminder & large file finder'
         }
       };
 
@@ -1738,6 +1879,7 @@
       };
 
       function detectInitialOS() {
+        if (IS_BOT) return 'windows';
         var ua = (navigator.userAgent || '').toLowerCase();
         var platform = (navigator.platform || '').toLowerCase();
         var uaPlatform = (navigator.userAgentData && navigator.userAgentData.platform
@@ -1749,70 +1891,143 @@
         }
         if (/android/.test(ua) || uaPlatform === 'android') return 'android';
         if (/macintosh|mac os x/.test(ua) || uaPlatform === 'macos') return 'mac';
-        if ((/linux/.test(ua) && !/android/.test(ua)) || uaPlatform === 'linux') return 'linux';
         return 'windows';
       }
 
+      function detectTimezoneCurrency(tz) {
+        if (!tz) return '';
+        if (tz.indexOf('london') !== -1 || tz.indexOf('belfast') !== -1) return 'gbp';
+        if (tz.indexOf('tokyo') !== -1) return 'jpy';
+        if (tz.indexOf('seoul') !== -1) return 'krw';
+        if (tz.indexOf('singapore') !== -1) return 'sgd';
+        if (tz.indexOf('hong_kong') !== -1) return 'hkd';
+        if (tz.indexOf('taipei') !== -1) return 'twd';
+        if (tz.indexOf('kolkata') !== -1 || tz.indexOf('calcutta') !== -1) return 'inr';
+        if (tz.indexOf('kuala_lumpur') !== -1) return 'myr';
+        if (tz.indexOf('bangkok') !== -1) return 'thb';
+        if (tz.indexOf('manila') !== -1) return 'php';
+        if (tz.indexOf('dubai') !== -1) return 'aed';
+        if (tz.indexOf('riyadh') !== -1) return 'sar';
+        if (tz.indexOf('jerusalem') !== -1 || tz.indexOf('tel_aviv') !== -1) return 'ils';
+        if (tz.indexOf('johannesburg') !== -1) return 'zar';
+        if (tz.indexOf('sydney') !== -1 || tz.indexOf('melbourne') !== -1 || tz.indexOf('brisbane') !== -1 || tz.indexOf('perth') !== -1) return 'aud';
+        if (tz.indexOf('auckland') !== -1) return 'nzd';
+        if (tz.indexOf('toronto') !== -1 || tz.indexOf('vancouver') !== -1 || tz.indexOf('montreal') !== -1 || tz.indexOf('edmonton') !== -1 || tz.indexOf('winnipeg') !== -1) return 'cad';
+        if (tz.indexOf('sao_paulo') !== -1 || tz.indexOf('fortaleza') !== -1 || tz.indexOf('recife') !== -1 || tz.indexOf('manaus') !== -1 || tz.indexOf('belem') !== -1) return 'brl';
+        if (tz.indexOf('mexico') !== -1 || tz.indexOf('cancun') !== -1 || tz.indexOf('tijuana') !== -1 || tz.indexOf('monterrey') !== -1) return 'mxn';
+        if (tz.indexOf('zurich') !== -1) return 'chf';
+        if (tz.indexOf('stockholm') !== -1) return 'sek';
+        if (tz.indexOf('oslo') !== -1) return 'nok';
+        if (tz.indexOf('copenhagen') !== -1) return 'dkk';
+        if (tz.indexOf('warsaw') !== -1) return 'pln';
+        if (tz.indexOf('prague') !== -1) return 'czk';
+        if (tz.indexOf('bucharest') !== -1) return 'ron';
+        if (tz.indexOf('sofia') !== -1) return 'bgn';
+        if (tz.indexOf('istanbul') !== -1) return 'try';
+        if (tz.indexOf('europe/') === 0) return 'eur';
+        if (tz.indexOf('america/') === 0) return 'usd';
+        return '';
+      }
+
       function detectInitialCurrencyByLocale() {
+        if (IS_BOT) return 'gbp';
         try {
           var params = new URLSearchParams(window.location.search);
           var qCurr = (params.get('currency') || '').toLowerCase();
-          if (qCurr && FALLBACK_PRICING[qCurr]) return qCurr;
+          if (qCurr && Object.hasOwn(FALLBACK_PRICING, qCurr)) return qCurr;
           var saved = (localStorage.getItem('sweepr_currency_manual') || '').toLowerCase();
-          if (saved && FALLBACK_PRICING[saved]) return saved;
+          if (saved && Object.hasOwn(FALLBACK_PRICING, saved)) return saved;
           var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '').toLowerCase();
-          if (tz.indexOf('london') !== -1 || tz.indexOf('belfast') !== -1) return 'gbp';
-          if (tz.indexOf('tokyo') !== -1) return 'jpy';
-          if (tz.indexOf('kolkata') !== -1 || tz.indexOf('calcutta') !== -1) return 'inr';
-          if (tz.indexOf('sydney') !== -1 || tz.indexOf('melbourne') !== -1) return 'aud';
-          if (tz.indexOf('auckland') !== -1) return 'nzd';
-          if (tz.indexOf('toronto') !== -1 || tz.indexOf('vancouver') !== -1) return 'cad';
-          if (tz.indexOf('zurich') !== -1) return 'chf';
-          if (tz.indexOf('stockholm') !== -1) return 'sek';
-          if (tz.indexOf('oslo') !== -1) return 'nok';
-          if (tz.indexOf('copenhagen') !== -1) return 'dkk';
-          if (tz.indexOf('warsaw') !== -1) return 'pln';
-          if (tz.indexOf('europe/') === 0) return 'eur';
-          if (tz.indexOf('america/') === 0) return 'usd';
+          var tzCurr = detectTimezoneCurrency(tz);
+          if (tzCurr && Object.hasOwn(FALLBACK_PRICING, tzCurr)) return tzCurr;
         } catch (e) {}
         return 'gbp';
       }
 
       function applyOS(osKey) {
-        if (!OS_PROFILES[osKey]) osKey = 'windows';
+        if (IS_BOT) return;
+        if (!Object.hasOwn(OS_PROFILES, osKey)) osKey = 'windows';
         state.os = osKey;
         var p = OS_PROFILES[osKey];
         var cta = document.getElementById('primaryDownloadCta');
-        var headerCta = document.getElementById('headerDownloadBtn');
         var label = document.getElementById('primaryDownloadLabel');
         var path1 = document.getElementById('auditPath1');
         var path2 = document.getElementById('auditPath2');
         var path3 = document.getElementById('auditPath3');
 
         if (cta) cta.setAttribute('href', p.href);
-        if (headerCta) headerCta.setAttribute('href', p.href);
         if (label) label.textContent = p.ctaLabel;
         if (path1) path1.textContent = p.path1;
         if (path2) path2.textContent = p.path2;
         if (path3) path3.textContent = p.path3;
       }
 
+      function syncSoftwareJsonLd(c, annualBase, monthlyBase, sixMoBase, annualSavingsPercent, sixMonthSavingsPercent) {
+        if (IS_BOT) return;
+        try {
+          var el = document.getElementById('softwareAppJsonLd');
+          if (!el) return;
+          var data = JSON.parse(el.textContent || '{}');
+          if (!Array.isArray(data.offers)) return;
+          if (data.offers[0]) {
+            data.offers[0].name = 'SWEEPR Cleaner Pro — Annual Plan (Save ' + annualSavingsPercent + '%)';
+            data.offers[0].price = apiNumStr(c, annualBase);
+            data.offers[0].priceCurrency = c.currencyCode;
+            if (Array.isArray(data.offers[0].priceSpecification)) {
+              if (data.offers[0].priceSpecification[0]) {
+                data.offers[0].priceSpecification[0].price = apiNumStr(c, annualBase);
+                data.offers[0].priceSpecification[0].priceCurrency = c.currencyCode;
+              }
+              if (data.offers[0].priceSpecification[1]) {
+                data.offers[0].priceSpecification[1].price = apiNumStr(c, monthlyBase * 12);
+                data.offers[0].priceSpecification[1].priceCurrency = c.currencyCode;
+              }
+            }
+          }
+          if (data.offers[1]) {
+            data.offers[1].name = 'SWEEPR Cleaner Pro — 6-Month Plan (Save ' + sixMonthSavingsPercent + '%)';
+            data.offers[1].price = apiNumStr(c, sixMoBase);
+            data.offers[1].priceCurrency = c.currencyCode;
+            if (Array.isArray(data.offers[1].priceSpecification)) {
+              if (data.offers[1].priceSpecification[0]) {
+                data.offers[1].priceSpecification[0].price = apiNumStr(c, sixMoBase);
+                data.offers[1].priceSpecification[0].priceCurrency = c.currencyCode;
+              }
+              if (data.offers[1].priceSpecification[1]) {
+                data.offers[1].priceSpecification[1].price = apiNumStr(c, monthlyBase * 6);
+                data.offers[1].priceSpecification[1].priceCurrency = c.currencyCode;
+              }
+            }
+          }
+          if (data.offers[2]) {
+            data.offers[2].price = apiNumStr(c, monthlyBase);
+            data.offers[2].priceCurrency = c.currencyCode;
+          }
+          if (data.offers[3]) {
+            data.offers[3].price = c.zeroDec ? '0' : '0.00';
+            data.offers[3].priceCurrency = c.currencyCode;
+          }
+          el.textContent = JSON.stringify(data, null, 2);
+        } catch (e) {}
+      }
+
       function renderPricing() {
-        var c = FALLBACK_PRICING[state.currency] || FALLBACK_PRICING.gbp;
+        var c = getCurr(state.currency);
         var api = state.apiPricing && state.apiPricing.currency === state.currency ? state.apiPricing : null;
 
         var divisor = api && api.zeroDecimal ? 1 : 100;
         var annualBase = api && api.annualAmount ? (api.annualAmount / divisor) : c.annual;
+        var sixMoBase = api && api.sixMonthAmount ? (api.sixMonthAmount / divisor) : c.sixMo;
         var monthlyBase = api && api.monthlyAmount ? (api.monthlyAmount / divisor) : c.monthly;
-        var monthlyRenew = api && api.monthlyFormatted ? api.monthlyFormatted : c.fmt(c.monthly);
+        var monthlyRenew = api && api.monthlyFormatted ? api.monthlyFormatted : fmtCurrencyVal(c, c.monthly);
         var annualEq = api && api.annualMonthlyEqFormatted ? api.annualMonthlyEqFormatted : c.annualEq;
         var annualStrike = api && api.annualRegularTotalFormatted ? api.annualRegularTotalFormatted : c.annualStrike;
         var annualSavingsPercent = api && api.annualSavingsPercent ? api.annualSavingsPercent : (c.annualSavingsPercent || Math.round((1 - (annualBase / (monthlyBase * 12))) * 100));
         var sixMonthSavingsPercent = api && api.sixMonthSavingsPercent ? api.sixMonthSavingsPercent : (c.sixMonthSavingsPercent || 35);
         var addonAnnualRate = api && api.batteryCareAnnualAmount ? (api.batteryCareAnnualAmount / divisor) : c.addonAnnual;
         var addonMonthlyRate = api && api.batteryCareMonthlyAmount ? (api.batteryCareMonthlyAmount / divisor) : c.addonMonthly;
-        var addonAnnualFmt = api && api.batteryCareAnnualFormatted ? api.batteryCareAnnualFormatted : c.fmt(c.addonAnnual);
-        var addonMonthlyFmt = api && api.batteryCareMonthlyFormatted ? api.batteryCareMonthlyFormatted : c.fmt(c.addonMonthly);
+        var addonAnnualFmt = api && api.batteryCareAnnualFormatted ? api.batteryCareAnnualFormatted : fmtCurrencyVal(c, c.addonAnnual);
+        var addonMonthlyFmt = api && api.batteryCareMonthlyFormatted ? api.batteryCareMonthlyFormatted : fmtCurrencyVal(c, c.addonMonthly);
         var activeAddonRate = state.plan === 'annual' ? addonAnnualRate : addonMonthlyRate;
         var activeAddonTag = state.plan === 'annual' ? ('+' + addonAnnualFmt + '/yr') : ('+' + addonMonthlyFmt + '/mo');
 
@@ -1822,7 +2037,7 @@
 
         var baseToday = state.plan === 'annual' ? annualBase : monthlyBase;
         var totalToday = baseToday + addonCount * activeAddonRate;
-        var formattedTotal = c.fmt(totalToday);
+        var formattedTotal = fmtCurrencyVal(c, totalToday);
 
         var figEl = document.getElementById('giantPriceFigure');
         var perEl = document.getElementById('giantPricePeriod');
@@ -1832,27 +2047,31 @@
         var swAnnualTitle = document.getElementById('planTabAnnualTitle');
         var swAnnualSub = document.getElementById('switchAnnualSub');
         var swMonthlySub = document.getElementById('switchMonthlySub');
+        var addonsHeadingEl = document.getElementById('addonsHeading');
         var addonBatTag = document.getElementById('addonBatteryPriceTag');
         var addonCloudTag = document.getElementById('addonCloudPriceTag');
         var scrubBat = document.getElementById('scrubberBatteryPrice');
         var scrubCloud = document.getElementById('scrubberCloudPrice');
         var tilePlum = document.getElementById('tilePlumPrice');
+        var tilePlumBadge = document.getElementById('tilePlumBadge');
         var secBadge = document.getElementById('secondaryOrderPriceBadge');
         var checkoutBtn = document.getElementById('w3CheckoutBtn');
         var checkoutTotal = document.getElementById('w3CheckoutBtnTotal');
-        var faqPlan = document.getElementById('faqPlanAnswer');
-        var faqAddon = document.getElementById('faqAddonAnswer');
+        var faqPlanDyn = document.getElementById('faqPlanDynamic');
+        var faqAddonDyn = document.getElementById('faqAddonDynamic');
 
         if (locEl) locEl.textContent = 'Region: ' + c.label;
         if (swAnnualTitle) swAnnualTitle.textContent = 'Yearly Plan · Save ' + annualSavingsPercent + '%';
         if (swAnnualSub) swAnnualSub.textContent = annualEq + '/mo equivalent';
         if (swMonthlySub) swMonthlySub.textContent = monthlyRenew + '/month · Cancel anytime';
+        if (addonsHeadingEl) addonsHeadingEl.textContent = 'Optional Pro Add-Ons (+' + addonAnnualFmt + '/yr each)';
         if (addonBatTag) addonBatTag.textContent = activeAddonTag;
         if (addonCloudTag) addonCloudTag.textContent = activeAddonTag;
         if (scrubBat) scrubBat.textContent = '+' + addonAnnualFmt + '/yr';
         if (scrubCloud) scrubCloud.textContent = '+' + addonAnnualFmt + '/yr';
         if (tilePlum) tilePlum.textContent = '+' + addonAnnualFmt + '/yr';
-        if (secBadge) secBadge.textContent = c.fmt(annualBase) + '/yr';
+        if (tilePlumBadge) tilePlumBadge.textContent = 'Optional Pro Add-ons (+' + addonAnnualFmt + '/yr)';
+        if (secBadge) secBadge.textContent = fmtCurrencyVal(c, annualBase) + '/yr';
 
         if (state.plan === 'annual') {
           if (figEl) figEl.textContent = formattedTotal;
@@ -1862,7 +2081,7 @@
             strikeEl.textContent = annualStrike + '/yr';
           }
           if (capEl) {
-            capEl.textContent = 'Clean up to 5 devices across PC, Mac, iPhone, and Android. Billed yearly (' + annualEq + '/mo equivalent). Cancel anytime in 1 click.';
+            capEl.textContent = 'Clean up to 5 devices across PC, Mac & Android (plus iOS Safari web companion / TestFlight beta). Billed yearly (' + annualEq + '/mo equivalent). Cancel anytime in 1 click.';
           }
           if (checkoutTotal) checkoutTotal.textContent = formattedTotal + '/yr →';
         } else {
@@ -1877,12 +2096,12 @@
           if (checkoutTotal) checkoutTotal.textContent = formattedTotal + '/mo →';
         }
 
-        if (faqPlan) {
-          var sixMoFmt = api && api.sixMonthFormatted ? api.sixMonthFormatted : c.fmt(c.sixMo || (annualBase * 0.78));
-          faqPlan.textContent = 'All three plans (Monthly, 6-Month, and Yearly) let you clean up to 5 devices across Windows, macOS, iOS, and Android. The Yearly plan is ' + c.fmt(annualBase) + '/year (saving ' + annualSavingsPercent + '%, or ' + annualEq + '/month), the 6-Month plan is ' + sixMoFmt + ' every 6 months (saving ' + sixMonthSavingsPercent + '%), and the Monthly plan is ' + monthlyRenew + '/month with no long-term commitment. You can cancel anytime in one click.';
+        if (faqPlanDyn) {
+          var sixMoFmt = api && api.sixMonthFormatted ? api.sixMonthFormatted : fmtCurrencyVal(c, sixMoBase);
+          faqPlanDyn.textContent = 'All three plans (Monthly, 6-Month, and Yearly) let you clean up to 5 devices across Windows, macOS, and Android (plus iOS Safari Web Companion & TestFlight beta). SWEEPR Free includes an unlimited storage scan and Unlimited Temp & Browser Cache Clean (to OS Recycle Bin); Pro unlocks Deep GPU/AI/Dev Caches, SHA-256 Duplicates, Uninstaller, Scheduler & 7-Day Undo Quarantine. The Yearly plan is ' + fmtCurrencyVal(c, annualBase) + '/year (saving ' + annualSavingsPercent + '%, or ' + annualEq + '/month), the 6-Month plan is ' + sixMoFmt + ' every 6 months (saving ' + sixMonthSavingsPercent + '%), and the Monthly plan is ' + monthlyRenew + '/month with no long-term commitment.';
         }
-        if (faqAddon) {
-          faqAddon.textContent = 'Each optional add-on is ' + addonAnnualFmt + '/year (' + addonMonthlyFmt + '/month on monthly billing). Battery Health Saver alerts you at 80% charge, pauses idle browser tabs, and cools down hot laptops. Cloud Protection gives you a password-locked folder for private files and automatically backs up important folders.';
+        if (faqAddonDyn) {
+          faqAddonDyn.textContent = 'Each optional Pro add-on is ' + addonAnnualFmt + '/year (' + addonMonthlyFmt + '/month on monthly billing). Battery Health Saver enforces an 80% hardware charge cap on supported ASUS WMI, Dell CCTK, and Linux sysfs laptops (and provides an 80% software unplug alert on other Windows PCs and Macs), while suspending idle tabs. Private File Lockbox encrypts private files locally with Argon2id + AES-256-GCM (.swvault Vault) and mirrors folders one-way (additive sync) to your locally mounted OneDrive, Google Drive, Dropbox, or iCloud folder (no SWEEPR-hosted cloud storage).';
         }
 
         // Update deep links to /order with selected plan, currency & add-ons
@@ -1894,9 +2113,12 @@
         if (checkoutBtn) checkoutBtn.setAttribute('href', orderHref);
         var secCta = document.getElementById('secondaryOrderCta');
         if (secCta) secCta.setAttribute('href', orderHref);
+
+        syncSoftwareJsonLd(c, annualBase, monthlyBase, sixMoBase, annualSavingsPercent, sixMonthSavingsPercent);
       }
 
       function fetchServerGeoPricing(currencyOverride) {
+        if (IS_BOT) return;
         var qs = new URLSearchParams();
         var manual = '';
         try { manual = (localStorage.getItem('sweepr_currency_manual') || '').toLowerCase(); } catch (e) {}
@@ -1913,7 +2135,7 @@
             if (!data || !data.pricing) return;
             var p = data.pricing;
             var curr = (p.currency || '').toLowerCase();
-            if (curr && FALLBACK_PRICING[curr]) {
+            if (curr && Object.hasOwn(FALLBACK_PRICING, curr)) {
               state.currency = curr;
               state.apiPricing = p;
               var sel = document.getElementById('globalCurrencySelect');
@@ -1924,8 +2146,10 @@
           .catch(function () {});
       }
 
-      // Apply initial OS detection immediately (elements already parsed above)
-      applyOS(detectInitialOS());
+      // Apply initial OS detection immediately for human visitors only
+      if (!IS_BOT) {
+        applyOS(detectInitialOS());
+      }
 
       document.addEventListener('DOMContentLoaded', function () {
         // 1. 3-Stage Scrubber Tabs
@@ -1961,10 +2185,16 @@
         if (batBox) batBox.addEventListener('change', renderPricing);
         if (cloudBox) cloudBox.addEventListener('change', renderPricing);
 
-        // 5. Currency Selector + Instant Geo-Hydration
-        state.currency = detectInitialCurrencyByLocale();
+        // 5. Currency Selector + Instant Geo-Hydration (skipped for crawlers)
         var sel = document.getElementById('globalCurrencySelect');
-        if (sel && FALLBACK_PRICING[state.currency]) {
+        if (IS_BOT) {
+          state.currency = 'gbp';
+          if (sel) sel.value = 'gbp';
+          return;
+        }
+
+        state.currency = detectInitialCurrencyByLocale();
+        if (sel && Object.hasOwn(FALLBACK_PRICING, state.currency)) {
           sel.value = state.currency;
         }
         if (sel) {

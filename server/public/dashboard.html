@@ -113,7 +113,7 @@
           </div>
           <h3 class="text-xl font-bold text-gray-900">Total Battery &amp; Mac/Phone Care — Device Lifespan Extender</h3>
           <p class="text-sm text-gray-600 mt-1 max-w-xl leading-relaxed">
-            Stops charging at 80% while plugged in at your desk, prevents overheating, and puts power-hungry browser tabs to sleep—helping your laptop and phone battery last twice as long and saving you from £100–£250 battery replacements.
+            Enforces an 80% hardware charge cap on supported ASUS WMI, Dell CCTK, and Linux sysfs laptops (with an 80% software unplug alert on other Windows PCs and macOS) and suspends idle browser tabs to help reduce unnecessary battery wear while plugged in.
           </p>
         </div>
         <div class="shrink-0 w-full sm:w-auto">
@@ -139,9 +139,9 @@
               🔒 Paid Add-on Available
             </span>
           </div>
-          <h3 class="text-xl font-bold text-gray-900">SWEEPR Cloud Protection — Encrypted Photo Vault &amp; Multi-Cloud Backup Sync</h3>
+          <h3 class="text-xl font-bold text-gray-900">SWEEPR Cloud Protection — Encrypted File Vault &amp; Local Sync Mirror</h3>
           <p class="text-sm text-gray-600 mt-1 max-w-xl leading-relaxed">
-            Lock private photos, passport scans, and tax documents inside a password-protected vault in your cloud drive, and automatically back up your most important folders between Google Drive, OneDrive, Dropbox, and iCloud.
+            Encrypt private photos, passport scans, and tax documents locally with Argon2id + AES-256-GCM (.swvault), and mirror selected local folders one-way (additive sync) into your locally mounted Google Drive, OneDrive, Dropbox, or iCloud folder.
           </p>
         </div>
         <div class="shrink-0 w-full sm:w-auto">
@@ -207,7 +207,7 @@
               <span>Android (.apk)</span>
             </a>
             <a href="/ios-app" class="btn btn-go justify-center gap-2 text-xs sm:text-sm py-3" style="background:#334155;">
-              <span>iOS (iPhone/iPad)</span>
+              <span>iOS Web Companion</span>
             </a>
           </div>
           <div class="mt-4 w-full max-w-sm rounded-xl bg-emerald-50/80 border border-emerald-200/80 p-3.5 text-left text-xs text-gray-700 space-y-2">
@@ -215,7 +215,7 @@
               <span>🛡️ Windows 10/11 First-Launch Walkthrough</span>
             </div>
             <p class="text-[11px] text-gray-600 leading-relaxed">
-              Because v0.1.0 is a freshly compiled 5 MB native Rust binary, if Windows SmartScreen appears on first launch:
+              Because v0.1.0 is a freshly compiled 6.76 MB (7,085,912 B) native Rust binary signed with an SSL.com Individual Validation (IV) Authenticode certificate (<code class="font-mono">CN=Benjamin Cook</code>), if Windows SmartScreen appears on first launch:
             </p>
             <div class="grid grid-cols-2 gap-2 text-[11px] font-semibold">
               <div class="bg-white border border-emerald-200 rounded-lg px-2.5 py-1.5 text-gray-800">
@@ -232,15 +232,15 @@
         </div>
       </div>
 
-      <!-- SWEEPR Ecosystem Cross-Promo: Free 30-Second Home Wi-Fi & Smart-TV Spy Scanner -->
+      <!-- SWEEPR Ecosystem Cross-Promo: Free Home Wi-Fi & Smart-TV Spy Scanner -->
       <div class="glass-card p-6 sm:p-7 bg-gradient-to-r from-emerald-50/90 via-white to-teal-50/70 shadow-sm rounded-2xl border border-emerald-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div class="space-y-1.5">
           <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
             <span>🛡️ SWEEPR Ecosystem Protection</span>
           </div>
-          <h3 class="text-base sm:text-lg font-extrabold text-gray-900">Complete Your Protection: Free 30-Second Home Wi-Fi &amp; Smart-TV Scanner</h3>
+          <h3 class="text-base sm:text-lg font-extrabold text-gray-900">Complete Your Protection: Free Home Wi-Fi &amp; Smart-TV Scanner</h3>
           <p class="text-xs sm:text-sm text-gray-600 max-w-2xl leading-relaxed">
-            Built by the SWEEPR team: scan your home Wi-Fi in 30 seconds for unknown devices, block Smart-TV ACR tracking, and stop ISP evening speed throttling with 10Gbps WireGuard.
+            From Benjamin Cook (SWEEPR): scan your home Wi-Fi for unknown devices, block Smart-TV ACR tracking, and stop ISP evening speed throttling with 10Gbps WireGuard.
           </p>
         </div>
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 w-full md:w-auto">
@@ -281,12 +281,13 @@
   <footer class="mt-16 py-8 text-center text-gray-500 text-xs border-t border-gray-200/60">
     <div class="flex flex-wrap justify-center gap-6 mb-3 font-medium">
       <a href="https://sweeprvpn.com/?utm_source=sweeprcleaner&amp;utm_medium=cross_promo&amp;utm_campaign=dashboard_footer" target="_blank" rel="noopener" class="text-emerald-700 font-bold hover:text-emerald-800 transition-colors">SWEEPR VPN &amp; Wi-Fi Scanner</a>
+      <a href="/about" class="hover:text-emerald-700 transition-colors">About</a>
       <a href="/refund" class="hover:text-emerald-700 transition-colors">Refund Policy</a>
       <a href="/terms" class="hover:text-emerald-700 transition-colors">Terms of Service</a>
       <a href="/privacy" class="hover:text-emerald-700 transition-colors">Privacy Policy</a>
       <a href="/support" class="hover:text-emerald-700 transition-colors">Support &amp; Help</a>
     </div>
-    <p class="text-gray-400">&copy; 2026 SWEEPR Cleaner Inc. All rights reserved.</p>
+    <p class="text-gray-400">&copy; 2026 Benjamin Cook t/a SWEEPR Cleaner. All rights reserved.</p>
   </footer>
 
   <script>

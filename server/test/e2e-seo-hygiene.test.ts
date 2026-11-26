@@ -73,12 +73,12 @@ async function loadDynamicSitemap(targetApp: ReturnType<typeof createApp> = app)
 }
 
 describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", () => {
-  test("TC-T1-SM-01: Sitemap pruned footprint holds exact 96 Tier-1 URLs across dynamic and static files", async () => {
+  test("TC-T1-SM-01: Sitemap pruned footprint holds exact 101 Tier-1 URLs across dynamic and static files", async () => {
     const { urls: dynamicUrls } = await loadDynamicSitemap(app);
     const { urls: staticUrls } = loadStaticSitemap();
 
-    assert.equal(staticUrls.length, 96, `Expected exact 96 URLs in static sitemap.xml, got ${staticUrls.length}`);
-    assert.equal(dynamicUrls.length, 96, `Expected exact 96 URLs in dynamic /sitemap.xml, got ${dynamicUrls.length}`);
+    assert.equal(staticUrls.length, 101, `Expected exact 101 URLs in static sitemap.xml, got ${staticUrls.length}`);
+    assert.equal(dynamicUrls.length, 101, `Expected exact 101 URLs in dynamic /sitemap.xml, got ${dynamicUrls.length}`);
   });
 
   test("TC-T1-SM-02: Core commercial, policy, and hub pages present (and noindex /download & retired /tools/:slug excluded) in sitemap", async () => {
@@ -87,6 +87,7 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
 
     const hubs = [
       "/",
+      "/about",
       "/pricing",
       "/clean",
       "/tools",
@@ -134,7 +135,7 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
     }
   });
 
-  test("TC-T1-SM-03: All 16 surviving switcher pages present in sitemap (both dynamic and static)", async () => {
+  test("TC-T1-SM-03: All 20 switcher pages present in sitemap (both dynamic and static)", async () => {
     const { urls: dynamicUrls } = await loadDynamicSitemap(app);
     const { urls: staticUrls } = loadStaticSitemap();
 
@@ -148,6 +149,7 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
       "/vs/cleanmymac",
       "/vs/daisydisk",
       "/vs/pearcleaner",
+      "/vs/onyx",
       "/alternatives/ccleaner",
       "/alternatives/bleachbit",
       "/alternatives/avast-cleanup",
@@ -155,6 +157,9 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
       "/alternatives/glary-utilities",
       "/alternatives/wise-disk-cleaner",
       "/alternatives/cleanmymac",
+      "/alternatives/daisydisk",
+      "/alternatives/pearcleaner",
+      "/alternatives/onyx",
     ];
     for (const [sourceName, urls] of [
       ["dynamic /sitemap.xml", dynamicUrls],
@@ -370,7 +375,7 @@ describe("E2E SEO Hygiene Track — Tier 1: Core Feature Acceptance Criteria", (
     assert.equal(res.status, 200);
     const html = await res.text();
     assert.ok(
-      html.includes("Tested on Windows 11 24H2 · Verified Microsoft Authenticode Publisher: Benjamin Cook"),
+      html.includes("Verified Authenticode IV Publisher: Benjamin Cook"),
       "Guide must render verified publisher attribution badge verbatim"
     );
   });
@@ -487,7 +492,7 @@ describe("E2E SEO Hygiene Track — Tier 2: Boundary & Corner Cases", () => {
         `${p} description length (${desc.length}) must be between 70 and 160 characters`
       );
       assert.ok(
-        desc.includes("Zero save files or active logins lost") && desc.includes("6.5 MB Sweepr scan"),
+        desc.includes("Zero save files or active logins lost") && desc.includes("6.76 MB Sweepr scan"),
         `${p} description must contain reassuring micro-copy and Sweepr scan CTA`
       );
     }
@@ -834,7 +839,7 @@ describe("E2E SEO Hygiene Track — Tier 4: Real-World Crawl Simulation", () => 
     const resGuide = await app.request("/clean/app/steam-depotcache", { headers: googleBotHeaders });
     assert.equal(resGuide.status, 200);
     const html = await resGuide.text();
-    assert.ok(html.includes("Tested on Windows 11 24H2 · Verified Microsoft Authenticode Publisher: Benjamin Cook"));
+    assert.ok(html.includes("Verified Authenticode IV Publisher: Benjamin Cook"));
   });
 });
 
@@ -1018,9 +1023,9 @@ describe("E2E SEO Hygiene Track — Milestone M3 Remediation Verification (R1, R
     for (const [legacyRoute, expectedTarget] of [
       ["/vs/ccleaner.html", "/vs/ccleaner"],
       ["/vs/CCleaner", "/vs/ccleaner"],
-      ["/vs/onyx.html", "/vs/cleanmymac"],
+      ["/vs/onyx.html", "/vs/onyx"],
       ["/alternatives/ccleaner.html", "/alternatives/ccleaner"],
-      ["/alternatives/daisydisk.html", "/vs/daisydisk"],
+      ["/alternatives/daisydisk.html", "/alternatives/daisydisk"],
       ["/tools/discord-cache-cleaner.html", "/clean/app/discord-cache"],
       ["/tools/pc-cache-calculator.html", "/tools/pc-cache-calculator"],
       ["/bloat-watch/windows-11-24h2-8gb-update-cache-bug.html", "/clean/folder/windows-11-24h2-update-cache-8gb-bug"],
@@ -1104,45 +1109,41 @@ describe("E2E SEO Hygiene Track — Milestone M3 Remediation Verification (R1, R
     }
   });
 
-  test("TC-M3-R4: All 12 Windows switchers return 200, appear in sitemap.xml and NOT sitemap-cleanup.xml, while 4 retired macOS switchers remain 301", async () => {
-    const windowsSwitchers = [
+  test("TC-M3-R4: All 20 Windows and macOS switchers return 200, appear in sitemap.xml and NOT sitemap-cleanup.xml", async () => {
+    const allSwitchers = [
       "/vs/ccleaner",
       "/vs/bleachbit",
       "/vs/avast-cleanup",
       "/vs/cleanmypc",
       "/vs/glary-utilities",
       "/vs/wise-disk-cleaner",
+      "/vs/cleanmymac",
+      "/vs/daisydisk",
+      "/vs/pearcleaner",
+      "/vs/onyx",
       "/alternatives/ccleaner",
       "/alternatives/bleachbit",
       "/alternatives/avast-cleanup",
       "/alternatives/cleanmypc",
       "/alternatives/glary-utilities",
       "/alternatives/wise-disk-cleaner",
+      "/alternatives/cleanmymac",
+      "/alternatives/daisydisk",
+      "/alternatives/pearcleaner",
+      "/alternatives/onyx",
     ];
     const { urls: sitemapUrls } = await loadDynamicSitemap(app);
     const cleanupRes = await app.request("/sitemap-cleanup.xml");
     assert.equal(cleanupRes.status, 200);
     const cleanupUrls = parseSitemap(await cleanupRes.text());
 
-    for (const path of windowsSwitchers) {
+    for (const path of allSwitchers) {
       const res = await app.request(path, { redirect: "manual" });
       assert.equal(res.status, 200, `${path} must return HTTP 200`);
       const parsed = parseHtml(await res.text());
       assert.equal((parsed.metaRobots || "").includes("noindex"), false, `${path} must be indexable`);
       assert.ok(sitemapUrls.some((u) => new URL(u).pathname === path), `${path} must appear in sitemap.xml`);
       assert.equal(cleanupUrls.some((u) => new URL(u).pathname === path), false, `${path} must NOT appear in sitemap-cleanup.xml`);
-    }
-
-    for (const [retiredMac, target] of [
-      ["/vs/onyx", "/vs/cleanmymac"],
-      ["/alternatives/daisydisk", "/vs/daisydisk"],
-      ["/alternatives/onyx", "/alternatives/cleanmymac"],
-      ["/alternatives/pearcleaner", "/vs/pearcleaner"],
-    ] as const) {
-      const res = await app.request(retiredMac, { redirect: "manual" });
-      assert.equal(res.status, 301, `${retiredMac} must remain a 301 redirect`);
-      assert.equal(res.headers.get("location"), target);
-      assert.equal(sitemapUrls.some((u) => new URL(u).pathname === retiredMac), false);
     }
   });
 

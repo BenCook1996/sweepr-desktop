@@ -8,14 +8,14 @@ This document provides turnkey submission specifications, editorial pitches, met
 
 - **Program Name:** `SWEEPR Cleaner`
 - **Current Version:** `0.1.0`
-- **Release Date:** `November 4, 2026`
-- **Developer / Publisher:** `Benjamin Cook` (`SWEEPR Technologies`)
+- **Release Date:** `November 2026`
+- **Developer / Publisher:** `Benjamin Cook t/a SWEEPR Cleaner`
 - **Author Email:** `support@sweeprcleaner.com`
 - **Homepage:** `https://sweeprcleaner.com`
 - **Live PAD XML URL:** `https://sweeprcleaner.com/pad.xml`
 - **Primary Installer URL (.exe):** `https://sweeprcleaner.com/SWEEPRCleaner.exe`
-  - *File Size:* `6,840,632 bytes` (6.52 MB)
-  - *SHA-256:* `38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA`
+  - *File Size:* `7,085,912 bytes` (6.76 MB)
+  - *SHA-256:* `FEAE464CA121CF897D27916C632F4DB8F84A87D4B79642403AD1B0E0F2BB706A`
   - *Installer Type:* NSIS (Nullsoft)
   - *Silent Switch:* `/S`
   - *Digital Signature:* Valid SSL.com Authenticode (`CN=Benjamin Cook, O=Benjamin Cook, L=Worthing, C=GB`)
@@ -23,7 +23,7 @@ This document provides turnkey submission specifications, editorial pitches, met
   - *File Size:* `3,993,600 bytes` (3.81 MB)
   - *SHA-256:* `33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A`
   - *Silent Switch:* `/qn /norestart`
-- **License Model:** `Freemium` (Free core disk scan & basic cache clean; optional Pro upgrade at £1.99/mo entry or £49.99/yr for 5 devices)
+- **License Model:** `Freemium` (Unlimited Free Temp & Browser Cache Clean to OS Recycle Bin; optional Pro upgrade at £1.99 1st-mo intro or £49.99/yr for 5 devices unlocking Deep GPU/AI/Dev Caches, SHA-256 Duplicates, Batch Uninstaller, Scheduler & 7-Day Undo Quarantine)
 - **Supported Operating Systems:** `Windows 11`, `Windows 10` (64-bit architectures)
 - **System Requirements:** Windows 10/11 64-bit, 50 MB RAM, 25 MB free disk space
 - **Visual Assets:**
@@ -59,15 +59,15 @@ Designed as a transparent, high-performance antidote to legacy PC cleaners that 
 
 Key Highlights & Features:
 
-• ⚡ Lightweight Native Rust Architecture: Weighing just 6.5 MB, SWEEPR launches instantaneously, utilizes under 40 MB of RAM during active scans, and traverses nested directories in milliseconds using multi-threaded NVMe-optimized Rust algorithms.
-• 🛑 Zero Background Processes: Runs strictly on demand. SWEEPR installs zero background daemons, zero startup tray services, and zero analytics monitors. When closed, its system memory footprint is exactly 0 MB.
-• 🛡️ 7-Day Undo Quarantine: Never worry about accidental file deletions. All cleared caches and temporary files are isolated into a secure 7-day quarantine vault, allowing instant 1-click rollback if an application requires a file.
-• 🔍 DeepClean Cache Scanning: Targets gigabytes of hidden bloat across Windows Temp, AppData, browser caches (Chrome, Edge, Firefox, Brave), chat applications (Discord, Teams, Slack, Telegram), and developer scratch disks.
+• ⚡ Lightweight Native Rust Architecture: Weighing just 6.76 MB, SWEEPR launches instantaneously, utilizes under 40 MB of RAM during active scans, and traverses nested directories in milliseconds using multi-threaded NVMe-optimized Rust algorithms.
+• 🛑 Zero-Telemetry Default & On-Demand Scanning: Telemetry defaults to disabled (`telemetry_enabled = false`), requiring no resident nagware or adware. When closed, memory footprint is 0 MB unless optional scheduled cleanups are enabled.
+• 🛡️ 7-Day Undo Quarantine (2–10 GB Budget): Never worry about accidental file deletions. Cleared Pro items are held in a configurable 2–10 GB (5 GB default) rolling quarantine vault with fast same-volume O(1) moves and OS Recycle Bin fallback (excludes shredded files, browser DBs, and registry edits).
+• 🔍 Unlimited Free Temp & Browser Cleaning: Clean Windows Temp and standard browser caches (Chrome, Edge, Firefox, Brave) unlimitedly to the OS Recycle Bin on the free tier, plus inspect 71 verified cleanup rule groups (455 patterns) across Windows, macOS, and Linux.
 • 🎮 GPU Shader & Game Depot Cleaner: Safely purges stale DirectX 11/12, Vulkan, NVIDIA DXCache, AMD DxCache, and Steam depot staging chunks that cause micro-stutters and hitching after driver updates.
-• 🧹 Smart App Uninstaller: Completely removes stubborn software, wiping orphaned folders, leftover AppData directories, and stale registry entries that the standard Windows Add/Remove Programs wizard leaves behind.
-• 📑 Cryptographic Duplicate Finder: Uses cryptographic SHA-256 byte comparisons to identify true duplicate files, photos, and videos without false positives.
-• 🔒 Secure File Shredder: DoD 5220.22-M compliant permanent file deletion for sensitive confidential files, preventing forensic file recovery on both SSDs and hard drives.
-• 🌐 Multi-Platform Coverage: A single Pro license covers up to 5 devices across Windows 10/11, macOS, and mobile devices.
+• 🧹 Smart App Uninstaller: Completely removes stubborn software, UWP/Appx bloat, batch selections, and orphaned folders/HKCU leftovers with 1-click HKCU registry backup restore.
+• 📑 Cryptographic Duplicate Finder & Interactive Disk Map: Uses cryptographic SHA-256 byte comparisons plus an interactive Treemap/Sunburst disk map without false positives.
+• 🔒 Secure File Shredder: SSD-aware 1-pass / rotational HDD 3-pass permanent file shredding plus optional HDD-only free-space zeroing (protecting NVMe SSDs from unnecessary wear-leveling writes).
+• 🌐 Multi-Platform Coverage: A single Pro license covers up to 5 devices across Windows 10/11, macOS, and Android (plus iOS Safari web companion / TestFlight beta).
 ```
 
 ---
@@ -82,12 +82,12 @@ Key Highlights & Features:
 - **Form Field Values:**
   - *Program Title:* `SWEEPR Cleaner`
   - *Version:* `0.1.0`
-  - *License:* `Freemium` / `Demo` (Free core clean)
-  - *Price:* `$11.99` (or £1.99/mo Pro entry / free core scan)
+  - *License:* `Freemium` (Unlimited Free Temp & Browser Cache Clean; Pro upgrades available)
+  - *Price:* `£1.99 1st-mo intro / £49.99/yr (5 devices)`
   - *PAD URL:* `https://sweeprcleaner.com/pad.xml`
   - *Download URL:* `https://sweeprcleaner.com/SWEEPRCleaner.exe`
   - *Publisher Name:* `Benjamin Cook`
-  - *Company:* `SWEEPR Technologies`
+  - *Company:* `Benjamin Cook t/a SWEEPR Cleaner`
   - *Operating System:* `Windows 11, Windows 10 64-bit`
   - *Category:* `System Maintenance / Disk Cleaners`
 - **Softpedia "100% Clean" Award Strategy:**
@@ -103,34 +103,34 @@ Key Highlights & Features:
 - **Submission Method:** Direct Editorial Email to MajorGeeks Editors
 - **Editorial Contacts:** `tim@majorgeeks.com`, `jim@majorgeeks.com`
 - **Email Subject:**
-  `Software Submission: SWEEPR Cleaner v0.1.0 (6.5MB Native Rust PC Cleaner)`
+  `Software Submission: SWEEPR Cleaner v0.1.0 (6.76MB Native Rust PC Cleaner)`
 - **Email Body:**
 ```text
 Hi Tim & Jim,
 
 I would like to submit SWEEPR Cleaner v0.1.0 for listing under MajorGeeks' Drive Cleaners section.
 
-SWEEPR Cleaner is an ultra-lightweight (6.5 MB), modern PC cleaner and storage optimizer engineered in native Rust for Windows 10 and 11. I built it specifically as a fast, clean alternative to CCleaner and legacy cleaning suites that have become bogged down with background daemons, adware offers, and tray nagware.
+SWEEPR Cleaner is an ultra-lightweight (6.76 MB), modern PC cleaner and storage optimizer engineered in native Rust for Windows 10 and 11. I built it specifically as a fast, clean alternative to CCleaner and legacy cleaning suites that have become bogged down with background daemons, adware offers, and tray nagware.
 
 Key Technical Highlights for MajorGeeks Readers:
-• 6.5 MB native Rust binary — launches instantly, uses under 40 MB active RAM.
-• 0 MB background RAM when closed: Zero background services, zero startup tray monitors, zero telemetry.
-• 7-Day Undo Quarantine: All cleared cache files are held in a recovery vault so users can roll back any deletion with 1 click.
-• Targets modern bloat: Cleans NVIDIA/AMD DirectX shader caches, Steam depotcache leftovers, Discord/Spotify Electron bloat, and Windows Update leftovers.
-• Includes complete drag-and-drop app uninstaller, SHA-256 duplicate finder, and DoD-grade file shredder.
+• 6.76 MB native Rust binary — launches instantly, uses under 40 MB active RAM.
+• Zero-Telemetry Default: Telemetry is disabled out of the box (telemetry_enabled = false); runs cleanly on demand with zero bundled offers.
+• 7-Day Undo Quarantine (2–10 GB Budget): Cleared Pro files stay in a configurable 2–10 GB (5 GB default) rolling recovery vault with same-volume O(1) move and Recycle Bin fallback.
+• Unlimited Free Temp & Standard Browser Cache Clean (to OS Recycle Bin), plus 71 audited cache/storage rules (455 patterns) covering NVIDIA/AMD DirectX shader caches, Steam depotcache leftovers, Discord/Spotify caches, and Windows Update bloat.
+• Includes interactive Treemap/Sunburst disk map, batch/UWP app uninstaller, SHA-256 duplicate finder, and SSD-aware / HDD free-space shredder.
 • Digitally signed with a valid Authenticode certificate (Benjamin Cook / SSL.com). 100% clean installer with zero bundled toolbars or third-party offers.
 
 Submission & File Details:
 • Program Name: SWEEPR Cleaner
 • Version: 0.1.0
-• File Size: 6,840,632 bytes (6.52 MB)
-• SHA-256: 38E5CDF33C813709C0B4124334CD10EA797C70AAED0C598F4CCB5A5F477544AA
+• File Size: 7,085,912 bytes (6.76 MB)
+• SHA-256: FEAE464CA121CF897D27916C632F4DB8F84A87D4B79642403AD1B0E0F2BB706A
 • Direct Download URL: https://sweeprcleaner.com/SWEEPRCleaner.exe
 • MSI Installer: https://sweeprcleaner.com/Sweepr_Setup.msi
 • Live PAD XML Feed: https://sweeprcleaner.com/pad.xml
 • Website: https://sweeprcleaner.com
-• License: Freemium (Free core disk scan and basic cache clean; optional £1.99/mo Pro upgrade)
-• Author: Benjamin Cook (support@sweeprcleaner.com)
+• License: Freemium (Unlimited Free Temp & Browser Cache clean to Recycle Bin; optional £1.99 1st-mo intro / £49.99/yr 5-device Pro)
+• Author: Benjamin Cook t/a SWEEPR Cleaner (support@sweeprcleaner.com)
 
 Thank you for your time and for everything you do for the Windows community!
 
@@ -151,7 +151,7 @@ https://sweeprcleaner.com
   - *Software Name:* `SWEEPR Cleaner`
   - *Version:* `0.1.0`
   - *License:* `Freemium`
-  - *Developer:* `Benjamin Cook / SWEEPR Technologies`
+  - *Developer:* `Benjamin Cook t/a SWEEPR Cleaner`
   - *Homepage URL:* `https://sweeprcleaner.com`
   - *Direct Download Link:* `https://sweeprcleaner.com/SWEEPRCleaner.exe`
   - *Changelog / Release Notes URL:* `https://sweeprcleaner.com/state-of-windows-storage`
@@ -197,9 +197,9 @@ https://sweeprcleaner.com
 - **Target Category:** `System Administration > System Maintenance > Disk Cleanup`
 - **Listing Profile:**
   - *Product Name:* `SWEEPR Cleaner`
-  - *Vendor / Company Name:* `SWEEPR Technologies`
+  - *Vendor / Company Name:* `Benjamin Cook t/a SWEEPR Cleaner`
   - *Official Website:* `https://sweeprcleaner.com`
-  - *Pricing:* Free scan & basic cleaning · Pro plans starting at £1.99/mo
+  - *Pricing:* Unlimited Free Temp & Browser Cache clean to Recycle Bin · Pro plans starting at £1.99 1st-mo intro / £49.99/yr (5 devices)
   - *Operating System:* Windows 11, Windows 10, macOS, Linux
   - *Download URL:* `https://sweeprcleaner.com/SWEEPRCleaner.exe`
   - *Alternatives:* Tagged against `CCleaner`, `BleachBit`, `CleanMyMac`
