@@ -740,8 +740,8 @@ mod tests {
 
     #[test]
     fn headless_scan_dry_run_json_executes_without_deleting_and_respects_pro_gate() {
-        let base = std::fs::canonicalize(std::env::temp_dir()).unwrap();
-        let root = base.join(format!("sweepr-cli-test-{}", std::process::id()));
+        let base = std::fs::canonicalize(dirs::home_dir().unwrap_or_else(std::env::temp_dir)).unwrap();
+        let root = base.join(format!(".sweepr-cli-test-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         let data_dir = root.join("data");
         let local_data_dir = root.join("local_data");

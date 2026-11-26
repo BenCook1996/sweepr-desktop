@@ -1365,8 +1365,8 @@ mod tests {
 
     #[test]
     fn custom_rule_validation_rejects_unsafe_paths_and_symlinks() {
-        let base_tmp = std::fs::canonicalize(std::env::temp_dir()).unwrap();
-        let root = base_tmp.join(format!("sweepr-custom-rules-test-{}", std::process::id()));
+        let base_tmp = std::fs::canonicalize(dirs::home_dir().unwrap_or_else(std::env::temp_dir)).unwrap();
+        let root = base_tmp.join(format!(".sweepr-custom-rules-test-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         let data_dir = root.join("app_data");
         let cache_dir = root.join("my_app").join("cache");
