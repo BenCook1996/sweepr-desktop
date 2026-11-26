@@ -1247,7 +1247,7 @@ export function createApp(deps: AppDeps) {
     }
     return {
       sha256: SWEEPR_WINDOWS_EXE_SHA256,
-      sizeMb: platform === "mac" ? "7.07 MB" : "6.76 MB",
+      sizeMb: platform === "mac" ? "7.08 MB" : "6.76 MB",
     };
   };
 

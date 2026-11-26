@@ -35,7 +35,7 @@ Download signed installers directly from [sweeprcleaner.com/download](https://sw
 | --- | --- | --- | --- |
 | `SWEEPRCleaner.exe` | Windows x64 (NSIS Setup, SSL.com IV signed) | 7,085,912 (6.76 MiB) | `FEAE464CA121CF897D27916C632F4DB8F84A87D4B79642403AD1B0E0F2BB706A` |
 | `Sweepr_Setup.msi` | Windows x64 (MSI Installer) | 3,993,600 (3.81 MiB) | `33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A` |
-| `SWEEPRCleaner.dmg` | macOS (Universal DMG) | 7,412,590 (7.07 MiB) | `D13A23AACA6B2AEE1BC2E5602F792C31D0CEFA147121686944FEDEC66B17AE6A` |
+| `SWEEPRCleaner.dmg` | macOS (Universal DMG) | 7,420,734 (7.08 MiB) | `88F3DF54147B629AFBC636274B215871871C8BB510BFFCC7095956E790EBE952` |
 | `SWEEPRCleaner.apk` | Android | 3,383,176 (3.23 MiB) | `620602F6B1A61DD392130D93CCE6B87E7F861E23D0317D47797352DE69CC7098` |
 
 `SWEEPRCleaner.exe` carries an SSL.com **Individual Validation (IV)** Authenticode signature (`CN=Benjamin Cook, O=Benjamin Cook, L=Worthing, C=GB`, thumbprint `1800DBEA6FE847D384E549D02CA372C3D45D8B81`).

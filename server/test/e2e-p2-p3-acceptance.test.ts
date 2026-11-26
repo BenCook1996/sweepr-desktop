@@ -42,8 +42,8 @@ const CANONICAL_EXE_BYTES = 7085912;
 const CANONICAL_EXE_SHA256 = "FEAE464CA121CF897D27916C632F4DB8F84A87D4B79642403AD1B0E0F2BB706A";
 const CANONICAL_MSI_BYTES = 3993600;
 const CANONICAL_MSI_SHA256 = "33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A";
-const CANONICAL_DMG_BYTES = 7412590;
-const CANONICAL_DMG_SHA256 = "D13A23AACA6B2AEE1BC2E5602F792C31D0CEFA147121686944FEDEC66B17AE6A";
+const CANONICAL_DMG_BYTES = 7420734;
+const CANONICAL_DMG_SHA256 = "88F3DF54147B629AFBC636274B215871871C8BB510BFFCC7095956E790EBE952";
 const CANONICAL_LOGO_URL = "https://sweeprcleaner.com/icon-512.png";
 
 const TOP_25_DIRECT_ANSWER_ROUTES = [
@@ -1090,7 +1090,7 @@ describe("Tier 1 — Area 5: /about Sole-Founder Page & Attribution Unification 
   });
 });
 
-describe("Tier 1 — Area 6: Release Metadata Sync 6.76 MB / 7.07 MB / IV (p3-1a, p3-1b)", () => {
+describe("Tier 1 — Area 6: Release Metadata Sync 6.76 MB / 7.08 MB / IV (p3-1a, p3-1b)", () => {
   test("T1.6.1 GET /release-manifest.json returns canonical byte counts and SHA-256 digests", async () => {
     const res = await httpGet("/release-manifest.json");
     assert.equal(res.status, 200);
@@ -1151,7 +1151,7 @@ describe("Tier 1 — Area 6: Release Metadata Sync 6.76 MB / 7.07 MB / IV (p3-1a
     assert.ok(!/winget-pkgs\/pull\/480164|6\.52\s*M(?:i?B)|Authenticode OV/i.test(updaterSrc), "update-release-listings.mjs contains stale metadata");
   });
 
-  test("T1.6.4 All active /vs/* & /alternatives/* pages and package manifests/README sync 6.76 MB, 7.07 MB, IV, and canonical URLs", async () => {
+  test("T1.6.4 All active /vs/* & /alternatives/* pages and package manifests/README sync 6.76 MB, 7.08 MB, IV, and canonical URLs", async () => {
     for (const prefix of ["/vs", "/alternatives"]) {
       for (const slug of ALL_COMPETITOR_SLUGS) {
         const res = await httpGetFollowLocal(`${prefix}/${slug}`);
@@ -1165,13 +1165,13 @@ describe("Tier 1 — Area 6: Release Metadata Sync 6.76 MB / 7.07 MB / IV (p3-1a
           `${prefix}/${slug} missing positive Individual Validation (IV) / CN=Benjamin Cook cert reference`
         );
         if ((MAC_COMPETITOR_SLUGS as readonly string[]).includes(slug) && !res.redirected) {
-          assert.match(res.text, /7\.07\s*M(?:i?B)/i, `${prefix}/${slug} missing 7.07 MB dmg size`);
+          assert.match(res.text, /7\.08\s*M(?:i?B)/i, `${prefix}/${slug} missing 7.08 MB dmg size`);
         }
       }
     }
 
     const readme = readFileSync(resolve(REPO_ROOT, "README.md"), "utf-8");
-    assert.ok(readme.includes("7,085,912") && readme.includes("7,412,590"), "README.md missing canonical byte sizes");
+    assert.ok(readme.includes("7,085,912") && readme.includes("7,420,734"), "README.md missing canonical byte sizes");
     assert.match(readme, /Individual Validation|\bIV\b|CN=Benjamin Cook/i, "README.md missing Individual Validation (IV) / CN=Benjamin Cook");
     assert.ok(!readme.includes("winget-pkgs/pull/480164"), "README.md still links winget-pkgs/pull/480164");
 

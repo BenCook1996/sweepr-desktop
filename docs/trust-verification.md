@@ -118,7 +118,7 @@ Matches `server/public/release-manifest.json` and `README.md`:
 | --- | --- | ---: | --- | --- |
 | `SWEEPRCleaner.exe` | Windows (NSIS Setup, x64) | `7,085,912` | `FEAE464CA121CF897D27916C632F4DB8F84A87D4B79642403AD1B0E0F2BB706A` | Authenticode (`1800DBEA6FE847D384E549D02CA372C3D45D8B81`) + SHA-256 + `.sig` (Ed25519) |
 | `Sweepr_Setup.msi` | Windows (WiX MSI, x64) | `3,993,600` | `33E5427E84AB8FC4F3D01DFD17404F7CB38B70B9731A8C2CCFBB62876711933A` | SHA-256 + `.sig` (Ed25519); CI release builds also apply Azure Artifact Signing |
-| `SWEEPRCleaner.dmg` | macOS (Universal DMG) | `7,412,590` | `D13A23AACA6B2AEE1BC2E5602F792C31D0CEFA147121686944FEDEC66B17AE6A` | SHA-256 (Developer ID / notarized in CI when Apple credentials configured) |
+| `SWEEPRCleaner.dmg` | macOS (Universal DMG) | `7,420,734` | `88F3DF54147B629AFBC636274B215871871C8BB510BFFCC7095956E790EBE952` | SHA-256 (Developer ID / notarized in CI when Apple credentials configured) |
 | `SWEEPRCleaner.apk` | Android | `3,383,176` | `620602F6B1A61DD392130D93CCE6B87E7F861E23D0317D47797352DE69CC7098` | SHA-256 |
 
 ---

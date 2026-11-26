@@ -347,7 +347,7 @@ Across the **24 ranked disadvantages** (`#1` at `96/100` down to `#24` at `22/10
   - Schedule upgrade from SSL.com Individual Validation (`1800DBEA6FE847D384E549D02CA372C3D45D8B81`) to an OV/EV Organization Validation or Azure Trusted Signing profile to accelerate Microsoft SmartScreen reputation.
 - [ ] **C3. Microsoft Defender / SmartScreen (WDSI) & VirusTotal:**
   - Submit signed `SWEEPRCleaner.exe`, `Sweepr_Setup.msi`, and portable `.zip` binaries to **Microsoft Security Intelligence (WDSI)** as software developer submissions (`Incorrectly detected` / `Clean file` pre-clearance).
-  - Upload release binaries to **VirusTotal**, capture canonical permalinks for each SHA-256 (`FEAE464...` `.exe`, `33E5427...` `.msi`, `D13A23A...` `.dmg`), and publish links on `/about` and `docs/trust-verification.md`.
+  - Upload release binaries to **VirusTotal**, capture canonical permalinks for each SHA-256 (`FEAE464...` `.exe`, `33E5427...` `.msi`, `88F3DF5...` `.dmg`), and publish links on `/about` and `docs/trust-verification.md`.
 - [ ] **C4. Public Rule-Audit GitHub Repository (`#6`):**
   - Create public GitHub repo (e.g., `sweepr-cleaner/public-rules-catalog`), push `docs/public-rules-catalog.json` (`71` rules, `455` patterns, `9` `network_calls`, SHA-256 `D64BE71CB83693E251CB6B664D6A302EC838C2803D704A22308BB45E77A5F835`) plus verification instructions (`sweepr.exe --export-rules-catalog` diff check), and link from `/vs/bleachbit`, `/alternatives/bleachbit`, and `/about`.
 - [ ] **C5. Third-Party Review & Tier-1 Download Portals:**

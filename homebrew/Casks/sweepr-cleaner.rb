@@ -1,6 +1,6 @@
 cask "sweepr-cleaner" do
   version "0.1.0"
-  sha256 "d13a23aaca6b2aee1bc2e5602f792c31d0cefa147121686944fedec66b17ae6a"
+  sha256 "88f3df54147b629afbc636274b215871871c8bb510bffcc7095956e790ebe952"
 
   url "https://sweeprcleaner.com/SWEEPRCleaner.dmg"
   name "SWEEPR Cleaner"
